@@ -8,7 +8,7 @@ This template provides a minimal setup to get React working with Vite, featuring
 
 Before you get started, make sure you have the following installed on your system:
 
-1. **Node.js**: Download and install the latest LTS version from [Node.js Official Website](https://nodejs.org/).
+**Node.js**: Download and install the latest LTS version from [Node.js Official Website](https://nodejs.org/).
 
 ---
 
