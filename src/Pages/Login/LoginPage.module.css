@@ -1,0 +1,258 @@
+
+.container_LoginPage {
+    position: absolute;
+    width: 1200px;
+    height: 800px;
+    background-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 25px 30px 55px rgba(85, 85, 119, 0.5);
+    border-radius: 13px;
+    overflow: hidden;
+    left: 300px;
+    top: 70px;
+}
+
+.formContainer {
+    position: absolute;
+    width: 60%;
+    height: 100%;
+    padding: 0 40px;
+    transition: all 0.6s ease-in-out;
+}
+
+.signUpContainer {
+    opacity: 0;
+    z-index: 1;
+}
+
+.signInContainer {
+    z-index: 2;
+}
+
+.container_LoginPage form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 50px;
+}
+
+.container_LoginPage h1 {
+    color: #141E30;
+    font-size: 34px;
+    font-weight: bold;
+}
+
+.socialContainer {
+    margin: 20px 0;
+}
+
+.socialContainer a {
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 5px;
+    height: 50px;
+    width: 150px;
+}
+
+.social:hover {
+    background-color: white;
+    border: 1px solid #ddd;
+}
+
+.container_LoginPage span {
+    font-size: 17px;
+}
+
+.infield_LoginPage {
+    position: relative;
+    margin: 8px 0;
+    width: 100%;
+}
+.infield_LoginPage input {
+    width: 100%;
+    padding: 12px 8px;
+    background-color: #f3f3f3;
+    border: none;
+    outline: none;
+    font-size: 18px;
+}
+
+.forgot {
+    margin-top: 30px;
+    font-size: 14px;
+    padding-bottom: 3px;
+    border-bottom: 2px solid #eee;
+}
+
+.forgot:hover {
+    font-weight: bold;
+    border-bottom: 1px solid black;
+}
+
+.overlayPanel button {
+    border-radius: 20px;
+    border: 1px solid #141E30;
+    background-color: rgba(9, 9, 9, 0.3);
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 12px 45px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 80ms ease-in;
+}
+
+
+.formContainer button {
+    border-radius: 20px;
+    border: 1px solid #141E30;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 12px 45px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: 80ms ease-in;
+    background: #059669;
+    margin-top: 30px;
+}
+
+.formContainer button:hover {
+    background: #fff;
+    color: #141E30;
+}
+
+.overlayContainer {
+    position: absolute;
+    top: 0;
+    left: 60%;
+    width: 40%;
+    height: 100%;
+    overflow: hidden;
+    transition: transform 0.6s ease-in-out;
+    z-index: 9;
+}
+
+.overlay {
+    position: relative;
+    background-color: rgba(236, 253, 245, 0.2);
+    color: #fff;
+    left: -150%;
+    height: 100%;
+    width: 250%;
+    transition: transform 0.6s ease-in-out;
+}
+
+.overlayPanel {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 40px;
+    text-align: center;
+    height: 80%;
+    width: 460px;
+    transition: 0.6s ease-in-out;
+}
+
+.overlayPanel img {
+    margin-right: 20px;
+    border-radius: 10px;
+    height: 500px;
+    width: 400px;
+}
+
+.overlayLeft {
+    right: 60%;
+    transform: translateX(-12%);
+}
+
+.overlayRight {
+    right: 0%;
+    transform: translateX(0%);
+}
+
+.overlayPanel h1 {
+    color: black;
+}
+
+.overlayPanel button {
+    margin-top: 42px;
+    border: 1px solid black;
+    background-color: #059669;
+}
+
+.overlayLeft button {
+    margin-top: 38px;
+}
+
+.overlayPanel button:hover {
+    background: #fff;
+    color: #141E30;
+}
+
+.rightPanelActive .overlayContainer {
+    transform: translateX(-150%);
+}
+
+.rightPanelActive .overlay {
+    transform: translateX(50%);
+}
+
+.rightPanelActive .overlayLeft {
+    transform: translateX(25%);
+}
+
+.rightPanelActive .overlayRight {
+    transform: translateX(35%);
+}
+
+.rightPanelActive .signInContainer {
+    transform: translateX(20%);
+    opacity: 0;
+}
+
+.rightPanelActive .signUpContainer {
+    transform: translateX(66.7%);
+    opacity: 1;
+    z-index: 5;
+    animation: show 0.6s;
+}
+
+@keyframes show {
+    0%, 50% {
+        opacity: 0;
+        z-index: 1;
+    }
+    50.1%, 100% {
+        opacity: 1;
+        z-index: 5;
+    }
+}
+
+.infield_LoginPage input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.togglePassword {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #aaa;
+    transition: color 0.3s ease;
+}
+
+.togglePassword:hover {
+    color: #333;
+}
