@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: 'Inter', sans-serif;
+}
