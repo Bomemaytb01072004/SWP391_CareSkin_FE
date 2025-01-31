@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Header from '../../components/Header/Header';
 import {
   faUser,
   faHeart,
@@ -10,22 +11,23 @@ import {
 
 function Navbar() {
   const [scrollingUp, setScrollingUp] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(window.scrollY);
+
   const [showSmartNav, setShowSmartNav] = useState(false);
   const [isSmartNavVisible, setIsSmartNavVisible] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-
     const handleScroll = () => {
-      setScrollingUp(window.scrollY < lastScrollY);
-      lastScrollY = window.scrollY;
+      const currentScrollY = window.scrollY;
+      setScrollingUp(currentScrollY < lastScrollY);
+      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -55,13 +57,23 @@ function Navbar() {
   const handleDragEnd = () => {
     setIsDragging(false);
   };
+
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Products', path: '/products' },
+    { name: 'Sales', path: '/sales' },
+    { name: 'SkinQuiz', path: '/skinquiz' },
+    { name: 'Blogs', path: '/blogs' },
+    { name: 'About', path: '/about' },
+  ];
   return (
     <>
       <nav
-        className={`bg-white shadow-md sticky top-0 z-50 transform transition-transform duration-300 ${
+        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 ${
           scrollingUp ? 'translate-y-0' : '-translate-y-full'
-        } md:translate-y-0`}
+        }`}
       >
+        <Header />
         <div className=" mx-auto px-4 lg:px-8 flex items-center justify-between h-16">
           {/* Logo */}
           <div className="lg:flex hidden">
@@ -74,24 +86,11 @@ function Navbar() {
 
           {/* Navigation Links */}
           <ul className="flex-1 flex justify-center item lg:space-x-12 lg:mr-2 mx-auto space-x-8    text-gray-700 lg:font-medium">
-            <li className="hover:text-emerald-600 transition">
-              <a href="/">Home</a>
-            </li>
-            <li className="hover:text-emerald-600 transition">
-              <a href="#">Products</a>
-            </li>
-            <li className="hover:text-emerald-600 transition">
-              <a href="#">Sales</a>
-            </li>
-            <li className="hover:text-emerald-600 transition">
-              <a href="#">SkinQuiz</a>
-            </li>
-            <li className="hover:text-emerald-600 transition">
-              <a href="#">Blogs</a>
-            </li>
-            <li className="hover:text-emerald-600 transition">
-              <a href="#">About</a>
-            </li>
+            {navLinks.map((link, index) => (
+              <li key={index} className="hover:text-emerald-600 transition">
+                <Link to={link.path}>{link.name}</Link>
+              </li>
+            ))}
           </ul>
 
           {/* Right Side */}
@@ -110,14 +109,13 @@ function Navbar() {
                 className="text-gray-700 hover:text-emerald-600 text-xl transition"
               />
             </div>
-
-            <div className="lg:flex hidden space-x-4 items-center ml ">
-              <a
+            <div className="lg:flex hidden space-x-4 items-center ml">
+              <Link
+                to="/joinus"
                 className="text-gray-700 font-medium hover:text-emerald-600 transition"
-                href="/joinus"
               >
                 Join Us
-              </a>
+              </Link>
             </div>
           </div>
         </div>

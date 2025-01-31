@@ -1,5 +1,4 @@
 import React from 'react';
-import Header from '../../components/Header/Header';
 import Navbar from '../../components/Navbar/Navbar';
 import SloganCarousel from '../../components/Carousel/SloganCarousel';
 import Footer from '../../components/Footer/Footer';
@@ -15,10 +14,9 @@ import {
 function HomePage() {
   return (
     <>
-      <Header />
       <Navbar />
       {/* Skin Quiz Section */}
-      <div className="flex flex-col md:flex-row items-center text-center md:text-left py-16 px-6 md:px-10 bg-white w-full max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row items-center text-center mt-16 md:text-left py-16 px-6 md:px-10 bg-white w-full max-w-7xl mx-auto">
         {/* Left Side: Text */}
         <div className="md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left">
           <h1
@@ -34,9 +32,12 @@ function HomePage() {
             Take our personalized skin quiz and get a customized skincare
             routine that works for your unique needs.
           </p>
-          <button className="px-6 py-3 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition">
+          <a
+            href="/skinquiz"
+            className="px-6 py-3 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition"
+          >
             Take Skin Quiz
-          </button>
+          </a>
         </div>
 
         {/* Right Side: Image */}
@@ -47,10 +48,7 @@ function HomePage() {
 
       {/* Shop by Category Section */}
       <div className="py-16 bg-gray-50 rounded-xl mx-auto max-w-7xl px-5 mt-10">
-        <h2
-          className="text-3xl font-bold text-gray-800 text-center mb-16"
-          style={{ textShadow: '0.13rem 0.13rem 0.3rem rgba(0, 0, 0, 0.25)' }}
-        >
+        <h2 className="text-3xl font-bold text-gray-800 text-center mb-16">
           Shop by Category
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -98,11 +96,8 @@ function HomePage() {
       </div>
 
       {/* Not Sure Where to Start Section */}
-      <div className="bg-emerald-50 py-12 px-6 text-center rounded-xl shadow-md mx-auto max-w-5xl mt-10 mb-12">
-        <h2
-          className="text-3xl font-bold text-gray-800 mb-4"
-          style={{ textShadow: '0.13rem 0.13rem 0.3rem rgba(0, 0, 0, 0.25)' }}
-        >
+      <div className="bg-emerald-50 py-12 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-12">
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">
           Not Sure Where to Start?
         </h2>
         <p className="text-gray-600 text-base md:text-lg mb-6">
