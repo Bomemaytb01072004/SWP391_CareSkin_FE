@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/Navbar/Navbar';
-import Footer from '../../components/Footer/Footer';
-import SloganCarousel from '../../components/Carousel/SloganCarousel';
+import Navbar from '../../components/Layout/Navbar';
+import Footer from '../../components/Layout/Footer';
+import SloganCarousel from '../../components/SkinQuiz/Carousel/SloganCarousel';
 
 const SkinQuizPage = () => {
   const navigate = useNavigate();

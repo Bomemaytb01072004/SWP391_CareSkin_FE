@@ -1,9 +1,10 @@
 import React from 'react';
-import Navbar from '../../components/Navbar/Navbar';
-import SloganCarousel from '../../components/Carousel/SloganCarousel';
-import Footer from '../../components/Footer/Footer';
+import Navbar from '../../components/Layout/Navbar';
+import Footer from '../../components/Layout/Footer';
+import SloganCarousel from '../../components/HomePage/Carousel/SloganCarousel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import BestSellers from '../../components/BestSellers/BestSellers';
+import BestSellers from '../../components/HomePage/BestSellers';
+import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
 import {
   faDroplet,
   faSun,
@@ -47,11 +48,11 @@ function HomePage() {
       </div>
 
       {/* Shop by Category Section */}
-      <div className="py-16 bg-gray-50 rounded-xl mx-auto max-w-7xl px-5 mt-10">
+      <div className="py-16 bg-gray-50 rounded-xl mx-auto max-w-screen-2xl px-5 mt-10">
         <h2 className="text-3xl font-bold text-gray-800 text-center mb-16">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto justify-items-center">
           {[
             {
               icon: faDroplet,
@@ -116,6 +117,8 @@ function HomePage() {
 
       {/* BestSellers */}
       <BestSellers />
+      {/* ServiceFeedback */}
+      <ServiceFeedback />
 
       {/* Footer */}
       <Footer />
