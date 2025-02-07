@@ -40,40 +40,38 @@ const ServiceFeedback = () => {
   }, [customers]);
 
   return (
-    <div className="bg-gray-50 py-16">
-      <div className="px-6 max-w-screen-2xl mx-auto justify-items-center">
-        <h2 className="text-3xl font-bold text-center text-black mb-10">
-          Customer Stories
-        </h2>
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-500 ${
-            fade ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          {visibleFeedback.map((customer) => (
-            <div
-              key={customer.id}
-              className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition"
-            >
-              <div className="flex items-center mb-4">
-                <img
-                  src={customer.profileImage}
-                  alt={customer.name}
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <div>
-                  <h3 className="font-bold text-lg text-gray-800">
-                    {customer.name}
-                  </h3>
-                  <div className="flex items-center text-yellow-500">
-                    {'★'.repeat(customer.rating)}
-                  </div>
+    <div className="py-16 bg-gray-50 rounded-xl max-w-screen-2xl px-5 mt-8 mx-auto justify-items-center">
+      <h2 className="text-3xl font-bold text-center text-black mb-16">
+        Customer Stories
+      </h2>
+      <div
+        className={`lg:h-60 max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-500 ${
+          fade ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {visibleFeedback.map((customer) => (
+          <div
+            key={customer.id}
+            className="bg-white max-h-80 p-10 rounded-lg shadow-md hover:shadow-lg transition"
+          >
+            <div className="flex items-center mb-4">
+              <img
+                src={customer.profileImage}
+                alt={customer.name}
+                className="w-12 h-12 rounded-full mr-4"
+              />
+              <div>
+                <h3 className="font-bold text-lg text-gray-800">
+                  {customer.name}
+                </h3>
+                <div className="flex items-center text-yellow-500">
+                  {'★'.repeat(customer.rating)}
                 </div>
               </div>
-              <p className="text-gray-600 text-sm">{customer.review}</p>
             </div>
-          ))}
-        </div>
+            <p className="text-gray-600 text-sm">{customer.review}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
