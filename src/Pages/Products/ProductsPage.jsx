@@ -1,5 +1,5 @@
 import styles from "./ProductsPage.module.css";
-import Navbar from '../../components/Navbar/Navbar';
+import Navbar from '../../components/Layout/Navbar';
 import Footer from "../../components/Layout/Footer";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import Dropdown from "../../components/Dropdown/Dropdown";
