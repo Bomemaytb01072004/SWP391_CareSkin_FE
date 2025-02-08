@@ -16,7 +16,7 @@ function Footer() {
           {/* Logo */}
           <div className="flex items-center -ml-2 -mt-2">
             <img
-              src="src/assets/logo.png"
+              src="/src/assets/logo.png"
               alt="CareSkin Logo"
               className="w-[13.125rem] h-[4.375rem] mr-2"
             />
