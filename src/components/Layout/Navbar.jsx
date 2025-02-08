@@ -78,7 +78,7 @@ function Navbar() {
           {/* Logo */}
           <div className="lg:flex hidden">
             <img
-              src="src/assets/logo.png"
+              src="/src/assets/logo.png"
               alt="CareSkin Logo"
               className="w-[13.125rem] h-[4.375rem]"
             />
