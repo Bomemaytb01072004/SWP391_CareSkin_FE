@@ -16,7 +16,7 @@ function Footer() {
           {/* Logo */}
           <div className="flex items-center -ml-2 -mt-2">
             <img
-              src="src/assets/logo.png"
+              src="/src/assets/logo.png"
               alt="CareSkin Logo"
               className="w-[13.125rem] h-[4.375rem] mr-2"
             />
@@ -43,7 +43,10 @@ function Footer() {
               links: ['Contact Us', 'Shipping', 'Returns', 'FAQ'],
             },
           ].map((section, index) => (
-            <div key={index} className="w-full text-left">
+            <div
+              key={index}
+              className="w-full md:text-left text-center md:w-1/2 flex flex-col items-center md:items-start"
+            >
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 {section.title}
               </h3>
@@ -61,12 +64,12 @@ function Footer() {
         </div>
 
         {/* Follow Us */}
-        <div className="w-full md:w-1/4 text-left">
+        <div className="w-full md:w-1/4 text-center flex flex-col items-center md:items-start">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Follow Us
           </h3>
           <div className="flex space-x-4 text-gray-600">
-            {[faInstagram, faFacebook, faTwitter, faPinterest].map(
+            {[faInstagram, faFacebook, faTwitter].map(
               (icon, index) => (
                 <a key={index} href="#" className="hover:text-emerald-600">
                   <FontAwesomeIcon icon={icon} />
@@ -83,7 +86,7 @@ function Footer() {
       {/* Bottom Section */}
       <div className="flex flex-col md:flex-row justify-between text-center md:text-left text-gray-600 text-sm">
         <p>© 2025 CareSkin. All rights reserved.</p>
-        <div className="flex space-x-6 mt-4 md:mt-0">
+        <div className="flex space-x-6 mt-4 md:mt-0 justify-center ">
           <a href="#" className="hover:text-emerald-600">
             Privacy Policy
           </a>

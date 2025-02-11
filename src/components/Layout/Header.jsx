@@ -20,8 +20,10 @@ function Header() {
 
   return (
     <header className="w-full bg-black z-50 border-b-[0.0625rem] border-gray-200">
-      <div className=" flex items-center justify-center py-2">
-        <p className="text-sm text-slate-50">{messages[currentMessageIndex]}</p>
+      <div className="flex items-center justify-center py-2 max-w-full overflow-hidden">
+        <p className="text-sm text-slate-50 text-center whitespace-normal">
+          {messages[currentMessageIndex]}
+        </p>
       </div>
     </header>
   );

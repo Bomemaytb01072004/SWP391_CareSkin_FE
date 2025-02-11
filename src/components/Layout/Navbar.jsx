@@ -61,7 +61,6 @@ function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Products', path: '/products' },
-    { name: 'Sales', path: '/sales' },
     { name: 'SkinQuiz', path: '/skinquiz' },
     { name: 'Blogs', path: '/blogs' },
     { name: 'About', path: '/about' },
@@ -78,14 +77,14 @@ function Navbar() {
           {/* Logo */}
           <div className="lg:flex hidden">
             <img
-              src="src/assets/logo.png"
+              src="/src/assets/logo.png"
               alt="CareSkin Logo"
               className="w-[13.125rem] h-[4.375rem]"
             />
           </div>
 
           {/* Navigation Links */}
-          <ul className="flex-1 flex justify-center item lg:space-x-12 lg:mr-2 mx-auto space-x-8    text-gray-700 lg:font-medium">
+          <ul className="flex-1 flex justify-center item lg:space-x-12 lg:mr-2 mx-auto space-x-4    text-gray-700 lg:font-medium">
             {navLinks.map((link, index) => (
               <li key={index} className="hover:text-emerald-600 transition">
                 <Link to={link.path}>{link.name}</Link>
