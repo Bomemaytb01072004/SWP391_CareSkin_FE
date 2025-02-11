@@ -7,53 +7,45 @@ import ProductList from '../../components/CardProduct/ProductList';
 import Filters from '../../components/Filters/Filters';
 import Pagination from '../../components/Pagination/Pagination';
 
+
+
 function ProductsPage() {
+
   const breadcrumbItems = [
     { label: 'Products', link: '/products', active: true },
   ];
   return (
+
     <>
       <Navbar />
-      <div className={styles.productPage_container}>
-        <div className={styles.body}>
-          <div className={styles.productPage_mainGroup}>
-            <div className={styles.productPage_breadcrumb}>
+      <div className={`mt-20 ${styles.productPage_container}`}>
+        <div className="row">
+          <div className="col-12 mb-3">
+            <div className={`d-flex flex-column flex-md-row justify-content-between align-items-center ${styles.productPage_breadcrumb}`}>
               <Breadcrumb items={breadcrumbItems} />
-            </div>
-            <div className={styles.productPage_secondGroup}>
-              <div className={styles.productPage_sidebar}>
-                <div className={styles.div6}>
-                  <Filters />
-                </div>
-              </div>
-              <div className={styles.div11}>
-                <div className={styles.div12}>
-                  <div className={styles.div13}>
-                    <div className={styles.totalProducts}>124 products </div>
-                  </div>
-                  <div className={styles.sortByFeature}>
-                    <Dropdown />
-                  </div>
-                </div>
-                <ProductList />
-                <Pagination />
-              </div>
-            </div>
-            <div className={styles.productPage_searchBar}>
-              <div className={styles.input2}>
-                <div className={styles.searchProducts}>Search products... </div>
-              </div>
-              <div className={styles.frame13}>
-                <img
-                  className={styles.frame14}
-                  src="https://upload.wikimedia.org/wikipedia/commons/5/55/Magnifying_glass_icon.svg"
-                />
-              </div>
+
             </div>
           </div>
         </div>
-      </div>
 
+        <div className="row">
+          <div className={`col-lg-2 ${styles.productPage_sidebar}`}>
+            <Filters />
+          </div>
+
+          <div className={`col-12 col-md-8 col-lg-9 ${styles.div11}`}>
+            <div className={`d-flex align-items-center mb-3 ${styles.div12}`}>
+              <div className={`fw-bold ${styles.totalProducts}`}>124 products</div>
+              <div className={styles.sortByFeature}>
+                <Dropdown />
+              </div>
+            </div>
+
+            <ProductList />
+            <Pagination />
+          </div>
+        </div>
+      </div>
       <Footer />
     </>
   );
