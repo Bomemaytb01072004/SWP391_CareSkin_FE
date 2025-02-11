@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
-import {
-  faCircleInfo,
-  faChevronRight,
-  faUserEdit,
-} from '@fortawesome/free-solid-svg-icons';
+import Breadcrumb from '../../components/Breadcrumb/Breadcrumb'; // Import Breadcrumb
+
+import { faCircleInfo, faUserEdit } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Example skincare routines based on skin type
@@ -124,16 +122,8 @@ const SkinRoutinePage = () => {
       <div className="bg-emerald-50 min-h-screen pt-10 mt-20">
         {/* Breadcrumb Section */}
         <div className="max-w-5xl mx-auto flex justify-between items-center px-6 text-emerald-600 text-sm">
-          <div className="flex items-center space-x-2">
-            <a href="/" className="hover:underline">
-              Home
-            </a>
-            <FontAwesomeIcon
-              icon={faChevronRight}
-              className="text-gray-500 text-xs"
-            />
-            <span className="font-semibold">SkinQuiz</span>
-          </div>
+          <Breadcrumb items={[{ label: 'SkinQuiz', active: true }]} />
+
           <a
             href="/edit-profile"
             className="flex items-center text-emerald-600 hover:underline"
@@ -179,7 +169,7 @@ const SkinRoutinePage = () => {
 
         {/* Morning Routine */}
         <div className="w-full bg-white py-10 sm:py-12">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto px-2 sm:px-4">
             <h3 className="text-lg sm:text-xl font-bold text-yellow-600 mb-4 sm:mb-6">
               ☀ Morning Routine
             </h3>
@@ -204,7 +194,7 @@ const SkinRoutinePage = () => {
                     <p className="text-xs sm:text-sm text-gray-600">
                       {item.description}
                     </p>
-                    <div className="flex items-center gap-3 text-sm text-emerald-600 mt-2">
+                    <div className="flex flex-col md:flex-row items-center gap-3 text-sm text-emerald-600 mt-4">
                       <a
                         href={item.detailsLink}
                         className="flex items-center gap-1 hover:underline"
@@ -224,12 +214,12 @@ const SkinRoutinePage = () => {
         </div>
         {/*Evening Routine*/}
         <div className="w-full bg-[#F9FAFB] py-10 sm:py-12">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6">
-            <h3 className="text-lg sm:text-xl font-bold text-[#5243AA] mb-4 sm:mb-6">
+          <div className="max-w-5xl mx-auto px-2 sm:px-4">
+            <h3 className="text-lg sm:text-xl font-bold text-yellow-600 mb-4 sm:mb-6">
               🌙 Evening Routine
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {routine.evening.map((item, index) => (
+              {routine.morning.map((item, index) => (
                 <div
                   key={index}
                   className="p-4 bg-white rounded-lg shadow-md flex gap-4"
@@ -242,16 +232,14 @@ const SkinRoutinePage = () => {
                     alt={item.name}
                     className="w-16 sm:w-20 h-16 sm:h-20 rounded-lg object-cover border border-gray-300"
                   />
-
                   <div>
                     <h4 className="text-sm sm:text-lg font-semibold text-gray-800">
                       {item.name}
                     </h4>
-
                     <p className="text-xs sm:text-sm text-gray-600">
                       {item.description}
                     </p>
-                    <div className="flex items-center gap-3 text-sm text-[#5243AA] mt-2">
+                    <div className="flex flex-col md:flex-row items-center gap-3 text-sm text-[#5243AA] mt-4">
                       <a
                         href={item.detailsLink}
                         className="flex items-center gap-1 hover:underline"
@@ -269,7 +257,6 @@ const SkinRoutinePage = () => {
             </div>
           </div>
         </div>
-
         {/* Weekly Treatments */}
         <div className="w-full bg-white py-10 sm:py-14">
           <div className="max-w-5xl mx-auto px-4 sm:px-8">
