@@ -1,14 +1,16 @@
-import styles from "./ProductsPage.module.css";
+import styles from './ProductsPage.module.css';
 import Navbar from '../../components/Layout/Navbar';
-import Footer from "../../components/Layout/Footer";
-import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
-import Dropdown from "../../components/Dropdown/Dropdown";
-import ProductList from "../../components/CardProduct/ProductList";
-import Filters from "../../components/Filters/Filters";
-import Pagination from '../../components/Pagination/Pagination'
-
+import Footer from '../../components/Layout/Footer';
+import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
+import Dropdown from '../../components/Dropdown/Dropdown';
+import ProductList from '../../components/CardProduct/ProductList';
+import Filters from '../../components/Filters/Filters';
+import Pagination from '../../components/Pagination/Pagination';
 
 function ProductsPage() {
+  const breadcrumbItems = [
+    { label: 'Products', link: '/products', active: true },
+  ];
   return (
     <>
       <Navbar />
@@ -16,7 +18,7 @@ function ProductsPage() {
         <div className={styles.body}>
           <div className={styles.productPage_mainGroup}>
             <div className={styles.productPage_breadcrumb}>
-              <Breadcrumb />
+              <Breadcrumb items={breadcrumbItems} />
             </div>
             <div className={styles.productPage_secondGroup}>
               <div className={styles.productPage_sidebar}>
@@ -27,9 +29,7 @@ function ProductsPage() {
               <div className={styles.div11}>
                 <div className={styles.div12}>
                   <div className={styles.div13}>
-                    <div className={styles.totalProducts}>
-                      124 products{" "}
-                    </div>
+                    <div className={styles.totalProducts}>124 products </div>
                   </div>
                   <div className={styles.sortByFeature}>
                     <Dropdown />
@@ -41,12 +41,13 @@ function ProductsPage() {
             </div>
             <div className={styles.productPage_searchBar}>
               <div className={styles.input2}>
-                <div className={styles.searchProducts}>
-                  Search products...{" "}
-                </div>
+                <div className={styles.searchProducts}>Search products... </div>
               </div>
               <div className={styles.frame13}>
-                <img className={styles.frame14} src="https://upload.wikimedia.org/wikipedia/commons/5/55/Magnifying_glass_icon.svg" />
+                <img
+                  className={styles.frame14}
+                  src="https://upload.wikimedia.org/wikipedia/commons/5/55/Magnifying_glass_icon.svg"
+                />
               </div>
             </div>
           </div>
@@ -56,5 +57,5 @@ function ProductsPage() {
       <Footer />
     </>
   );
-};
+}
 export default ProductsPage;
