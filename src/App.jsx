@@ -5,6 +5,7 @@ import LoginPage from './Pages/Login/LoginPage';
 import SkinQuizPage from './Pages/SkinQuiz/SkinQuizPage';
 import SkinRoutinePage from './Pages/SkinQuiz/SkinRoutinePage';
 import ProductsPage from './Pages/Products/ProductsPage'
+import ProductDetailedPage from './Pages/ProductDetailed/ProductDetailedPage';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/skinquiz" element={<SkinQuizPage />} />
         <Route path="/skinroutine" element={<SkinRoutinePage />} />
         <Route path="/products" element={<ProductsPage />} />
+        <Route path="/product/:id" element={<ProductDetailedPage />} />
       </Routes>
     </Router>
   );
