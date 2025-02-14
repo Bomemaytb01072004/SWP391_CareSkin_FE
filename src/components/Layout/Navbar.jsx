@@ -7,14 +7,13 @@ import {
   faHeart,
   faShoppingCart,
   faBars,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
   const [scrollingUp, setScrollingUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(window.scrollY);
-
-  const [showSmartNav, setShowSmartNav] = useState(false);
-  const [isSmartNavVisible, setIsSmartNavVisible] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
 
@@ -29,28 +28,28 @@ function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setShowSmartNav(true);
-      } else {
-        setShowSmartNav(false);
-        setIsSmartNavVisible(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleDragStart = () => {
+  const handleDragStart = (e) => {
     setIsDragging(true);
   };
 
   const handleDrag = (e) => {
     if (isDragging) {
-      setPosition({ x: e.clientX - 20, y: e.clientY - 20 });
+      requestAnimationFrame(() => {
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        // Ensure button stays within screen boundaries
+        const newX = Math.max(
+          10,
+          Math.min(window.innerWidth - 50, clientX - 20)
+        );
+        const newY = Math.max(
+          10,
+          Math.min(window.innerHeight - 50, clientY - 20)
+        );
+
+        setPosition({ x: newX, y: newY });
+      });
     }
   };
 
@@ -65,10 +64,11 @@ function Navbar() {
     { name: 'Blogs', path: '/blogs' },
     { name: 'About', path: '/about' },
   ];
+
   return (
     <>
       <nav
-        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 ${
+        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 hidden md:block lg:block ${
           scrollingUp ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -119,40 +119,73 @@ function Navbar() {
           </div>
         </div>
       </nav>
-      {/* Smart Navbar Button - Only Show on Mobile */}
-      {showSmartNav && (
-        <div
-          className="fixed w-14 h-14 bg-gray-800 opacity-50 rounded-full flex items-center justify-center cursor-pointer z-50"
-          style={{
-            left: position.x,
-            top: position.y,
-            transition: isDragging ? 'none' : 'transform 0.3s ease',
-          }}
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDrag}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={handleDragEnd}
-          onClick={() => setIsSmartNavVisible(!isSmartNavVisible)}
-        >
-          <FontAwesomeIcon icon={faBars} className="text-white text-2xl" />
-        </div>
-      )}
 
-      {/* Smart Navbar - Appears When Button is Clicked */}
-      {isSmartNavVisible && (
-        <div
-          className="fixed bg-transparent shadow-lg rounded-lg p-4 flex flex-col space-y-4 z-50 backdrop-blur-md"
-          style={{ left: position.x, top: position.y + 60 }}
-        >
-          {[faUser, faHeart, faShoppingCart].map((icon, index) => (
-            <FontAwesomeIcon
-              key={index}
-              icon={icon}
-              className="text-gray-700 hover:text-emerald-600 text-2xl transition"
-            />
-          ))}
+      {/* Smart Navbar Button (Visible only in md and sm) */}
+      <div
+        className="fixed w-14 h-14 bg-gray-800 opacity-80 rounded-full flex items-center justify-center cursor-pointer z-[10000] md:flex lg:hidden sm:flex"
+        style={{
+          left: position.x,
+          top: position.y,
+          transition: isDragging ? 'none' : 'transform 0.1s ease-in-out',
+          pointerEvents: 'auto',
+        }}
+        onMouseDown={handleDragStart}
+        onMouseMove={handleDrag}
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        onTouchStart={handleDragStart}
+        onTouchMove={handleDrag}
+        onTouchEnd={handleDragEnd}
+        onClick={() => setIsSidebarOpen(true)}
+      >
+        <FontAwesomeIcon icon={faBars} className="text-white text-2xl" />
+      </div>
+
+      {/* Sidebar */}
+      <div
+        className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-[9999] ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="p-2 flex justify-center items-center border-b">
+          <img
+            src="/src/assets/logoalone.png"
+            alt="CareSkin Logo"
+            className="h-[3.75rem]"
+          />{' '}
         </div>
-      )}
+        <ul className="p-4 space-y-8 text-gray-700 font-medium text-center">
+          {navLinks.map((link, index) => (
+            <li key={index} className="hover:text-emerald-600 transition">
+              <Link to={link.path} onClick={() => setIsSidebarOpen(false)}>
+                {link.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="p-4 flex space-x-4 justify-center border-b">
+          <FontAwesomeIcon
+            icon={faUser}
+            className="text-gray-700 text-2xl hover:text-emerald-600"
+          />
+          <FontAwesomeIcon
+            icon={faHeart}
+            className="text-gray-700 text-2xl hover:text-emerald-600"
+          />
+          <FontAwesomeIcon
+            icon={faShoppingCart}
+            className="text-gray-700 text-2xl hover:text-emerald-600"
+          />
+        </div>
+        <div className="p-4 flex justify-center">
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="text-gray-700 text-2xl"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+      </div>
     </>
   );
 }
