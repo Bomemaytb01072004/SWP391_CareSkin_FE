@@ -29,16 +29,24 @@ const CartPage = () => {
   const removeFromCart = (id) => {
     const updatedCart = cart.filter((item) => item.id !== id);
     setCart(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
     setSelectedItems(selectedItems.filter((itemId) => itemId !== id));
+
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    // Dispatch an event to notify Navbar to update the cart badge
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleQuantityChange = (id, newQuantity) => {
     const updatedCart = cart.map((item) =>
       item.id === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
     );
+
     setCart(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    // Dispatch an event to notify Navbar to update the cart badge
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleCheckboxChange = (id) => {
@@ -59,7 +67,11 @@ const CartPage = () => {
     const updatedCart = cart.filter((item) => !selectedItems.includes(item.id));
     setCart(updatedCart);
     setSelectedItems([]);
+
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    // Dispatch an event to notify Navbar to update the cart badge
+    window.dispatchEvent(new Event('storage'));
   };
 
   const selectedProducts = cart.filter((item) =>
