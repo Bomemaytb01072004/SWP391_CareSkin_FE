@@ -116,7 +116,7 @@ const CartPage = () => {
                   type="checkbox"
                   checked={selectedItems.length === cart.length}
                   onChange={handleSelectAll}
-                  className="w-4 h-4 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer accent-emerald-500 border-2 border-gray-400 rounded-md "
                 />{' '}
                 Select All{' '}
               </label>
@@ -133,19 +133,18 @@ const CartPage = () => {
                   key={item.id}
                   className="flex items-center bg-white shadow-sm p-4 rounded-xl border relative w-full"
                 >
-                  {/* Checkbox */}
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(item.id)}
                     onChange={() => handleCheckboxChange(item.id)}
-                    className="w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer accent-emerald-500 border-2 border-gray-400 rounded-md "
                   />
 
                   {/* Product Image */}
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-20 h-20 object-cover ml-3 rounded-md border"
+                    className="w-24 h-28 object-cover ml-3 rounded-md border transform transition duration-300 ease-in-out hover:scale-150"
                   />
 
                   {/* Product Details */}

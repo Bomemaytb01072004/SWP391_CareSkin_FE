@@ -139,7 +139,7 @@ function Navbar() {
                   className="text-gray-700 hover:text-emerald-600 text-xl transition"
                 />
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                     {cartCount}
                   </span>
                 )}
@@ -202,27 +202,32 @@ function Navbar() {
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
           {/* User Profile */}
-          <Link to="/profile" className="cursor-pointer">
+          <Link to="/profile">
             <FontAwesomeIcon
               icon={faUser}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
           </Link>
 
-          {/* Wishlist */}
-          <Link to="/wishlist" className="cursor-pointer">
+          {/* Wishlist Icon */}
+          <Link to="/wishlist">
             <FontAwesomeIcon
               icon={faHeart}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
           </Link>
 
-          {/* Shopping Cart */}
-          <Link to="/cart" className="cursor-pointer">
+          {/* Cart Icon with Badge */}
+          <Link to="/cart" className="relative">
             <FontAwesomeIcon
               icon={faShoppingCart}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
+            {cartCount > 0 && (
+              <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                {cartCount}
+              </span>
+            )}
           </Link>
         </div>
         <div className="p-4 flex justify-center">
