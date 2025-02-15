@@ -201,18 +201,29 @@ function Navbar() {
           ))}
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
-          <FontAwesomeIcon
-            icon={faUser}
-            className="text-gray-700 text-2xl hover:text-emerald-600"
-          />
-          <FontAwesomeIcon
-            icon={faHeart}
-            className="text-gray-700 text-2xl hover:text-emerald-600"
-          />
-          <FontAwesomeIcon
-            icon={faShoppingCart}
-            className="text-gray-700 text-2xl hover:text-emerald-600"
-          />
+          {/* User Profile */}
+          <Link to="/profile" className="cursor-pointer">
+            <FontAwesomeIcon
+              icon={faUser}
+              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+            />
+          </Link>
+
+          {/* Wishlist */}
+          <Link to="/wishlist" className="cursor-pointer">
+            <FontAwesomeIcon
+              icon={faHeart}
+              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+            />
+          </Link>
+
+          {/* Shopping Cart */}
+          <Link to="/cart" className="cursor-pointer">
+            <FontAwesomeIcon
+              icon={faShoppingCart}
+              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+            />
+          </Link>
         </div>
         <div className="p-4 flex justify-center">
           <button

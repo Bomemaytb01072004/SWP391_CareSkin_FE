@@ -159,7 +159,7 @@ const SkinRoutinePage = () => {
               Add All
             </button>
             <button
-              className="px-4 py-2 sm:px-6 sm:py-3 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-red-500 text-white rounded-full shadow-md hover:bg-red-700 transition"
               onClick={resetRoutine}
             >
               Reset & Retake Quiz
