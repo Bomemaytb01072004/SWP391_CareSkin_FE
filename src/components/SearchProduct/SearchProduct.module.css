@@ -5,7 +5,8 @@
   }
 
   .searchContainer input{
-    width: auto;
+    margin-left: 7px;
+    width: 100%;
   }
   
   .searchInput {
