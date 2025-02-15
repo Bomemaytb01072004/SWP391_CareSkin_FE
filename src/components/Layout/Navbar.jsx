@@ -16,6 +16,7 @@ function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +28,26 @@ function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
+  useEffect(() => {
+    // Function to update cart count
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+      setCartCount(totalCount);
+    };
+
+    // Update cart count on initial load
+    updateCartCount();
+
+    // Listen for storage updates
+    window.addEventListener('storage', updateCartCount);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+    };
+  }, []);
 
   const handleDragStart = (e) => {
     setIsDragging(true);
@@ -92,21 +113,37 @@ function Navbar() {
             ))}
           </ul>
 
-          {/* Right Side */}
+          {/* Right Side Icons with Links */}
           <div className="lg:flex md:flex space-x-5 items-center">
             <div className="lg:flex md:flex hidden space-x-4 items-center">
-              <FontAwesomeIcon
-                icon={faUser}
-                className="text-gray-700 hover:text-emerald-600 text-xl transition"
-              />
-              <FontAwesomeIcon
-                icon={faHeart}
-                className="text-gray-700 hover:text-emerald-600 text-xl transition"
-              />
-              <FontAwesomeIcon
-                icon={faShoppingCart}
-                className="text-gray-700 hover:text-emerald-600 text-xl transition"
-              />
+              {/* Profile Icon */}
+              <Link to="/profile">
+                <FontAwesomeIcon
+                  icon={faUser}
+                  className="text-gray-700 hover:text-emerald-600 text-xl transition"
+                />
+              </Link>
+
+              {/* Wishlist Icon */}
+              <Link to="/wishlist">
+                <FontAwesomeIcon
+                  icon={faHeart}
+                  className="text-gray-700 hover:text-emerald-600 text-xl transition"
+                />
+              </Link>
+
+              {/* Cart Icon with Badge */}
+              <Link to="/cart" className="relative">
+                <FontAwesomeIcon
+                  icon={faShoppingCart}
+                  className="text-gray-700 hover:text-emerald-600 text-xl transition"
+                />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
             </div>
             <div className="lg:flex hidden space-x-4 items-center ml">
               <Link

@@ -1,12 +1,11 @@
-import React from "react";
-import { Link } from "react-router-dom"; 
-import { Star } from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
 
-function CardProduct({ product }) {
+function CardProduct({ product, addToCart }) {
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
-
         <Link
           className="relative mx-4 mt-3 flex-col overflow-hidden rounded-xl"
           to={`/product/${product.id}`}
@@ -43,19 +42,19 @@ function CardProduct({ product }) {
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                {product.rating || "0.0"}
+                {product.rating || '0.0'}
                 <Star size={16} className="fill-yellow-500" />
               </span>
             </div>
           </div>
 
-          
+          {/* Add to Cart Button */}
           <button
-            className="flex items-center justify-center rounded-md bg-green-600 py-2.5 text-center text-sm font-medium text-white hover:bg-green-500"
+            className="flex items-center justify-center rounded-md bg-emerald-600 py-2.5 text-center text-sm font-medium text-white hover:bg-emerald-700"
             onClick={(e) => {
-              e.preventDefault();  
-              e.stopPropagation(); 
-              alert("Đã thêm vào giỏ hàng!");
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart(product);
             }}
           >
             Add to cart
