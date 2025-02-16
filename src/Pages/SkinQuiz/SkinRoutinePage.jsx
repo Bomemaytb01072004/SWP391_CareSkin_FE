@@ -121,12 +121,12 @@ const SkinRoutinePage = () => {
       <Navbar />
       <div className="bg-emerald-50 min-h-screen pt-10 mt-20">
         {/* Breadcrumb Section */}
-        <div className="max-w-5xl mx-auto flex justify-between items-center px-6 text-emerald-600 text-sm">
+        <div className="max-w-5xl mx-auto flex justify-between items-center px-6 text-emerald-700 text-sm">
           <Breadcrumb items={[{ label: 'SkinQuiz', active: true }]} />
 
           <a
             href="/edit-profile"
-            className="flex items-center text-emerald-600 hover:underline"
+            className="flex items-center text-emerald-700 hover:underline"
           >
             <FontAwesomeIcon icon={faUserEdit} className="mr-1" />
             Edit Profile
@@ -134,7 +134,7 @@ const SkinRoutinePage = () => {
         </div>
         {/* Header Section */}
         <div className=" mx-auto bg-emerald-50 p-10 shadow-lg text-center">
-          <p className="text-emerald-600 font-semibold">
+          <p className="text-emerald-700 font-semibold">
             Your Personalized Routine
           </p>
 
@@ -159,7 +159,7 @@ const SkinRoutinePage = () => {
               Add All
             </button>
             <button
-              className="px-4 py-2 sm:px-6 sm:py-3 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-red-500 text-white rounded-full shadow-md hover:bg-red-700 transition"
               onClick={resetRoutine}
             >
               Reset & Retake Quiz

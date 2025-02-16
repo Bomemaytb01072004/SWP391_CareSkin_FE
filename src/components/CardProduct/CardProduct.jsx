@@ -4,11 +4,12 @@ import { Star } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
 
-function CardProduct({ product }) {
+
+
+function CardProduct({ product, addToCart }) {
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
-
         <Link
           className="relative mx-4 mt-3 flex-col overflow-hidden rounded-xl"
           to={`/product/${product.id}`}
@@ -45,7 +46,7 @@ function CardProduct({ product }) {
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                {product.rating || "0.0"}
+                {product.rating || '0.0'}
                 <Star size={16} className="fill-yellow-500" />
               </span>
             </div>
@@ -53,11 +54,11 @@ function CardProduct({ product }) {
 
           <div className="flex items-center w-full sm:justify-around justify-between">
             <button
-              className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md bg-green-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition hover:bg-green-500"
+              className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md  bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition  hover:bg-emerald-700"
               onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                alert("Add to cart successfully");
+              e.preventDefault();
+              e.stopPropagation();
+              addToCart(product);
               }}
             >
               Add to cart
@@ -68,11 +69,7 @@ function CardProduct({ product }) {
             >
               <FontAwesomeIcon icon={faCodeCompare} className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700" />
             </button>
-
-
           </div>
-
-
         </div>
       </div>
     </div>
