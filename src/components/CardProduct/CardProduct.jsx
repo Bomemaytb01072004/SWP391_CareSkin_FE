@@ -1,6 +1,10 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
+
+
 
 function CardProduct({ product, addToCart }) {
   return (
@@ -48,17 +52,24 @@ function CardProduct({ product, addToCart }) {
             </div>
           </div>
 
-          {/* Add to Cart Button */}
-          <button
-            className="flex items-center justify-center rounded-md bg-emerald-600 py-2.5 text-center text-sm font-medium text-white hover:bg-emerald-700"
-            onClick={(e) => {
+          <div className="flex items-center w-full sm:justify-around justify-between">
+            <button
+              className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md  bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition  hover:bg-emerald-700"
+              onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               addToCart(product);
-            }}
-          >
-            Add to cart
-          </button>
+              }}
+            >
+              Add to cart
+            </button>
+
+            <button
+              className="flex items-center justify-center p-1 w-6 h-8 max-h-[40px] sm:max-h-[40 px] sm:w-10 sm:h-10 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm active:scale-95"
+            >
+              <FontAwesomeIcon icon={faCodeCompare} className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

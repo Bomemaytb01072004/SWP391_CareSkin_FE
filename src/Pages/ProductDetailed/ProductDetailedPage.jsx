@@ -6,6 +6,8 @@ import styles from "./ProductDetailedPage.module.css";
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
+import LoadingPage from '../LoadingPage/LoadingPage'
+
 import {
     faTruckFast,
     faArrowRotateLeft,
@@ -42,11 +44,7 @@ function ProductDetailedPage() {
     if (loading) {
         return (
             <>
-                <Navbar />
-                <div style={{ textAlign: "center", margin: "50px" }}>
-                    <h2>Loading...</h2>
-                </div>
-                <Footer />
+               <LoadingPage />
             </>
         );
     }
