@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/skinroutine" element={<SkinRoutinePage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/product/:id" element={<ProductDetailedPage />} />
-        <Route path="/compare" element={<CompareProduct />} />
+        <Route path="/compare/:product1/:product2" element={<CompareProduct />} />
         <Route path="/cart" element={<CartPage />} />
 
       </Routes>

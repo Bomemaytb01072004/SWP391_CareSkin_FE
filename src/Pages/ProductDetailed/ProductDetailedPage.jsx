@@ -7,6 +7,7 @@ import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import LoadingPage from '../LoadingPage/LoadingPage'
+import ComparePopup from '../../components/ComparePopup/ComparePopup'
 
 import {
     faTruckFast,
@@ -20,6 +21,11 @@ function ProductDetailedPage() {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const [compareList, setCompareList] = useState(() => {
+        const stored = localStorage.getItem("compareList");
+        return stored ? JSON.parse(stored) : [];
+    });
 
     const breadcrumbItems = [
         { label: "Products", link: "/products", active: true },
@@ -41,10 +47,29 @@ function ProductDetailedPage() {
         getProduct();
     }, [id]);
 
+    useEffect(() => {
+        localStorage.setItem("compareList", JSON.stringify(compareList));
+    }, [compareList]);
+
+    const addToCompare = (product) => {
+        if (!compareList.find((p) => p.id === product.id)) {
+            setCompareList([...compareList, product]);
+        }
+    };
+
+    const removeFromCompare = (productId) => {
+        setCompareList(compareList.filter((p) => p.id !== productId));
+    };
+
+    const handleCompareNow = () => {
+        const compareIds = compareList.map((p) => p.id).join(",");
+        navigate(`/compare?ids=${compareIds}`);
+    };
+
     if (loading) {
         return (
             <>
-               <LoadingPage />
+                <LoadingPage />
             </>
         );
     }
@@ -119,7 +144,10 @@ function ProductDetailedPage() {
                                     <button className={styles.quantityCount}>+</button>
                                 </div>
                                 <button className={styles.addToCart}>Add to Cart</button>
-                                <button className={styles.quantityCompare}>
+                                <button
+                                    className={styles.quantityCompare}
+                                    onClick={() => addToCompare(product)}
+                                >
                                     <FontAwesomeIcon icon={faCodeCompare} />
                                 </button>
                             </div>
@@ -144,6 +172,15 @@ function ProductDetailedPage() {
                     </div>
                 </div>
             </div>
+
+            {compareList.length > 0 && (
+                <ComparePopup
+                    compareList={compareList}
+                    removeFromCompare={removeFromCompare}
+                    clearCompare={() => setCompareList([])}
+                    onCompareNow={handleCompareNow}
+                />
+            )}
 
             <Footer />
         </>

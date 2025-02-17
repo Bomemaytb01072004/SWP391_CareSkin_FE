@@ -6,7 +6,7 @@ import { fetchProductById } from "../../utils/api";
 import "bootstrap/dist/css/bootstrap-grid.min.css";
 import styles from "./CompareProductPage.module.css";
 import LoadingPage from '../LoadingPage/LoadingPage'
-import { Link } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 
 
 
@@ -15,16 +15,31 @@ function CompareProduct() {
         { label: "Compare", link: "/compare", active: true },
     ];
 
+    const { product1, product2 } = useParams();
+    const [searchParams] = useSearchParams();
+    const [listIdCompare, setListIdCompare] = useState([product1.split("-")[0], product2.split("-")[0]]);
+    useEffect ( () => {
+        let cache_listIdCompare = listIdCompare;
+        if (searchParams.get('product_id')){
+            cache_listIdCompare[2] = searchParams.get('product_id');
+        }
+        setListIdCompare(cache_listIdCompare);
+    }, [searchParams]);
+    
+
+
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [listIdCompare, setListIdCompare] = useState([1, 2, 4]);
 
     useEffect(() => {
         (async () => {
             try {
                 const listProduct = [];
+                if (!listIdCompare.length > 1){
+                    return;
+                }
                 for (let id of listIdCompare) {
                     const res = await fetchProductById(id);
                     listProduct.push(res);
@@ -76,7 +91,7 @@ function CompareProduct() {
                                         src={
                                             product.image
                                         }
-                                        className="card-img-top"
+                                        className="card-img-top sm:w-80"
                                         alt={product.name}
                                     />
                                     {product.tag && (
