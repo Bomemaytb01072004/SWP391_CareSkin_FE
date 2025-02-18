@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Header from '../../components/Layout/Header';
@@ -8,6 +8,7 @@ import {
   faShoppingCart,
   faBars,
   faTimes,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
@@ -16,7 +17,22 @@ function Navbar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  let closeTimeout = null;
+
+  useEffect(() => {
+    function handleScroll() {
+      setIsCartOpen(false); // Close dropdown on scroll
+    }
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,24 +46,40 @@ function Navbar() {
   }, [lastScrollY]);
 
   useEffect(() => {
-    // Function to update cart count
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-      setCartCount(totalCount);
+    const updateCart = () => {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
     };
 
-    // Update cart count on initial load
-    updateCartCount();
-
-    // Listen for storage updates
-    window.addEventListener('storage', updateCartCount);
-
-    // Cleanup event listener
+    updateCart();
+    window.addEventListener('storage', updateCart);
     return () => {
-      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('storage', updateCart);
     };
   }, []);
+
+  const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+  const removeFromCart = (id) => {
+    const updatedCart = cart.filter((item) => item.id !== id);
+    setCart(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleMouseEnter = () => {
+    if (closeTimeout) {
+      clearTimeout(closeTimeout); // Cancel closing if user re-enters
+    }
+    setIsCartOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    closeTimeout = setTimeout(() => {
+      setIsCartOpen(false);
+    }, 200); // Delay closing to allow user to move to dropdown
+  };
 
   const handleDragStart = (e) => {
     setIsDragging(true);
@@ -132,19 +164,80 @@ function Navbar() {
                 />
               </Link>
 
-              {/* Cart Icon with Badge */}
-              <Link to="/cart" className="relative">
-                <FontAwesomeIcon
-                  icon={faShoppingCart}
-                  className="text-gray-700 hover:text-emerald-600 text-xl transition"
-                />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                    {cartCount}
-                  </span>
+              {/* Cart Icon with Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <Link
+                  to="/cart"
+                  className="relative text-gray-700 hover:text-emerald-600 transition"
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} className="text-xl" />
+                  {cart.length > 0 && (
+                    <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold px-2 py-[2px] rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Cart Dropdown (Only Shows on Hover) */}
+                {isCartOpen && cart.length > 0 && (
+                  <div
+                    ref={dropdownRef}
+                    className="absolute -right-20 top-11 w-96 bg-white shadow-lg border rounded-lg p-4 z-50"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                      Cart Items
+                    </h3>
+                    <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+                      {cart.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 border-b pb-2 mb-2 last:border-none"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-14 h-14 object-cover rounded-md"
+                          />
+                          <div className="flex-1">
+                            <p className="text-xs font-semibold text-gray-800">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              x{item.quantity}
+                            </p>
+                          </div>
+                          <p className="text-sm font-bold text-gray-700">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
+                          {/* Remove Button */}
+                          <button onClick={() => removeFromCart(item.id)}>
+                            <FontAwesomeIcon
+                              icon={faTrash}
+                              className="text-red-500 hover:text-red-700 text-base transition"
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center mt-3">
+                      <Link
+                        to="/cart"
+                        className="block bg-emerald-600 text-white font-semibold py-2 rounded-md hover:bg-emerald-700 transition"
+                      >
+                        View Cart
+                      </Link>
+                    </div>
+                  </div>
                 )}
-              </Link>
+              </div>
             </div>
+
             <div className="lg:flex hidden space-x-4 items-center ml">
               <Link
                 to="/joinus"
@@ -202,27 +295,32 @@ function Navbar() {
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
           {/* User Profile */}
-          <Link to="/profile" className="cursor-pointer">
+          <Link to="/profile">
             <FontAwesomeIcon
               icon={faUser}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
           </Link>
 
-          {/* Wishlist */}
-          <Link to="/wishlist" className="cursor-pointer">
+          {/* Wishlist Icon */}
+          <Link to="/wishlist">
             <FontAwesomeIcon
               icon={faHeart}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
           </Link>
 
-          {/* Shopping Cart */}
-          <Link to="/cart" className="cursor-pointer">
+          {/* Cart Icon with Badge */}
+          <Link to="/cart" className="relative">
             <FontAwesomeIcon
               icon={faShoppingCart}
-              className="text-gray-700 text-2xl hover:text-emerald-600 transition duration-200"
+              className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
+            {totalItems > 0 && (
+              <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                {totalItems}
+              </span>
+            )}
           </Link>
         </div>
         <div className="p-4 flex justify-center">
