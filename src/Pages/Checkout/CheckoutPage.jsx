@@ -49,7 +49,6 @@ const CheckoutPage = () => {
     }
   };
 
-  // 🏦 Handle COD Checkout
   const handleCODCheckout = () => {
     alert('Order placed successfully!');
 
@@ -62,14 +61,12 @@ const CheckoutPage = () => {
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     localStorage.removeItem('checkoutItems');
 
-    // Notify Navbar to update cart badge
     window.dispatchEvent(new Event('storage'));
 
-    // Redirect to order confirmation page
     navigate('/order-confirmation');
   };
 
-  // 🌍 Handle MoMo / VNPay Online Payment (Not Working)
+  // Handle MoMo / VNPay Online Payment (Not Working)
   const handleOnlinePayment = () => {
     let paymentUrl = '';
 
@@ -83,13 +80,11 @@ const CheckoutPage = () => {
       )}&phone=${customerInfo.phone}`;
     }
 
-    // Save order info before redirecting
     localStorage.setItem(
       'pendingOrder',
       JSON.stringify({ selectedItems, customerInfo })
     );
 
-    // Redirect to payment gateway
     window.location.href = paymentUrl;
   };
 
@@ -168,7 +163,7 @@ const CheckoutPage = () => {
                   value="cod"
                   checked={customerInfo.paymentMethod === 'cod'}
                   onChange={handleInputChange}
-                  className="w-5 h-5 accent-green-600"
+                  className="w-5 h-5 accent-emerald-600"
                 />
                 Cash on Delivery (COD)
               </label>
@@ -198,7 +193,7 @@ const CheckoutPage = () => {
 
             <button
               type="submit"
-              className="w-full mt-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition"
+              className="w-full mt-6 py-3 bg-emerald-600 text-white font-semibold rounded-md hover:bg-emerald-700 transition"
             >
               {customerInfo.paymentMethod === 'cod'
                 ? 'Place Order'
@@ -227,6 +222,32 @@ const CheckoutPage = () => {
               <div className="flex justify-between text-gray-800 font-semibold text-lg">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
+              </div>
+            </div>
+            {/* Selected Items Summary */}
+            <div className="mt-4 border-t pt-4">
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                Selected Items:
+              </h4>
+              <div className="max-h-80 overflow-y-auto pr-2">
+                {selectedItems.length > 0 ? (
+                  selectedItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2 mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 object-cover rounded-md border"
+                      />
+                      <span className="text-gray-700 text-sm">
+                        {item.name} x{item.quantity}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-600 text-sm">
+                    No items selected for checkout.
+                  </p>
+                )}
               </div>
             </div>
           </div>
