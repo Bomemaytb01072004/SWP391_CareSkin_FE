@@ -1,0 +1,45 @@
+.filters-container {
+    border: 1px solid #ddd;
+    padding: 15px;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+.filters-container h3 {
+    font-size: 25px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.filters-container input {
+    width: 20px;
+  }
+
+.filters-container h4 {
+    font-size: 19px;
+    font-style: italic;
+}
+  
+  .filter-section {
+    margin-bottom: 25px;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+  }
+  
+  .filter-label input {
+    margin-right: 10px;
+  }
+  
+  input[type="checkbox"] {
+    transform: scale(1.5); 
+    margin-right: 10px;
+  }
+  
+
+
+  

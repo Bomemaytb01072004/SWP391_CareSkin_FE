@@ -1,104 +1,497 @@
 import React, { useState } from 'react';
+import image1 from '../../assets/image-login-1.jpg';
+import image2 from '../../assets/image-login-2.jpg';
+import bgImage from '../../assets/bg-login.png'; // Import your background image
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import image2 from '../../assets/image-login-2.jpg'
-import image1 from '../../assets/image-login-1.jpg'
-import bgImage from '../../assets/bg-login.png';
-import styles from './LoginPage.module.css';
-
+import Navbar from '../../components/Layout/Navbar';
+import Footer from '../../components/Layout/Footer';
 
 const LoginPage = () => {
-    const [rightPanelActive, setRightPanelActive] = useState(false);
+  const [rightPanelActive, setRightPanelActive] = useState(false);
 
-    const togglePassword = (inputId, iconElement) => {
-        const passwordField = document.getElementById(inputId);
-    
-        if (passwordField.type === "password") {
-            passwordField.type = "text";
-            iconElement.classList.remove("fa-eye");
-            iconElement.classList.add("fa-eye-slash");
-        } else {
-            passwordField.type = "password";
-            iconElement.classList.remove("fa-eye-slash");
-            iconElement.classList.add("fa-eye");
+  const togglePassword = (idField) => {
+    const passwordField = document.getElementById(idField);
+    passwordField.type =
+      passwordField.type === 'password' ? 'text' : 'password';
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const enteredUsername = document
+      .getElementById('loginUsername')
+      .value.trim();
+    const enteredPassword = document
+      .getElementById('passwordLogin')
+      .value.trim();
+
+    if (!enteredUsername || !enteredPassword) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff'
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.status}`);
+      }
+
+      const users = await response.json();
+
+      console.log('API Response:', users);
+      console.log('Entered Username:', enteredUsername);
+      console.log('Entered Password:', enteredPassword);
+
+      // Ensure case-sensitive matching with correct property name
+      const user = users.find(
+        (u) =>
+          u.userName.trim() === enteredUsername &&
+          u.password.trim() === enteredPassword
+      );
+
+      if (user) {
+        alert(`Welcome, ${user.userName}!`);
+        localStorage.setItem('user', JSON.stringify(user));
+        window.location.href = '/dashboard'; // Redirect if needed
+      } else {
+        alert('Invalid username or password.');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      alert('An error occurred while logging in.');
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('passwordRegister').value.trim();
+    const confirmPassword = document
+      .getElementById('confirmPassword')
+      .value.trim();
+
+    if (!username || !email || !password || !confirmPassword) {
+      alert('All fields are required.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match. Please try again.');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff'
+      );
+      const users = await response.json();
+
+      const usernameExists = users.some((user) => user.username === username);
+      const emailExists = users.some((user) => user.email === email);
+
+      if (usernameExists) {
+        alert('Username is already taken. Please choose another one.');
+        return;
+      }
+      if (emailExists) {
+        alert('An account with this email already exists.');
+        return;
+      }
+
+      // Proceed with registration if username & email are unique
+      const registerResponse = await fetch(
+        'https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password }),
         }
-    };
-    
+      );
 
-    return (
-        <div 
+      if (registerResponse.ok) {
+        alert('Registration successful! You can now log in.');
+        setRightPanelActive(false); // Switch to Login panel
+      } else {
+        alert('Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again later.');
+    }
+  };
+
+  return (
+    <>
+      <Navbar />
+      <div
+        className="h-screen flex items-center justify-center bg-cover bg-center p-4"
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="relative w-full max-w-4xl h-[600px] bg-white shadow-lg rounded-lg flex flex-col md:flex-row overflow-hidden">
+          {/* Overlay/Image Section */}
+          <div
             style={{
-                height: '100vh',
-                backgroundImage: `url(${bgImage})`,
-                display: 'grid',
-                placeContent: 'center',
-                backgroundSize: 'cover',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center'
+              position: 'absolute',
+              top: '0',
+              left: rightPanelActive ? '0' : '50%',
+              width: '50%',
+              height: '100%',
+              backgroundImage: `url(${rightPanelActive ? image2 : image1})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              transition: 'all 0.6s ease-in-out',
+              zIndex: 1,
             }}
-        >
-            <div className={`${styles.container_LoginPage} ${rightPanelActive ?  styles.rightPanelActive : ''}`} id="container">
-                <div className={`${styles.formContainer} ${styles.signUpContainer}`}>
-                <form>
-                    <h1>Create Account</h1>
-                    <div className={styles.socialContainer}>
-                        <a href="#" className={styles.social}><i className="fa-brands fa-facebook" style={{ color: '#2AA4F4' }}></i></a>
-                        <a href="#" className={styles.social}><svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="23" height="20" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                        </svg></a>
-                    </div>
-                    <span>or use your email for registration</span>
-                    <div className={styles.infield_LoginPage}>
-                        <input type="email" placeholder="Email" name="emailSignUp" required />
-                    </div>
-                    <div className={styles.infield_LoginPage}>
-                        <input type="text" placeholder="Username" name="usernameSignUp" required />
-                    </div>
-                    <div className={styles.infield_LoginPage}>
-                        <input type="password" id="passwordLogin" placeholder="Password" name="password" required />
-                        <i className={`fa-solid fa-eye ${styles.togglePassword}`}  onClick={(e) => togglePassword('passwordLogin', e.target)}></i>
-                    </div>
-                    <button>Sign Up</button>
-                </form>
-            </div>
+          >
+            {/* Switch to Sign Up Button */}
+            {!rightPanelActive && (
+              <button
+                onClick={() => setRightPanelActive(true)}
+                style={{
+                  position: 'absolute',
+                  bottom: '121px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  padding: '12px 40px',
+                  backgroundColor: 'white',
+                  color: '#059669',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  boxShadow: '0px 5px 10px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Sign Up
+              </button>
+            )}
 
-            <div className={`${styles.formContainer} ${styles.signInContainer}`}>
-                <form>
-                    <h1>Sign in</h1>
-                    <div className={styles.socialContainer}>
-                        <a href="#" className={styles.social}><i className="fa-brands fa-facebook" style={{ color: '#2AA4F4' }}></i></a>
-                        <a href="#" className={styles.social}><svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="23" height="20" viewBox="0 0 48 48">
-                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-                        </svg></a>
-                    </div>
-                    <span>or use your account</span>
-                    <div className={styles.infield_LoginPage}>
-                        <input type="text" placeholder="Username" name="username" required />
-                    </div>
-                    <div className={styles.infield_LoginPage}>
-                        <input type="password" id="passwordRegister" placeholder="Password" name="passwordSignUp" required />
-                        <i className={`fa-solid fa-eye ${styles.togglePassword}`}  onClick={(e) => togglePassword('passwordRegister', e.target)}></i>
-                    </div>
-                    <a href="#" className={styles.forgot}>Forgot your password?</a>
-                    <button>Sign In</button>
-                </form>
-            </div>
+            {/* Switch to Sign In Button */}
+            {rightPanelActive && (
+              <button
+                onClick={() => setRightPanelActive(false)}
+                style={{
+                  position: 'absolute',
+                  bottom: '121px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  padding: '12px 40px',
+                  backgroundColor: 'white',
+                  color: '#059669',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  boxShadow: '0px 5px 10px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Sign In
+              </button>
+            )}
+          </div>
 
-            <div className={styles.overlayContainer} id="overlayCon">
-                <div className={styles.overlay}>
-                    <div className={`${styles.overlayPanel} ${styles.overlayLeft}`}>
-                        <img src={image1} alt="" />
-                        <button onClick={() => setRightPanelActive(false)}>Sign In</button>
-                    </div>
-                    <div className={`${styles.overlayPanel} ${styles.overlayRight}`}>
-                        <img src={image2} alt="" />
-                        <button onClick={() => setRightPanelActive(true)}>Sign Up</button>
-                    </div>
-                </div>
+          {/* Sign In Form */}
+          <form
+            onSubmit={handleLogin}
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: rightPanelActive ? '-50%' : '0',
+              width: '50%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              textAlign: 'center',
+              backgroundColor: 'white',
+              transition: 'all 0.6s ease-in-out',
+              zIndex: 2,
+            }}
+          >
+            <h1
+              style={{
+                marginBottom: '20px',
+                color: '#333',
+                color: 'rgba(0, 0, 0, 1)',
+                fontSize: '1.375rem',
+                fontWeight: 'bold',
+              }}
+            >
+              Sign In
+            </h1>
+            <div style={{ marginBottom: '20px' }}>
+              <a href="#">
+                <i
+                  className="fa-brands fa-facebook"
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '25px',
+                    backgroundColor: '#fff',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+                    color: '#2AA4F4',
+                  }}
+                ></i>
+              </a>
+              <a href="#">
+                <i
+                  className="fa-brands fa-google"
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '25px',
+                    backgroundColor: '#fff',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+                    color: '#DB4437',
+                  }}
+                ></i>
+              </a>
             </div>
+            <span
+              style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
+            >
+              or use your account
+            </span>
+            <input
+              type="text"
+              id="loginUsername"
+              name="username"
+              placeholder="Username"
+              required
+              style={{
+                width: '80%',
+                padding: '10px',
+                marginBottom: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+              }}
+            />
+            <div style={{ position: 'relative', width: '80%' }}>
+              <input
+                type="password"
+                id="passwordLogin"
+                name="password"
+                placeholder="Password"
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                }}
+              />
+              <i
+                className="fa-solid fa-eye toggle-password"
+                onClick={() => togglePassword('passwordLogin')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '10px',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                }}
+              ></i>
             </div>
+            <a
+              href="#"
+              style={{ margin: '15px 0', fontSize: '12px', color: '#059669' }}
+            >
+              Forgot your password?
+            </a>
+            <button
+              type="submit"
+              style={{
+                padding: '12px 40px',
+                marginTop: '20px',
+                backgroundColor: '#059669',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                cursor: 'pointer',
+              }}
+            >
+              Sign In
+            </button>
+          </form>
+
+          {/* Sign Up Form */}
+          <form
+            onSubmit={handleRegister}
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: rightPanelActive ? '50%' : '100%',
+              width: '50%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              textAlign: 'center',
+              backgroundColor: 'white',
+              transition: 'all 0.6s ease-in-out',
+              zIndex: 2,
+            }}
+          >
+            <h1
+              style={{
+                marginBottom: '20px',
+                color: '#333',
+                color: 'rgba(0, 0, 0, 1)',
+                fontSize: '1.375rem',
+                fontWeight: 'bold',
+              }}
+            >
+              Create Account
+            </h1>
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+              <a href="#">
+                <i
+                  className="fa-brands fa-facebook"
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '25px',
+                    backgroundColor: '#fff',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+                    color: '#2AA4F4',
+                  }}
+                ></i>
+              </a>
+              <a href="#">
+                <i
+                  className="fa-brands fa-google"
+                  style={{
+                    border: '1px solid #ddd',
+                    borderRadius: '25px',
+                    backgroundColor: '#fff',
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
+                    color: '#DB4437',
+                  }}
+                ></i>
+              </a>
+            </div>
+            <span
+              style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
+            >
+              or use your email for registration
+            </span>
+            <input
+              type="text"
+              id="registerUsername"
+              name="username"
+              placeholder="Username"
+              required
+              style={{
+                width: '80%',
+                padding: '10px',
+                marginBottom: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+              }}
+            />
+            <input
+              type="email"
+              id="registerEmail"
+              name="email"
+              placeholder="Email"
+              required
+              style={{
+                width: '80%',
+                padding: '10px',
+                marginBottom: '10px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+              }}
+            />
+            <div style={{ position: 'relative', width: '80%' }}>
+              <input
+                type="password"
+                id="passwordRegister"
+                name="password"
+                placeholder="Password"
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  marginBottom: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                }}
+              />
+              <i
+                className="fa-solid fa-eye toggle-password"
+                onClick={() => togglePassword('passwordRegister')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '10px',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                  color: '#aaa',
+                }}
+              ></i>
+            </div>
+            <div style={{ position: 'relative', width: '80%' }}>
+              <input
+                type="password"
+                name="confirmPassword"
+                id="confirmPassword"
+                placeholder="Confirm Password"
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                }}
+              />
+              <i
+                className="fa-solid fa-eye toggle-password"
+                onClick={() => togglePassword('confirmPassword')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '10px',
+                  transform: 'translateY(-50%)',
+                  cursor: 'pointer',
+                  color: '#aaa',
+                }}
+              ></i>
+            </div>
+            <button
+              type="submit"
+              style={{
+                padding: '12px 40px',
+                marginTop: '20px',
+                backgroundColor: '#059669',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                cursor: 'pointer',
+              }}
+            >
+              Sign Up
+            </button>
+          </form>
         </div>
-        
-    );
+      </div>
+      <Footer></Footer>
+    </>
+  );
 };
 
 export default LoginPage;
