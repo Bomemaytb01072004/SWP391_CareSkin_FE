@@ -39,7 +39,8 @@ const LoginPage = () => {
       );
 
       if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
+        const { password, ...userData } = user;
+        localStorage.setItem('user', JSON.stringify(userData));
         toast.success(`Welcome, ${user.username}!`, { autoClose: 2000 });
         setTimeout(() => {
           window.location.href = '/';

@@ -28,7 +28,8 @@ function ProductDetailedPage() {
   });
 
   const breadcrumbItems = [
-    { label: 'Products', link: '/products', active: true },
+    { label: 'Products', link: '/products', active: false },
+    { label: `Product ${id}`, link: `/products/${id}`, active: true },
   ];
 
   useEffect(() => {

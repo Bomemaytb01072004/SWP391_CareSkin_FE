@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Header from '../../components/Layout/Header';
 import {
@@ -19,8 +19,22 @@ function Navbar() {
   const [isDragging, setIsDragging] = useState(false);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
   const dropdownRef = useRef(null);
   let closeTimeout = null;
+
+  useEffect(() => {
+    // Check if user session exists
+    const userSession = localStorage.getItem('user');
+    setIsLoggedIn(!!userSession);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user'); // Clear user session
+    setIsLoggedIn(false);
+    navigate('/'); // Redirect to homepage after logout
+  };
 
   useEffect(() => {
     function handleScroll() {
@@ -239,12 +253,21 @@ function Navbar() {
             </div>
 
             <div className="lg:flex hidden space-x-4 items-center ml">
-              <Link
-                to="/joinus"
-                className="text-gray-700 font-medium hover:text-emerald-600 transition"
-              >
-                Join Us
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-700 font-medium hover:text-emerald-600 transition"
+                >
+                  Log Out
+                </button>
+              ) : (
+                <Link
+                  to="/joinus"
+                  className="text-gray-700 font-medium hover:text-emerald-600 transition"
+                >
+                  Join Us
+                </Link>
+              )}
             </div>
           </div>
         </div>
