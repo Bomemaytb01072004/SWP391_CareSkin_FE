@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 
@@ -8,6 +8,7 @@ const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState([]); // Default Unselected
   const shippingCost = 5.0; // $5 shipping
   const taxRate = 0.1; // 10% tax
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -50,17 +51,29 @@ const CartPage = () => {
   };
 
   const handleCheckboxChange = (id) => {
-    setSelectedItems((prev) =>
-      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
-    );
+    let updatedSelected;
+    if (selectedItems.includes(id)) {
+      updatedSelected = selectedItems.filter((itemId) => itemId !== id);
+    } else {
+      updatedSelected = [...selectedItems, id];
+    }
+    setSelectedItems(updatedSelected);
+
+    // Save selected items to localStorage
+    localStorage.setItem('selectedItems', JSON.stringify(updatedSelected));
   };
 
   const handleSelectAll = () => {
+    let updatedSelected;
     if (selectedItems.length === cart.length) {
-      setSelectedItems([]); // Unselect all
+      updatedSelected = [];
     } else {
-      setSelectedItems(cart.map((item) => item.id)); // Select all
+      updatedSelected = cart.map((item) => item.id);
     }
+    setSelectedItems(updatedSelected);
+
+    // Save selected items to localStorage
+    localStorage.setItem('selectedItems', JSON.stringify(updatedSelected));
   };
 
   const removeSelectedItems = () => {
@@ -72,6 +85,17 @@ const CartPage = () => {
 
     // Dispatch an event to notify Navbar to update the cart badge
     window.dispatchEvent(new Event('storage'));
+  };
+
+  const proceedToCheckout = () => {
+    const selectedProducts = cart.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+
+    if (selectedProducts.length > 0) {
+      localStorage.setItem('checkoutItems', JSON.stringify(selectedProducts));
+      navigate('/checkout'); // Navigate to checkout page
+    }
   };
 
   const selectedProducts = cart.filter((item) =>
@@ -116,7 +140,7 @@ const CartPage = () => {
                   type="checkbox"
                   checked={selectedItems.length === cart.length}
                   onChange={handleSelectAll}
-                  className="w-4 h-4 cursor-pointer"
+                  className="w-4 h-4 cursor-pointer accent-emerald-500 border-2 border-gray-400 rounded-md "
                 />{' '}
                 Select All{' '}
               </label>
@@ -133,19 +157,18 @@ const CartPage = () => {
                   key={item.id}
                   className="flex items-center bg-white shadow-sm p-4 rounded-xl border relative w-full"
                 >
-                  {/* Checkbox */}
                   <input
                     type="checkbox"
                     checked={selectedItems.includes(item.id)}
                     onChange={() => handleCheckboxChange(item.id)}
-                    className="w-4 h-4 cursor-pointer"
+                    className="w-4 h-4 cursor-pointer accent-emerald-500 border-2 border-gray-400 rounded-md "
                   />
 
                   {/* Product Image */}
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-20 h-20 object-cover ml-3 rounded-md border"
+                    className="w-24 h-28 object-cover ml-3 rounded-md border transform transition duration-300 ease-in-out hover:scale-150"
                   />
 
                   {/* Product Details */}
@@ -240,6 +263,7 @@ const CartPage = () => {
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
             disabled={selectedItems.length === 0}
+            onClick={proceedToCheckout}
           >
             Proceed to Checkout
           </button>
