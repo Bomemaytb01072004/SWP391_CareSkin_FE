@@ -1,0 +1,72 @@
+.compareProduct {
+  background: #ffffff;
+  border-color: #ced4da;
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  position: relative;
+  overflow: hidden;
+}
+
+.textTruncate {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90%;
+  display: inline-block;
+  font-weight: 600;
+}
+
+.nameProductTitle {
+  font-size: 1.27rem;
+  margin-bottom: 1rem;
+}
+
+.customTable {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.customTable thead th:first-child,
+.customTable tbody td:first-child {
+  text-align: start;
+  width: 12%;
+}
+
+.customTable th,
+.customTable td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.customTable thead {
+  background-color: #f8f9fa;
+}
+
+.customTable th {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.customTable td {
+  font-size: 1rem;
+}
+
+.priceProductCompare {
+  padding: 3px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  width: 100%;
+  background-color: #50c878;
+  border-radius: 20px;
+}

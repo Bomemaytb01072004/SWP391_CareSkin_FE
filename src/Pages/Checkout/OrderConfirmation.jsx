@@ -13,7 +13,7 @@ const OrderConfirmation = () => {
   return (
     <>
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 py-12 mt-24 mb-24 text-center bg-white shadow-lg rounded-lg">
+      <div className="max-w-4xl mx-auto px-6 py-12 mt-32 mb-24 text-center bg-white shadow-lg rounded-lg">
         <div className="flex flex-col items-center">
           {/* Success Icon with Animation */}
           <div className="relative">
