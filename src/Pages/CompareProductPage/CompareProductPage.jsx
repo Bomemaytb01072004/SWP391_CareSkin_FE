@@ -91,7 +91,7 @@ function CompareProduct() {
                                         src={
                                             product.image
                                         }
-                                        className="card-img-top sm:w-80"
+                                        className="card-img-top"
                                         alt={product.name}
                                     />
                                     {product.tag && (
