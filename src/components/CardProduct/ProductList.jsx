@@ -8,6 +8,7 @@ import ComparePopup from '../ComparePopup/ComparePopup'
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
     return stored ? JSON.parse(stored) : [];
@@ -31,44 +32,53 @@ const ProductList = () => {
     localStorage.setItem('compareList', JSON.stringify(compareList));
   }, [compareList]);
 
+  useEffect(() => {
+    localStorage.setItem('compareList', JSON.stringify(compareList));
+  }, [compareList]);
+
   const addToCart = (product) => {
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-    // Check if product already exists in cart
     const existingProduct = cart.find((item) => item.id === product.id);
 
     if (existingProduct) {
-      existingProduct.quantity += 1; // Increase quantity
+      existingProduct.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 }); // Add new product with quantity
+      cart.push({ ...product, quantity: 1 });
     }
 
     localStorage.setItem('cart', JSON.stringify(cart));
 
-    // Dispatch an event to notify Navbar to update
     window.dispatchEvent(new Event('storage'));
   };
 
-  // Hàm thêm sản phẩm vào danh sách so sánh
   const addToCompare = (product) => {
-    // Chỉ thêm nếu sản phẩm chưa có trong compareList
     if (!compareList.find((p) => p.id === product.id)) {
       setCompareList([...compareList, product]);
     }
   };
 
-  // Hàm xoá sản phẩm khỏi danh sách so sánh
   const removeFromCompare = (productId) => {
     setCompareList(compareList.filter((p) => p.id !== productId));
   };
 
   const handleCompareNow = () => {
     let subpath = "";
-    for (let product of compareList){
-      subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`
+  
+    if (compareList.length === 3) {
+      for (let i = 0; i < 2; i++) {
+        const product = compareList[i];
+        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+      }
+      navigate(`/compare/${subpath}?product_id=${compareList[2].id}`);
+    } else {
+      for (let product of compareList) {
+        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+      }
+      navigate(`/compare/${subpath}`);
     }
-    navigate(`/compare/${subpath}`);
   };
+  
 
   if (loading) {
     return <LoadingPage />;
