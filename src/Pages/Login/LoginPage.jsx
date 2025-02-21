@@ -4,14 +4,21 @@ import image2 from '../../assets/image-login-2.jpg';
 import bgImage from '../../assets/bg-login.png';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ToastContainer, toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+
+import { GoogleLogin } from '@react-oauth/google';
+
+
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
+  const navigate = useNavigate();
 
   const togglePassword = (idField) => {
     const passwordField = document.getElementById(idField);
-    passwordField.type =
-      passwordField.type === 'password' ? 'text' : 'password';
+    if (passwordField) {
+      passwordField.type = passwordField.type === 'password' ? 'text' : 'password';
+    }
   };
 
   const handleLogin = async (e) => {
@@ -26,85 +33,89 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff');
+      const response = await fetch('http://localhost:5000/api/Auth/Login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          UserName: enteredUsername,
+          Password: enteredPassword,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.status}`);
+        throw new Error('Login failed');
       }
 
-      const users = await response.json();
+      // Backend trả về chỉ token
+      const { token } = await response.json();
 
-      const user = users.find(
-        (u) =>
-          u.userName.trim() === enteredUsername &&
-          u.password.trim() === enteredPassword
-      );
+      if (token) {
+        // Lưu token vào localStorage
+        localStorage.setItem('token', token);
 
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        toast.success(`Welcome, ${user.userName}!`, { autoClose: 2000 });
+        // Nếu muốn decode JWT để lấy thông tin người dùng:
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedPayload = JSON.parse(window.atob(base64));
+        localStorage.setItem('user', JSON.stringify(decodedPayload));
+
+        toast.success('Login successful', { autoClose: 2000 });
         setTimeout(() => {
-          window.location.href = '/admin';
+          window.location.href = '/';
         }, 2000);
       } else {
         toast.error('Invalid username or password.');
       }
-      
     } catch (error) {
       console.error('Login Error:', error);
       toast.error('An error occurred while logging in.');
     }
   };
 
+
+
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    const username = document.getElementById('registerUsername').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('passwordRegister').value.trim();
-    const confirmPassword = document.getElementById('confirmPassword').value.trim();
+    const UserName = document.getElementById('registerUserName')?.value.trim();
+    const Email = document.getElementById('registerEmail')?.value.trim();
+    const Password = document.getElementById('passwordRegister')?.value.trim();
+    const ConfirmPassword = document.getElementById('ConfirmPassword')?.value.trim();
 
-    if (!username || !email || !password || !confirmPassword) {
+    if (!UserName || !Email || !Password || !ConfirmPassword) {
       toast.error('All fields are required.');
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (Password !== ConfirmPassword) {
       toast.error('Passwords do not match. Please try again.');
       return;
     }
 
     try {
-      const response = await fetch('https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff');
-      const users = await response.json();
+      const registerResponse = await fetch('http://localhost:5000/api/Register/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ UserName, Email, Password, ConfirmPassword }),
+      });
 
-      const usernameExists = users.some((user) => user.username === username);
-      const emailExists = users.some((user) => user.email === email);
-
-      if (usernameExists) {
-        toast.error('Username is already taken. Please choose another one.');
-        return;
-      }
-      if (emailExists) {
-        toast.error('An account with this email already exists.');
+      if (!registerResponse.ok) {
+        const errorData = await registerResponse.json();
+        toast.error(errorData.message || 'Registration failed');
         return;
       }
 
-      const registerResponse = await fetch(
-        'https://67b4a923a9acbdb38ecfe654.mockapi.io/Staff',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, email, password }),
-        }
-      );
+      // Nếu thành công, lấy dữ liệu JSON từ backend
+      const data = await registerResponse.json();
+      // Có thể hiển thị thông báo hoặc xử lý data nếu cần
+      toast.success('Registration successful! You can now log in.');
 
-      if (registerResponse.ok) {
-        toast.success('Registration successful! You can now log in.');
-        setRightPanelActive(false);
-      } else {
-        toast.error('Registration failed. Please try again.');
-      }
+      // Chuyển về form login
+      setRightPanelActive(false);
+
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred. Please try again later.');
@@ -114,7 +125,23 @@ const LoginPage = () => {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          padding: '10px 20px',
+          backgroundColor: '#059669',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '10px',
+          cursor: 'pointer',
+          boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        ← Homepage
+      </button>
       <div
         className="h-screen flex items-center justify-center bg-cover bg-center p-4"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -123,7 +150,7 @@ const LoginPage = () => {
           <div
             style={{
               position: 'absolute',
-              top: '0',
+              top: 0,
               left: rightPanelActive ? '0' : '50%',
               width: '50%',
               height: '100%',
@@ -183,7 +210,7 @@ const LoginPage = () => {
             onSubmit={handleLogin}
             style={{
               position: 'absolute',
-              top: '0',
+              top: 0,
               left: rightPanelActive ? '-50%' : '0',
               width: '50%',
               height: '100%',
@@ -209,6 +236,14 @@ const LoginPage = () => {
               Sign In
             </h1>
             <div style={{ marginBottom: '20px' }}>
+              {/* <GoogleLogin
+                onSuccess={credentialResponse => {
+                  console.log(credentialResponse);
+                }}
+                onError={() => {
+                  console.log('Login Failed');
+                }}
+              /> */}
               <a href="#facebook-login">
                 <i
                   className="fa-brands fa-facebook"
@@ -304,11 +339,12 @@ const LoginPage = () => {
             </button>
           </form>
 
+          {/* Form Đăng Ký */}
           <form
             onSubmit={handleRegister}
             style={{
               position: 'absolute',
-              top: '0',
+              top: 0,
               left: rightPanelActive ? '50%' : '100%',
               width: '50%',
               height: '100%',
@@ -333,7 +369,13 @@ const LoginPage = () => {
             >
               Create Account
             </h1>
-            <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+            <div
+              style={{
+                marginBottom: '20px',
+                display: 'flex',
+                gap: '10px',
+              }}
+            >
               <a href="#facebook-signup">
                 <i
                   className="fa-brands fa-facebook"
@@ -363,15 +405,13 @@ const LoginPage = () => {
                 ></i>
               </a>
             </div>
-            <span
-              style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
-            >
+            <span style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}>
               or use your email for registration
             </span>
             <input
               type="text"
-              id="registerUsername"
-              name="username"
+              id="registerUserName"
+              name="UserName"
               placeholder="Username"
               required
               style={{
@@ -385,7 +425,7 @@ const LoginPage = () => {
             <input
               type="email"
               id="registerEmail"
-              name="email"
+              name="Email"
               placeholder="Email"
               required
               style={{
@@ -396,17 +436,16 @@ const LoginPage = () => {
                 borderRadius: '5px',
               }}
             />
-            <div style={{ position: 'relative', width: '80%' }}>
+            <div style={{ position: 'relative', width: '80%', marginBottom: '10px' }}>
               <input
                 type="password"
                 id="passwordRegister"
-                name="password"
+                name="Password"
                 placeholder="Password"
                 required
                 style={{
                   width: '100%',
                   padding: '10px',
-                  marginBottom: '10px',
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
@@ -420,15 +459,14 @@ const LoginPage = () => {
                   right: '10px',
                   transform: 'translateY(-50%)',
                   cursor: 'pointer',
-                  color: '#aaa',
                 }}
               ></i>
             </div>
             <div style={{ position: 'relative', width: '80%' }}>
               <input
                 type="password"
-                name="confirmPassword"
-                id="confirmPassword"
+                id="ConfirmPassword"
+                name="ConfirmPassword"
                 placeholder="Confirm Password"
                 required
                 style={{
@@ -440,14 +478,13 @@ const LoginPage = () => {
               />
               <i
                 className="fa-solid fa-eye toggle-password"
-                onClick={() => togglePassword('confirmPassword')}
+                onClick={() => togglePassword('ConfirmPassword')}
                 style={{
                   position: 'absolute',
                   top: '50%',
                   right: '10px',
                   transform: 'translateY(-50%)',
                   cursor: 'pointer',
-                  color: '#aaa',
                 }}
               ></i>
             </div>
