@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import styles from "./SearchProduct.module.css";
-import { fetchProducts } from "../../utils/api";
-import LoadingPage from "../../Pages/LoadingPage/LoadingPage";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from './SearchProduct.module.css';
+import { fetchProducts } from '../../utils/api';
+import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
 
 const SearchProduct = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   const MAX_SUGGESTIONS = 5;
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const SearchProduct = () => {
         const data = await fetchProducts();
         setProducts(data);
       } catch (error) {
-        console.error("Error in SearchProduct:", error);
+        console.error('Error in SearchProduct:', error);
       } finally {
         setLoading(false);
       }

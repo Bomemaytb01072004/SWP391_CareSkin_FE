@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import CardProduct from './CardProduct';
 import { fetchProducts } from '../../utils/api';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
+import { useNavigate } from 'react-router-dom';
+import ComparePopup from '../ComparePopup/ComparePopup'
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    fetchProducts().then(setProducts);
-  }, []);
 
-  useEffect(() => {
-    fetchProducts().then(setProducts);
-  }, []);
+  const [compareList, setCompareList] = useState(() => {
+    const stored = localStorage.getItem('compareList');
+    return stored ? JSON.parse(stored) : [];
+  });
+  const navigate = useNavigate();
+
   useEffect(() => {
     (async () => {
       try {
@@ -26,23 +28,57 @@ const ProductList = () => {
     })();
   }, []); // <= Mảng phụ thuộc
 
+  useEffect(() => {
+    localStorage.setItem('compareList', JSON.stringify(compareList));
+  }, [compareList]);
+
+  useEffect(() => {
+    localStorage.setItem('compareList', JSON.stringify(compareList));
+  }, [compareList]);
+
   const addToCart = (product) => {
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-    // Check if product already exists in cart
     const existingProduct = cart.find((item) => item.id === product.id);
 
     if (existingProduct) {
-      existingProduct.quantity += 1; // Increase quantity
+      existingProduct.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 }); // Add new product with quantity
+      cart.push({ ...product, quantity: 1 });
     }
 
     localStorage.setItem('cart', JSON.stringify(cart));
 
-    // Dispatch an event to notify Navbar to update
     window.dispatchEvent(new Event('storage'));
   };
+
+  const addToCompare = (product) => {
+    if (!compareList.find((p) => p.id === product.id)) {
+      setCompareList([...compareList, product]);
+    }
+  };
+
+  const removeFromCompare = (productId) => {
+    setCompareList(compareList.filter((p) => p.id !== productId));
+  };
+
+  const handleCompareNow = () => {
+    let subpath = "";
+  
+    if (compareList.length === 3) {
+      for (let i = 0; i < 2; i++) {
+        const product = compareList[i];
+        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+      }
+      navigate(`/compare/${subpath}?product_id=${compareList[2].id}`);
+    } else {
+      for (let product of compareList) {
+        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+      }
+      navigate(`/compare/${subpath}`);
+    }
+  };
+  
 
   if (loading) {
     return <LoadingPage />;
@@ -56,9 +92,19 @@ const ProductList = () => {
             key={product.id}
             product={product}
             addToCart={addToCart}
+            addToCompare={addToCompare}
           />
         ))}
       </div>
+      {compareList.length > 0 && (
+        <ComparePopup
+          compareList={compareList}
+          removeFromCompare={removeFromCompare}
+          clearCompare={() => setCompareList([])}
+          onCompareNow={handleCompareNow}
+        />
+      )}
+
     </div>
   );
 };

@@ -6,7 +6,7 @@ import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
 
 
 
-function CardProduct({ product, addToCart }) {
+function CardProduct({ product, addToCart , addToCompare}) {
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -66,6 +66,11 @@ function CardProduct({ product, addToCart }) {
 
             <button
               className="flex items-center justify-center p-1 w-6 h-8 max-h-[40px] sm:max-h-[40 px] sm:w-10 sm:h-10 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm active:scale-95"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCompare(product);
+              }}
             >
               <FontAwesomeIcon icon={faCodeCompare} className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700" />
             </button>

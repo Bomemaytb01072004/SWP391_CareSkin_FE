@@ -28,3 +28,18 @@ export async function fetchProductById(id) {
     throw error;
   }
 }
+const apiURLCustomer = "https://679897e2be2191d708b02aab.mockapi.io/api/products/Customers";
+
+export async function fetchCustomers() {
+    try {
+        const res = await fetch(apiURLCustomer);
+        if(!res.ok) {
+            throw new Error("Error fetching customers");
+        }
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching customers");
+        throw error;
+    }
+}
