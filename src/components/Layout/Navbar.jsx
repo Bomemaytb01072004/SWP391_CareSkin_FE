@@ -82,6 +82,14 @@ function Navbar() {
     window.dispatchEvent(new Event('storage'));
   };
 
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      navigate('/profile');
+    } else {
+      navigate('/joinus');
+    }
+  };
+
   const handleMouseEnter = () => {
     if (closeTimeout) {
       clearTimeout(closeTimeout); // Cancel closing if user re-enters
@@ -135,9 +143,8 @@ function Navbar() {
   return (
     <>
       <nav
-        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 hidden md:block lg:block ${
-          scrollingUp ? 'translate-y-0' : '-translate-y-full'
-        }`}
+        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 hidden md:block lg:block ${scrollingUp ? 'translate-y-0' : '-translate-y-full'
+          }`}
       >
         <Header />
         <div className=" mx-auto px-4 lg:px-8 flex items-center justify-between h-16">
@@ -163,12 +170,12 @@ function Navbar() {
           <div className="lg:flex md:flex space-x-5 items-center">
             <div className="lg:flex md:flex hidden space-x-4 items-center">
               {/* Profile Icon */}
-              <Link to="/profile">
+              <button onClick={handleProfileClick}>
                 <FontAwesomeIcon
                   icon={faUser}
                   className="text-gray-700 hover:text-emerald-600 text-xl transition"
                 />
-              </Link>
+              </button>
 
               {/* Wishlist Icon */}
               <Link to="/wishlist">
@@ -296,9 +303,8 @@ function Navbar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-[9999] ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="p-2 flex justify-center items-center border-b">
           <img
@@ -318,12 +324,12 @@ function Navbar() {
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
           {/* User Profile */}
-          <Link to="/profile">
+            <button onClick={handleProfileClick}>
             <FontAwesomeIcon
               icon={faUser}
               className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
-          </Link>
+          </button>
 
           {/* Wishlist Icon */}
           <Link to="/wishlist">

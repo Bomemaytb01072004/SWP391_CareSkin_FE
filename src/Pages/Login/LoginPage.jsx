@@ -33,7 +33,7 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/Auth/Login', {
+      const response = await fetch('http://careskinbeauty.shop:4456/api/Auth/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ const LoginPage = () => {
     }
 
     try {
-      const registerResponse = await fetch('http://localhost:5000/api/Register/register', {
+      const registerResponse = await fetch('http://careskinbeauty.shop:4456/api/Register/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ UserName, Email, Password, ConfirmPassword }),
