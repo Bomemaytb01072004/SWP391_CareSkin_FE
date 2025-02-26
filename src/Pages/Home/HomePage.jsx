@@ -4,6 +4,8 @@ import Footer from '../../components/Layout/Footer';
 import SloganCarousel from '../../components/HomePage/Carousel/SloganCarousel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BestSellers from '../../components/HomePage/BestSellers';
+import IconSlider from '../../components/HomePage/Carousel/IconSlider'; // Adjust the path if needed
+
 import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
 import {
   faDroplet,
@@ -16,37 +18,44 @@ function HomePage() {
   return (
     <>
       <Navbar />
-      {/* Skin Quiz Section */}
-      <div className="flex flex-col md:flex-row items-center text-center mt-16 md:text-left py-16 px-6 md:px-10 bg-white w-full max-w-7xl mx-auto">
-        {/* Left Side: Text */}
-        <div className="md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left">
-          <h1
-            className="font-bold leading-tight mb-4 text-3xl md:text-5xl lg:text-6xl"
-            style={{
-              textShadow: '0.13rem 0.13rem 0.3rem rgba(0, 0, 0, 0.25)',
-              color: 'rgba(0, 0, 0, 1)',
-            }}
-          >
-            Discover Your Perfect Skincare Routine
-          </h1>
-          <p className="text-base md:text-lg text-gray-600 mb-6">
-            Take our personalized skin quiz and get a customized skincare
-            routine that works for your unique needs.
-          </p>
-          <a
-            href="/skinquiz"
-            className="px-6 py-3 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition"
-          >
-            Take Skin Quiz
-          </a>
-        </div>
+      <div className="relative w-full bg-emerald-50">
+        {/* Background Expanding Container */}
+        <div className="absolute inset-0 w-full h-full bg-emerald-50"></div>
 
-        {/* Right Side: Image */}
-        <div className="w-full md:w-1/2 flex justify-center mt-10 md:mt-0">
-          <SloganCarousel />
+        {/* Content Section */}
+        <div className="relative flex flex-col md:flex-row items-center text-center mt-16 md:text-left py-8 md:py-12 px-6 md:px-10 max-w-7xl mx-auto">
+          {/* Left Side: Text */}
+          <div className="md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left">
+            <h1
+              className="font-bold leading-tight mb-4 text-3xl md:text-5xl lg:text-6xl"
+              style={{
+                textShadow: '0.13rem 0.13rem 0.3rem rgba(0, 0, 0, 0.25)',
+                color: 'rgba(0, 0, 0, 1)',
+              }}
+            >
+              Discover Your Perfect Skincare Routine
+            </h1>
+            <p className="text-sm md:text-base lg:text-lg text-gray-600 mb-6">
+              Take our personalized skin quiz and get a customized skincare
+              routine that works for your unique needs.
+            </p>
+            <a
+              href="/skinquiz"
+              className="px-6 py-3 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition"
+            >
+              Take Skin Quiz
+            </a>
+          </div>
+          {/* Right Side: Image */}
+          <div className="w-full md:w-1/2 flex justify-center mt-10 md:mt-0">
+            <SloganCarousel />
+          </div>
         </div>
       </div>
-
+      {/* Icon Slider */}
+      <IconSlider />
+      {/* BestSellers */}
+      <BestSellers />
       {/* Shop by Category Section */}
       <div className="py-16 bg-gray-50 rounded-xl mx-auto max-w-screen-2xl px-5 mt-10">
         <h2 className="text-3xl font-bold text-gray-800 text-center mb-16">
@@ -95,9 +104,8 @@ function HomePage() {
           ))}
         </div>
       </div>
-
       {/* Not Sure Where to Start Section */}
-      <div className="bg-emerald-50 py-12 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-12">
+      <div className="bg-emerald-100 py-12 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-12">
         <h2 className="text-3xl font-bold text-gray-800 mb-4">
           Not Sure Where to Start?
         </h2>
@@ -114,12 +122,8 @@ function HomePage() {
           </button>
         </div>
       </div>
-
-      {/* BestSellers */}
-      <BestSellers />
       {/* ServiceFeedback */}
       <ServiceFeedback />
-
       {/* Footer */}
       <Footer />
     </>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import bgImage from '../../assets/bg-login.png';
-import axios from 'axios';
 
 const UserProfile = () => {
   const [user, setUser] = useState({
@@ -18,17 +17,26 @@ const UserProfile = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [editMode, setEditMode] = useState(false); // Toggle edit mode
+  const [editMode, setEditMode] = useState(false);
 
-  const customerId = 1; // Replace this with actual customer ID from authentication
+  const customerId = localStorage.getItem('customerId'); // Get user ID from localStorage
 
   useEffect(() => {
-    // Fetch User Data from API
-    axios
-      .get(`/api/Customer/get-profile/${customerId}`)
-      .then((res) => setUser(res.data))
-      .catch((err) => console.error('Error fetching profile:', err));
-  }, []);
+    if (!customerId) {
+      console.error('No customer ID found. User is not logged in.');
+      return;
+    }
+
+    fetch(`/api/Customer/get-profile/${customerId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Error fetching profile: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => setUser(data))
+      .catch((error) => console.error('Error fetching profile:', error));
+  }, [customerId]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -42,21 +50,29 @@ const UserProfile = () => {
     setLoading(true);
     setMessage('');
 
-    const formData = new FormData();
-    formData.append('FullName', user.fullName);
-    formData.append('Email', user.email);
-    formData.append('Phone', user.phone);
-    formData.append('Dob', user.dob);
-    formData.append('Gender', user.gender);
-    formData.append('Address', user.address);
-    if (selectedFile) {
-      formData.append('ProfilePicture', selectedFile);
-    }
+    const updatedUser = {
+      FullName: user.fullName,
+      Email: user.email,
+      Phone: user.phone,
+      Dob: user.dob,
+      Gender: user.gender,
+      Address: user.address,
+    };
 
     try {
-      await axios.put(`/api/Customer/update-profile/${customerId}`, formData);
+      const response = await fetch(
+        `/api/Customer/update-profile/${customerId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedUser),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
       setMessage('Profile updated successfully!');
-      setEditMode(false); // Disable edit mode after update
+      setEditMode(false);
     } catch (error) {
       setMessage('Error updating profile. Please try again.');
     } finally {
@@ -191,15 +207,6 @@ const UserProfile = () => {
                   }`}
                 />
               </div>
-              <div className="col-span-2">
-                <label className="text-gray-600 text-sm">Profile Picture</label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  disabled={!editMode}
-                  className="w-full border p-2 rounded-md focus:ring focus:ring-blue-200"
-                />
-              </div>
             </div>
 
             {/* Buttons */}
@@ -210,12 +217,6 @@ const UserProfile = () => {
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                 >
                   {loading ? 'Updating...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={() => setEditMode(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition"
-                >
-                  Cancel
                 </button>
               </div>
             )}

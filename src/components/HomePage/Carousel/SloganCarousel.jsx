@@ -4,7 +4,7 @@ import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import './SloganCarousel.module.css';
 function SloganCarousel() {
   return (
-    <div className="SloganCarousel max-w-lg mx-auto p-4">
+    <div className="SloganCarousel max-w-xl mx-auto p-4 ">
       <Carousel
         autoPlay
         infiniteLoop
@@ -19,7 +19,7 @@ function SloganCarousel() {
           <img
             src="/src/assets/sloganimage1.png"
             alt="Slide 1"
-            className="w-full rounded-lg"
+            className="w-full h-full rounded-lg"
           />
         </div>
         {/* Slide 2 */}
