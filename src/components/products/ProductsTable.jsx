@@ -21,9 +21,11 @@ const ProductsTable = () => {
     price: '',
     originalPrice: '',
     image: '',
-    discount: '',
+    discount: '0%',
     rating: '',
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editProduct, setEditProduct] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -79,19 +81,22 @@ const ProductsTable = () => {
     }
   };
 
-  const handleEdit = async (id, updatedData) => {
+  const handleEdit = async () => {
+    if (!editProduct) return;
     try {
-      await updateProduct(id, updatedData);
-      setProducts((prevProducts) =>
-        prevProducts.map((product) =>
-          product.id === id ? updatedData : product
+      const updatedProduct = await updateProduct(editProduct.id, editProduct);
+      setProducts((prev) =>
+        prev.map((product) =>
+          product.id === updatedProduct.id ? updatedProduct : product
         )
       );
-      setFilteredProducts((prevProducts) =>
-        prevProducts.map((product) =>
-          product.id === id ? updatedData : product
+      setFilteredProducts((prev) =>
+        prev.map((product) =>
+          product.id === updatedProduct.id ? updatedProduct : product
         )
       );
+      setIsEditing(false);
+      setEditProduct(null);
     } catch (error) {
       console.error('Failed to update product:', error);
     }
@@ -195,7 +200,10 @@ const ProductsTable = () => {
 
     return pages;
   };
-
+  const calculateDiscount = (originalPrice, price) => {
+    if (!originalPrice || !price || originalPrice <= price) return '0%';
+    return `${Math.round(((originalPrice - price) / originalPrice) * 100)}%`;
+  };
   return (
     <motion.div
       className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8"
@@ -203,7 +211,123 @@ const ProductsTable = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      {/* Header */}
+      {isEditing && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+          onClick={() => setIsEditing(false)} // Click outside to close
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg w-1/3 max-w-lg"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Edit Product
+              </h3>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Name"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.name || ''}
+                autoFocus // Auto-focus first input
+                onChange={(e) =>
+                  setEditProduct({ ...editProduct, name: e.target.value })
+                }
+              />
+              <input
+                type="text"
+                placeholder="Category"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.category || ''}
+                onChange={(e) =>
+                  setEditProduct({ ...editProduct, category: e.target.value })
+                }
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.price || ''}
+                onChange={(e) => {
+                  const newPrice = parseFloat(e.target.value) || 0;
+                  setEditProduct({
+                    ...editProduct,
+                    price: newPrice,
+                    discount: calculateDiscount(
+                      editProduct?.originalPrice,
+                      newPrice
+                    ),
+                  });
+                }}
+              />
+              <input
+                type="number"
+                placeholder="Original Price"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.originalPrice || ''}
+                onChange={(e) => {
+                  const newOriginalPrice = parseFloat(e.target.value) || 0;
+                  setEditProduct({
+                    ...editProduct,
+                    originalPrice: newOriginalPrice,
+                    discount: calculateDiscount(
+                      newOriginalPrice,
+                      editProduct?.price
+                    ),
+                  });
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Discount"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.discount || '0%'}
+                readOnly
+              />
+              <input
+                type="number"
+                step="0.1"
+                placeholder="Rating"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={editProduct?.rating || ''}
+                onChange={(e) =>
+                  setEditProduct({
+                    ...editProduct,
+                    rating: parseFloat(e.target.value) || 0,
+                  })
+                }
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex justify-end gap-4 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-400 text-white rounded-lg"
+                onClick={() => setIsEditing(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                onClick={handleEdit}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-100">Product List</h2>
@@ -231,13 +355,20 @@ const ProductsTable = () => {
           </button>
         </div>
       </div>
-
       {/* Modal for Adding Product */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+          onClick={() => setIsModalOpen(false)} // Close modal on background click
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg w-1/3 max-w-lg overflow-auto"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+          >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Add New Product</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add New Product
+              </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-600 hover:text-gray-800"
@@ -245,12 +376,14 @@ const ProductsTable = () => {
                 <X size={20} />
               </button>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
                 placeholder="Name"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.name}
+                autoFocus // Auto-focus first input
                 onChange={(e) =>
                   setNewProduct({ ...newProduct, name: e.target.value })
                 }
@@ -258,7 +391,7 @@ const ProductsTable = () => {
               <input
                 type="text"
                 placeholder="Category"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.category}
                 onChange={(e) =>
                   setNewProduct({ ...newProduct, category: e.target.value })
@@ -267,37 +400,48 @@ const ProductsTable = () => {
               <input
                 type="number"
                 placeholder="Price"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.price}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, price: e.target.value })
-                }
+                onChange={(e) => {
+                  const newPrice = parseFloat(e.target.value) || 0;
+                  setNewProduct({
+                    ...newProduct,
+                    price: newPrice,
+                    discount: calculateDiscount(
+                      newProduct.originalPrice,
+                      newPrice
+                    ),
+                  });
+                }}
               />
               <input
                 type="number"
                 placeholder="Original Price"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.originalPrice}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const newOriginalPrice = parseFloat(e.target.value) || 0;
                   setNewProduct({
                     ...newProduct,
-                    originalPrice: e.target.value,
-                  })
-                }
+                    originalPrice: newOriginalPrice,
+                    discount: calculateDiscount(
+                      newOriginalPrice,
+                      newProduct.price
+                    ),
+                  });
+                }}
               />
               <input
                 type="text"
                 placeholder="Discount"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.discount}
-                onChange={(e) =>
-                  setNewProduct({ ...newProduct, discount: e.target.value })
-                }
+                readOnly
               />
               <input
                 type="text"
                 placeholder="Image URL"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.image}
                 onChange={(e) =>
                   setNewProduct({ ...newProduct, image: e.target.value })
@@ -307,13 +451,17 @@ const ProductsTable = () => {
                 type="number"
                 step="0.1"
                 placeholder="Rating"
-                className="p-2 border rounded-lg"
+                className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.rating}
                 onChange={(e) =>
-                  setNewProduct({ ...newProduct, rating: e.target.value })
+                  setNewProduct({
+                    ...newProduct,
+                    rating: parseFloat(e.target.value) || '',
+                  })
                 }
               />
             </div>
+
             <div className="flex justify-end gap-4 mt-4">
               <button
                 className="px-4 py-2 bg-gray-400 text-white rounded-lg"
@@ -322,7 +470,7 @@ const ProductsTable = () => {
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 onClick={handleAddProduct}
               >
                 Submit
@@ -331,7 +479,6 @@ const ProductsTable = () => {
           </div>
         </div>
       )}
-
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
@@ -383,15 +530,26 @@ const ProductsTable = () => {
                   ${parseFloat(product.price || 0).toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {product.stock}
+                  ${parseFloat(product.originalPrice || 0).toFixed(2)}
+                  {/* className="p-2 border border-gray-300 text-gray-900 rounded-lg" */}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {product.sales}
+                  {product.discount}
                 </td>
+
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {typeof product.rating === 'number'
+                    ? product.rating.toFixed(1)
+                    : 'N/A'}
+                </td>
+
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                   <button
                     className="text-indigo-400 hover:text-indigo-300 mr-2"
-                    onClick={() => handleEdit(product.id, product)}
+                    onClick={() => {
+                      setEditProduct(product);
+                      setIsEditing(true);
+                    }}
                   >
                     <Edit size={18} />
                   </button>
@@ -407,7 +565,6 @@ const ProductsTable = () => {
           </tbody>
         </table>
       </div>
-
       <div className="flex justify-center mt-4 space-x-2">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
