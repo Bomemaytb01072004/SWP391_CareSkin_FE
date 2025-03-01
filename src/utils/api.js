@@ -1,5 +1,5 @@
 // api.js
-const apiURL = "https://679897e2be2191d708b02aab.mockapi.io/api/products/Products";
+const apiURL = "http://careskinbeauty.shop:4456/api/Product";
 
 export async function fetchProducts() {
   try {

@@ -39,7 +39,7 @@ const ProductList = () => {
   const addToCart = (product) => {
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
 
-    const existingProduct = cart.find((item) => item.id === product.id);
+    const existingProduct = cart.find((item) => item.ProductId === product.ProductId);
 
     if (existingProduct) {
       existingProduct.quantity += 1;
@@ -53,13 +53,13 @@ const ProductList = () => {
   };
 
   const addToCompare = (product) => {
-    if (!compareList.find((p) => p.id === product.id)) {
+    if (!compareList.find((p) => p.ProductId === product.ProductId)) {
       setCompareList([...compareList, product]);
     }
   };
 
   const removeFromCompare = (productId) => {
-    setCompareList(compareList.filter((p) => p.id !== productId));
+    setCompareList(compareList.filter((p) => p.ProductId !== productId));
   };
 
   const handleCompareNow = () => {
@@ -68,12 +68,12 @@ const ProductList = () => {
     if (compareList.length === 3) {
       for (let i = 0; i < 2; i++) {
         const product = compareList[i];
-        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+        subpath += `${product.ProductId}-${product.name.replaceAll(" ", "-")}/`;
       }
-      navigate(`/compare/${subpath}?product_id=${compareList[2].id}`);
+      navigate(`/compare/${subpath}?product_id=${compareList[2].ProductId}`);
     } else {
       for (let product of compareList) {
-        subpath += `${product.id}-${product.name.replaceAll(" ", "-")}/`;
+        subpath += `${product.ProductId}-${product.name.replaceAll(" ", "-")}/`;
       }
       navigate(`/compare/${subpath}`);
     }
@@ -89,7 +89,7 @@ const ProductList = () => {
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
         {products.map((product) => (
           <CardProduct
-            key={product.id}
+            key={product.ProductId}
             product={product}
             addToCart={addToCart}
             addToCompare={addToCompare}
