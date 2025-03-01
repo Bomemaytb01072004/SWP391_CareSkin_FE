@@ -1,42 +1,89 @@
 import React, { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode'; // Ensure this is correctly imported
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import bgImage from '../../assets/bg-login.png';
 
 const UserProfile = () => {
   const [user, setUser] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    dob: '',
-    gender: '',
-    profilePicture: '',
-    address: '',
+    CustomerId: null,
+    UserName: '',
+    Email: '',
+    FullName: '',
+    Phone: '',
+    Dob: '',
+    Gender: '',
+    PictureUrl: '',
+    Address: '',
   });
+
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [customerId, setCustomerId] = useState(
+    localStorage.getItem('customerId')
+  );
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [editMode, setEditMode] = useState(false);
 
-  const customerId = localStorage.getItem('customerId'); // Get user ID from localStorage
-
   useEffect(() => {
-    if (!customerId) {
-      console.error('No customer ID found. User is not logged in.');
+    if (!token) {
+      console.error('No token found. User is not logged in.');
       return;
     }
 
-    fetch(`/api/Customer/get-profile/${customerId}`)
+    // Decode token only if customerId is not in localStorage
+    if (!customerId) {
+      try {
+        const decodedToken = jwtDecode(token);
+
+        if (decodedToken.customerId) {
+          setCustomerId(decodedToken.customerId);
+          localStorage.setItem('customerId', decodedToken.customerId);
+        } else {
+          console.error('customerId not found in token');
+          return; // Stop execution if no customerId
+        }
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        return;
+      }
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!customerId) {
+      console.error('No customerId found, skipping API request.');
+      return;
+    }
+
+    fetch(`http://careskinbeauty.shop:4456/api/Customer/${customerId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Ensure token is included
+      },
+    })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Error fetching profile: ${response.status}`);
         }
         return response.json();
       })
-      .then((data) => setUser(data))
+      .then((data) => {
+        setUser({
+          CustomerId: data.CustomerId,
+          UserName: data.UserName,
+          Email: data.Email || '',
+          FullName: data.FullName || '',
+          Phone: data.Phone || '',
+          Dob: data.Dob ? data.Dob.split('T')[0] : '',
+          Gender: data.Gender || '',
+          PictureUrl: data.PictureUrl || 'https://via.placeholder.com/80',
+          Address: data.Address || '',
+        });
+      })
       .catch((error) => console.error('Error fetching profile:', error));
-  }, [customerId]);
+  }, [customerId, token]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });

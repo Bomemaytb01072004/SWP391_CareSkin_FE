@@ -126,7 +126,7 @@ const SkinQuizPage = () => {
   return (
     <>
       <Navbar />
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4 mt-10">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white  mt-10">
         {stage === 'start' && (
           <div
             className="relative w-full h-screen flex items-center justify-center text-white bg-cover bg-center"
@@ -154,7 +154,7 @@ const SkinQuizPage = () => {
               </motion.h2>
 
               <motion.h1
-                className="font-extrabold leading-tight mb-2 text-4xl md:text-6xl lg:text-7xl max-w-[700px] w-full"
+                className="font-extrabold leading-tight mb-2 text-4xl md:text-6xl lg:text-8xl max-w-[700px] w-full"
                 style={{
                   textShadow: '0.1rem 0.1rem 0.2rem rgba(0, 0, 0, 0.3)',
                   color: '#FFD700' /* Bright Yellow for Attention */,
@@ -175,7 +175,7 @@ const SkinQuizPage = () => {
               </motion.h1>
 
               <motion.p
-                className=" text-xs md:text-base lg:text-lg text-gray-300 mb-6 max-w-[500px] w-full leading-relaxed"
+                className=" text-xs md:text-base lg:text-lg text-slate-200 mb-6 max-w-[500px] w-full leading-relaxed"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
@@ -190,7 +190,7 @@ const SkinQuizPage = () => {
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
                 <button
-                  className="px-4 py-2 text-xs md:px-6 md:py-3 md:text-base lg:text-lg bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-transform transform hover:scale-105"
+                  className="px-6 py-3 text-xs md:px-6 md:py-3 md:text-base lg:text-xl bg-emerald-600 text-white rounded-full shadow-lg hover:bg-emerald-700 transition-transform transform hover:scale-105"
                   onClick={() => setStage('quiz')}
                 >
                   Start Quiz
