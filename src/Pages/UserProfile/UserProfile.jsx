@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import bgImage from '../../assets/bg-login.png';
-import axios from 'axios';
 
 const UserProfile = () => {
   const [user, setUser] = useState({
@@ -18,17 +17,22 @@ const UserProfile = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [editMode, setEditMode] = useState(false); // Toggle edit mode
+  const [editMode, setEditMode] = useState(false);
 
   const customerId = 1; // Replace this with actual customer ID from authentication
 
   useEffect(() => {
-    // Fetch User Data from API
-    axios
-      .get(`/api/Customer/get-profile/${customerId}`)
-      .then((res) => setUser(res.data))
+    // Fetch User Data using fetch API
+    fetch(`http://careskinbeauty.shop:4456/api/Customer/${customerId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then((data) => setUser(data))
       .catch((err) => console.error('Error fetching profile:', err));
-  }, []);
+  }, [customerId]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -54,9 +58,15 @@ const UserProfile = () => {
     }
 
     try {
-      await axios.put(`/api/Customer/update-profile/${customerId}`, formData);
+      const response = await fetch(`http://careskinbeauty.shop:4456/api/Customer/update-profile/${customerId}`, {
+        method: 'PUT',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error('Error updating profile');
+      }
       setMessage('Profile updated successfully!');
-      setEditMode(false); // Disable edit mode after update
+      setEditMode(false);
     } catch (error) {
       setMessage('Error updating profile. Please try again.');
     } finally {
@@ -84,16 +94,14 @@ const UserProfile = () => {
             </div>
             <div className="mt-6">
               <ul className="space-y-4">
-                {['Account', 'Password', 'Order History', 'Notification'].map(
-                  (tab) => (
-                    <li
-                      key={tab}
-                      className="p-3 rounded-md cursor-pointer text-gray-700 hover:bg-gray-200 transition"
-                    >
-                      {tab}
-                    </li>
-                  )
-                )}
+                {['Account', 'Password', 'Order History', 'Notification'].map((tab) => (
+                  <li
+                    key={tab}
+                    className="p-3 rounded-md cursor-pointer text-gray-700 hover:bg-gray-200 transition"
+                  >
+                    {tab}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -101,9 +109,7 @@ const UserProfile = () => {
           {/* Main Content */}
           <div className="w-2/3 p-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Account Settings
-              </h2>
+              <h2 className="text-2xl font-semibold text-gray-800">Account Settings</h2>
               <button
                 onClick={() => setEditMode(!editMode)}
                 className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition"
