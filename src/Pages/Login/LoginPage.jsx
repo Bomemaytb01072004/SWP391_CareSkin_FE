@@ -79,43 +79,45 @@ const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
+  
     const UserName = document.getElementById('registerUserName')?.value.trim();
     const Email = document.getElementById('registerEmail')?.value.trim();
     const Password = document.getElementById('passwordRegister')?.value.trim();
     const ConfirmPassword = document.getElementById('ConfirmPassword')?.value.trim();
-
+  
     if (!UserName || !Email || !Password || !ConfirmPassword) {
       toast.error('All fields are required.');
       return;
     }
-
+  
     if (Password !== ConfirmPassword) {
       toast.error('Passwords do not match. Please try again.');
       return;
     }
-
+  
     try {
-      const registerResponse = await fetch('http://careskinbeauty.shop:4456/api/Register/register', {
+      const formData = new FormData();
+      formData.append('UserName', UserName);
+      formData.append('Email', Email);
+      formData.append('Password', Password);
+      formData.append('ConfirmPassword', ConfirmPassword);
+  
+      const registerResponse = await fetch('http://careskinbeauty.shop:4456/api/Customer/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ UserName, Email, Password, ConfirmPassword }),
+        body: formData,
       });
-
+  
       if (!registerResponse.ok) {
         const errorData = await registerResponse.json();
         toast.error(errorData.message || 'Registration failed');
         return;
       }
-
-      // Nếu thành công, lấy dữ liệu JSON từ backend
+  
       const data = await registerResponse.json();
-      // Có thể hiển thị thông báo hoặc xử lý data nếu cần
       toast.success('Registration successful! You can now log in.');
-
-      // Chuyển về form login
+  
       setRightPanelActive(false);
-
+  
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred. Please try again later.');
