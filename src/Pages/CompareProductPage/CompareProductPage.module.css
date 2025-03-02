@@ -7,7 +7,7 @@
   align-items: flex-start;
   justify-content: flex-start;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .textTruncate {
@@ -21,17 +21,17 @@
 }
 
 .nameProductTitle {
-  font-size: 1.27rem;
+  font-size: 1.2rem;
   margin-bottom: 1rem;
 }
 
 .customTable {
-  table-layout: fixed;
-  width: 100%;
+  table-layout: auto;
+  width: max-content;
   border-collapse: collapse;
   border: 1px solid #dee2e6;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .customTable thead th:first-child,
@@ -70,3 +70,5 @@
   background-color: #50c878;
   border-radius: 20px;
 }
+
+.responsiveTable {  /* Nếu cần cuộn mượt trên iOS thì bật dòng dưới */  -webkit-overflow-scrolling: touch; }

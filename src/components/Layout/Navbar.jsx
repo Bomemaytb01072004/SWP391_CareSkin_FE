@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Header from '../../components/Layout/Header';
+import { useLocation } from 'react-router-dom';
 import {
   faUser,
   faHeart,
@@ -12,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
+  const location = useLocation(); // Get the current route
   const [scrollingUp, setScrollingUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(window.scrollY);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -80,6 +82,14 @@ function Navbar() {
     localStorage.setItem('cart', JSON.stringify(updatedCart));
 
     window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      navigate('/profile');
+    } else {
+      navigate('/joinus');
+    }
   };
 
   const handleMouseEnter = () => {
@@ -151,10 +161,19 @@ function Navbar() {
           </div>
 
           {/* Navigation Links */}
-          <ul className="flex-1 flex justify-center item lg:space-x-12 lg:mr-2 mx-auto space-x-4    text-gray-700 lg:font-medium">
+          <ul className="flex-1 flex justify-center lg:space-x-12 lg:mr-2 mx-auto space-x-4 text-gray-700 lg:font-medium">
             {navLinks.map((link, index) => (
-              <li key={index} className="hover:text-emerald-600 transition">
-                <Link to={link.path}>{link.name}</Link>
+              <li key={index}>
+                <Link
+                  to={link.path}
+                  className={`transition ${
+                    location.pathname === link.path
+                      ? 'text-emerald-600 font-bold' // Active link styling
+                      : 'text-gray-700 hover:text-emerald-600'
+                  }`}
+                >
+                  {link.name}
+                </Link>
               </li>
             ))}
           </ul>
@@ -163,12 +182,12 @@ function Navbar() {
           <div className="lg:flex md:flex space-x-5 items-center">
             <div className="lg:flex md:flex hidden space-x-4 items-center">
               {/* Profile Icon */}
-              <Link to="/profile">
+              <button onClick={handleProfileClick}>
                 <FontAwesomeIcon
                   icon={faUser}
                   className="text-gray-700 hover:text-emerald-600 text-xl transition"
                 />
-              </Link>
+              </button>
 
               {/* Wishlist Icon */}
               <Link to="/wishlist">
@@ -318,12 +337,12 @@ function Navbar() {
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
           {/* User Profile */}
-          <Link to="/profile">
+          <button onClick={handleProfileClick}>
             <FontAwesomeIcon
               icon={faUser}
               className="text-gray-700 hover:text-emerald-600 text-xl transition"
             />
-          </Link>
+          </button>
 
           {/* Wishlist Icon */}
           <Link to="/wishlist">

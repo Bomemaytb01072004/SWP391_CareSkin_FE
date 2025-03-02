@@ -8,8 +8,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { GoogleLogin } from '@react-oauth/google';
 
-
-
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
   const navigate = useNavigate();
@@ -17,15 +15,20 @@ const LoginPage = () => {
   const togglePassword = (idField) => {
     const passwordField = document.getElementById(idField);
     if (passwordField) {
-      passwordField.type = passwordField.type === 'password' ? 'text' : 'password';
+      passwordField.type =
+        passwordField.type === 'password' ? 'text' : 'password';
     }
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const enteredUsername = document.getElementById('loginUsername').value.trim();
-    const enteredPassword = document.getElementById('passwordLogin').value.trim();
+    const enteredUsername = document
+      .getElementById('loginUsername')
+      .value.trim();
+    const enteredPassword = document
+      .getElementById('passwordLogin')
+      .value.trim();
 
     if (!enteredUsername || !enteredPassword) {
       toast.error('Please fill in all fields.');
@@ -33,29 +36,35 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/Auth/Login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          UserName: enteredUsername,
-          Password: enteredPassword,
-        }),
-      });
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/Login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            UserName: enteredUsername,
+            Password: enteredPassword,
+          }),
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error('Login failed');
+      // Parse the response once and store it
+      const responseData = await response.json();
+      console.log('Response:', responseData); // Debugging
+
+      if (!responseData.Success) {
+        throw new Error(responseData.Message || 'Login failed');
       }
 
-      // Backend trả về chỉ token
-      const { token } = await response.json();
-
+      // Extract token correctly from response data
+      const token = responseData.Data;
       if (token) {
-        // Lưu token vào localStorage
         localStorage.setItem('token', token);
 
-        // Nếu muốn decode JWT để lấy thông tin người dùng:
+        // Decode JWT (if needed)
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const decodedPayload = JSON.parse(window.atob(base64));
@@ -70,52 +79,44 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Login Error:', error);
-      toast.error('An error occurred while logging in.');
+      toast.error(error.message || 'An error occurred while logging in.');
     }
   };
 
-
-
-
   const handleRegister = async (e) => {
     e.preventDefault();
-
     const UserName = document.getElementById('registerUserName')?.value.trim();
     const Email = document.getElementById('registerEmail')?.value.trim();
     const Password = document.getElementById('passwordRegister')?.value.trim();
-    const ConfirmPassword = document.getElementById('ConfirmPassword')?.value.trim();
-
+    const ConfirmPassword = document
+      .getElementById('ConfirmPassword')
+      ?.value.trim();
     if (!UserName || !Email || !Password || !ConfirmPassword) {
       toast.error('All fields are required.');
       return;
     }
-
     if (Password !== ConfirmPassword) {
       toast.error('Passwords do not match. Please try again.');
       return;
     }
-
     try {
-      const registerResponse = await fetch('http://localhost:5000/api/Register/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ UserName, Email, Password, ConfirmPassword }),
-      });
-
+      const formData = new FormData();
+      formData.append('UserName', UserName);
+      formData.append('Email', Email);
+      formData.append('Password', Password);
+      formData.append('ConfirmPassword', ConfirmPassword);
+      const registerResponse = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/Register',
+        { method: 'POST', body: formData }
+      );
       if (!registerResponse.ok) {
         const errorData = await registerResponse.json();
         toast.error(errorData.message || 'Registration failed');
         return;
       }
-
-      // Nếu thành công, lấy dữ liệu JSON từ backend
       const data = await registerResponse.json();
-      // Có thể hiển thị thông báo hoặc xử lý data nếu cần
       toast.success('Registration successful! You can now log in.');
-
-      // Chuyển về form login
       setRightPanelActive(false);
-
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred. Please try again later.');
@@ -166,7 +167,7 @@ const LoginPage = () => {
                 onClick={() => setRightPanelActive(true)}
                 style={{
                   position: 'absolute',
-                  bottom: '121px',
+                  bottom: '85px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   padding: '12px 40px',
@@ -188,7 +189,7 @@ const LoginPage = () => {
                 onClick={() => setRightPanelActive(false)}
                 style={{
                   position: 'absolute',
-                  bottom: '121px',
+                  bottom: '85px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   padding: '12px 40px',
@@ -227,7 +228,7 @@ const LoginPage = () => {
           >
             <h1
               style={{
-                marginBottom: '20px',
+                marginBottom: '80px',
                 color: 'rgba(0, 0, 0, 1)',
                 fontSize: '1.375rem',
                 fontWeight: 'bold',
@@ -274,7 +275,9 @@ const LoginPage = () => {
                 ></i>
               </a>
             </div>
-            <span style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}>
+            <span
+              style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
+            >
               or use your account
             </span>
             <input
@@ -405,7 +408,9 @@ const LoginPage = () => {
                 ></i>
               </a>
             </div>
-            <span style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}>
+            <span
+              style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
+            >
               or use your email for registration
             </span>
             <input
@@ -436,7 +441,13 @@ const LoginPage = () => {
                 borderRadius: '5px',
               }}
             />
-            <div style={{ position: 'relative', width: '80%', marginBottom: '10px' }}>
+            <div
+              style={{
+                position: 'relative',
+                width: '80%',
+                marginBottom: '10px',
+              }}
+            >
               <input
                 type="password"
                 id="passwordRegister"
