@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Header from '../../components/Layout/Header';
+import { useLocation } from 'react-router-dom';
 import {
   faUser,
   faHeart,
@@ -12,6 +13,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
+  const location = useLocation(); // Get the current route
   const [scrollingUp, setScrollingUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(window.scrollY);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -143,8 +145,9 @@ function Navbar() {
   return (
     <>
       <nav
-        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 hidden md:block lg:block ${scrollingUp ? 'translate-y-0' : '-translate-y-full'
-          }`}
+        className={`bg-white shadow-md fixed top-0 w-full z-50 transition-transform duration-300 hidden md:block lg:block ${
+          scrollingUp ? 'translate-y-0' : '-translate-y-full'
+        }`}
       >
         <Header />
         <div className=" mx-auto px-4 lg:px-8 flex items-center justify-between h-16">
@@ -158,10 +161,19 @@ function Navbar() {
           </div>
 
           {/* Navigation Links */}
-          <ul className="flex-1 flex justify-center item lg:space-x-12 lg:mr-2 mx-auto space-x-4    text-gray-700 lg:font-medium">
+          <ul className="flex-1 flex justify-center lg:space-x-12 lg:mr-2 mx-auto space-x-4 text-gray-700 lg:font-medium">
             {navLinks.map((link, index) => (
-              <li key={index} className="hover:text-emerald-600 transition">
-                <Link to={link.path}>{link.name}</Link>
+              <li key={index}>
+                <Link
+                  to={link.path}
+                  className={`transition ${
+                    location.pathname === link.path
+                      ? 'text-emerald-600 font-bold' // Active link styling
+                      : 'text-gray-700 hover:text-emerald-600'
+                  }`}
+                >
+                  {link.name}
+                </Link>
               </li>
             ))}
           </ul>
@@ -303,8 +315,9 @@ function Navbar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-[9999] ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed top-0 left-0 h-full w-48 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-[9999] ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
         <div className="p-2 flex justify-center items-center border-b">
           <img
@@ -324,7 +337,7 @@ function Navbar() {
         </ul>
         <div className="p-4 flex space-x-4 justify-center border-b">
           {/* User Profile */}
-            <button onClick={handleProfileClick}>
+          <button onClick={handleProfileClick}>
             <FontAwesomeIcon
               icon={faUser}
               className="text-gray-700 hover:text-emerald-600 text-xl transition"

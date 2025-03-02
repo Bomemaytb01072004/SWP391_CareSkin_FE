@@ -1,38 +1,89 @@
 import React, { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode'; // Ensure this is correctly imported
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import bgImage from '../../assets/bg-login.png';
 
 const UserProfile = () => {
   const [user, setUser] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    dob: '',
-    gender: '',
-    profilePicture: '',
-    address: '',
+    CustomerId: null,
+    UserName: '',
+    Email: '',
+    FullName: '',
+    Phone: '',
+    Dob: '',
+    Gender: '',
+    PictureUrl: '',
+    Address: '',
   });
+
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [customerId, setCustomerId] = useState(
+    localStorage.getItem('customerId')
+  );
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [editMode, setEditMode] = useState(false);
 
-  const customerId = 1; // Replace this with actual customer ID from authentication
+  useEffect(() => {
+    if (!token) {
+      console.error('No token found. User is not logged in.');
+      return;
+    }
+
+    // Decode token only if customerId is not in localStorage
+    if (!customerId) {
+      try {
+        const decodedToken = jwtDecode(token);
+
+        if (decodedToken.customerId) {
+          setCustomerId(decodedToken.customerId);
+          localStorage.setItem('customerId', decodedToken.customerId);
+        } else {
+          console.error('customerId not found in token');
+          return; // Stop execution if no customerId
+        }
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        return;
+      }
+    }
+  }, [token]);
 
   useEffect(() => {
-    // Fetch User Data using fetch API
-    fetch(`http://careskinbeauty.shop:4456/api/Customer/${customerId}`)
+    if (!customerId) {
+      console.error('No customerId found, skipping API request.');
+      return;
+    }
+
+    fetch(`http://careskinbeauty.shop:4456/api/Customer/${customerId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // Ensure token is included
+      },
+    })
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error(`Error fetching profile: ${response.status}`);
         }
         return response.json();
       })
-      .then((data) => setUser(data))
-      .catch((err) => console.error('Error fetching profile:', err));
-  }, [customerId]);
+      .then((data) => {
+        setUser({
+          CustomerId: data.CustomerId,
+          UserName: data.UserName,
+          Email: data.Email || '',
+          FullName: data.FullName || '',
+          Phone: data.Phone || '',
+          Dob: data.Dob ? data.Dob.split('T')[0] : '',
+          Gender: data.Gender || '',
+          PictureUrl: data.PictureUrl || 'https://via.placeholder.com/80',
+          Address: data.Address || '',
+        });
+      })
+      .catch((error) => console.error('Error fetching profile:', error));
+  }, [customerId, token]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -46,25 +97,27 @@ const UserProfile = () => {
     setLoading(true);
     setMessage('');
 
-    const formData = new FormData();
-    formData.append('FullName', user.fullName);
-    formData.append('Email', user.email);
-    formData.append('Phone', user.phone);
-    formData.append('Dob', user.dob);
-    formData.append('Gender', user.gender);
-    formData.append('Address', user.address);
-    if (selectedFile) {
-      formData.append('ProfilePicture', selectedFile);
-    }
+    const updatedUser = {
+      FullName: user.fullName,
+      Email: user.email,
+      Phone: user.phone,
+      Dob: user.dob,
+      Gender: user.gender,
+      Address: user.address,
+    };
 
     try {
-      const response = await fetch(`http://careskinbeauty.shop:4456/api/Customer/update-profile/${customerId}`, {
-        method: 'PUT',
-        body: formData,
-      });
-      if (!response.ok) {
-        throw new Error('Error updating profile');
-      }
+      const response = await fetch(
+        `/api/Customer/update-profile/${customerId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedUser),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
       setMessage('Profile updated successfully!');
       setEditMode(false);
     } catch (error) {
@@ -197,15 +250,6 @@ const UserProfile = () => {
                   }`}
                 />
               </div>
-              <div className="col-span-2">
-                <label className="text-gray-600 text-sm">Profile Picture</label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  disabled={!editMode}
-                  className="w-full border p-2 rounded-md focus:ring focus:ring-blue-200"
-                />
-              </div>
             </div>
 
             {/* Buttons */}
@@ -216,12 +260,6 @@ const UserProfile = () => {
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                 >
                   {loading ? 'Updating...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={() => setEditMode(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition"
-                >
-                  Cancel
                 </button>
               </div>
             )}

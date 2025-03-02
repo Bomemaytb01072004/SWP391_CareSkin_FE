@@ -71,9 +71,4 @@
   border-radius: 20px;
 }
 
-.responsiveTable {
-  /* Nếu cần cuộn mượt trên iOS thì bật dòng dưới */
-  -webkit-overflow-scrolling: touch; 
-}
-
-
+.responsiveTable {  /* Nếu cần cuộn mượt trên iOS thì bật dòng dưới */  -webkit-overflow-scrolling: touch; }
