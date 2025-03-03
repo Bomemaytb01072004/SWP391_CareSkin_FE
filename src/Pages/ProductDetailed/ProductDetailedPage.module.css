@@ -13,7 +13,7 @@
   background: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.0);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0);
 }
 
 .main {
@@ -65,7 +65,6 @@
   gap: 15px;
 }
 
-
 .productTitle {
   font-size: 24px;
   font-weight: bold;
@@ -104,7 +103,7 @@
 }
 
 .keyBenefits li::before {
-  content: "✔";
+  content: '✔';
   position: absolute;
   left: 0;
   color: #5cb85c;
@@ -145,12 +144,11 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  border: 0.1px solid #E5E7EB;
+  border: 0.1px solid #e5e7eb;
   border-radius: 8px;
-
 }
 
-.quantitySelection span{
+.quantitySelection span {
   font-size: 18px;
 }
 
@@ -161,7 +159,6 @@
   background: white;
   cursor: pointer;
   border-radius: 8px;
-
 }
 
 .addToCart {
@@ -207,4 +204,3 @@
   justify-content: center;
   gap: 10px;
 }
-

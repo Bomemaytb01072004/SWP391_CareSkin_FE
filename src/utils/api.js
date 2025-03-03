@@ -1,7 +1,6 @@
 const apiURLcustomers =
   'https://679897e2be2191d708b02aab.mockapi.io/api/products/Customers';
-const apiURLproducts =
-  'https://679897e2be2191d708b02aab.mockapi.io/api/products/Products';
+const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
 const apiURLorders =
   'https://67b44f76392f4aa94faa49b5.mockapi.io/api/order/order';
 

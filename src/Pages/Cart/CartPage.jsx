@@ -15,7 +15,7 @@ const CartPage = () => {
 
     // Merge duplicate items (Stack together)
     const mergedCart = storedCart.reduce((acc, item) => {
-      const existingItem = acc.find((i) => i.id === item.id);
+      const existingItem = acc.find((i) => i.id === item.ProductId);
       if (existingItem) {
         existingItem.quantity += item.quantity || 1;
       } else {
@@ -28,7 +28,7 @@ const CartPage = () => {
   }, []);
 
   const removeFromCart = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
+    const updatedCart = cart.filter((item) => item.ProductId !== id);
     setCart(updatedCart);
     setSelectedItems(selectedItems.filter((itemId) => itemId !== id));
 
@@ -40,7 +40,7 @@ const CartPage = () => {
 
   const handleQuantityChange = (id, newQuantity) => {
     const updatedCart = cart.map((item) =>
-      item.id === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
+      item.ProductId === id ? { ...item, quantity: Math.max(1, newQuantity) } : item
     );
 
     setCart(updatedCart);
@@ -68,7 +68,7 @@ const CartPage = () => {
     if (selectedItems.length === cart.length) {
       updatedSelected = [];
     } else {
-      updatedSelected = cart.map((item) => item.id);
+      updatedSelected = cart.map((item) => item.ProductId);
     }
     setSelectedItems(updatedSelected);
 
@@ -77,7 +77,7 @@ const CartPage = () => {
   };
 
   const removeSelectedItems = () => {
-    const updatedCart = cart.filter((item) => !selectedItems.includes(item.id));
+    const updatedCart = cart.filter((item) => !selectedItems.includes(item.ProductId));
     setCart(updatedCart);
     setSelectedItems([]);
 
@@ -89,7 +89,7 @@ const CartPage = () => {
 
   const proceedToCheckout = () => {
     const selectedProducts = cart.filter((item) =>
-      selectedItems.includes(item.id)
+      selectedItems.includes(item.ProductId)
     );
 
     if (selectedProducts.length > 0) {
@@ -99,10 +99,10 @@ const CartPage = () => {
   };
 
   const selectedProducts = cart.filter((item) =>
-    selectedItems.includes(item.id)
+    selectedItems.includes(item.ProductId)
   );
   const subtotal = selectedProducts.reduce(
-    (total, item) => total + item.price * (item.quantity || 1),
+    (total, item) => total + item.Variations[0].Price * (item.quantity || 1),
     0
   );
   const tax = subtotal * taxRate;
@@ -154,30 +154,30 @@ const CartPage = () => {
             <div className="mt-4 space-y-4 overflow-y-auto max-h-[545px] pr-2">
               {cart.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.ProductId}
                   className="flex items-center bg-white shadow-sm p-4 rounded-xl border relative w-full"
                 >
                   <input
                     type="checkbox"
-                    checked={selectedItems.includes(item.id)}
-                    onChange={() => handleCheckboxChange(item.id)}
+                    checked={selectedItems.includes(item.ProductId)}
+                    onChange={() => handleCheckboxChange(item.ProductId)}
                     className="w-4 h-4 cursor-pointer accent-emerald-500 border-2 border-gray-400 rounded-md "
                   />
 
                   {/* Product Image */}
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.PictureUrl}
+                    alt={item.ProductName}
                     className="w-24 h-28 object-cover ml-3 rounded-md border transform transition duration-300 ease-in-out hover:scale-150"
                   />
 
                   {/* Product Details */}
                   <div className="ml-4 flex-1">
                     <h3 className="text-base font-semibold w-64 text-gray-800">
-                      {item.name}
+                      {item.ProductName}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      {item.size || '50ml'}
+                      {item.Variations[0].Ml || '50ml'}
                     </p>
                   </div>
 
@@ -185,7 +185,7 @@ const CartPage = () => {
                   <div className="flex items-center border rounded-lg overflow-hidden">
                     <button
                       onClick={() =>
-                        handleQuantityChange(item.id, item.quantity - 1)
+                        handleQuantityChange(item.ProductId, item.quantity - 1)
                       }
                       className="bg-gray-200 px-3 py-1 text-gray-700 hover:bg-gray-300"
                       disabled={item.quantity <= 1}
@@ -201,13 +201,13 @@ const CartPage = () => {
                       onChange={(e) => {
                         let value = parseInt(e.target.value);
                         if (isNaN(value) || value < 1) value = 1;
-                        handleQuantityChange(item.id, value);
+                        handleQuantityChange(item.ProductId, value);
                       }}
                     />
 
                     <button
                       onClick={() =>
-                        handleQuantityChange(item.id, item.quantity + 1)
+                        handleQuantityChange(item.ProductId, item.quantity + 1)
                       }
                       className="bg-gray-200 px-3 py-1 text-gray-700 hover:bg-gray-300"
                     >
@@ -217,13 +217,13 @@ const CartPage = () => {
 
                   {/* Price */}
                   <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-12">
-                    ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                    ${((item.Variations[0].Price || 0) * (item.quantity || 1)).toFixed(2)}
                   </p>
 
                   {/* Remove Button */}
                   <button
                     className="text-red-500 hover:text-red-700 text-sm ml-6 transition"
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.ProductId)}
                   >
                     Remove
                   </button>

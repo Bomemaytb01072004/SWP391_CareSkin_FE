@@ -77,7 +77,7 @@ function Navbar() {
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const removeFromCart = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
+    const updatedCart = cart.filter((item) => item.ProductId !== id);
     setCart(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
 
@@ -229,27 +229,27 @@ function Navbar() {
                     <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
                       {cart.map((item) => (
                         <div
-                          key={item.id}
+                          key={item.ProductId}
                           className="flex items-center gap-3 border-b pb-2 mb-2 last:border-none"
                         >
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.PictureUrl}
+                            alt={item.ProductName}
                             className="w-14 h-14 object-cover rounded-md"
                           />
                           <div className="flex-1">
                             <p className="text-xs font-semibold text-gray-800">
-                              {item.name}
+                              {item.ProductName}
                             </p>
                             <p className="text-xs text-gray-600">
                               x{item.quantity}
                             </p>
                           </div>
                           <p className="text-sm font-bold text-gray-700">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ${(item.Variations[0].Price * item.quantity).toFixed(2)}
                           </p>
                           {/* Remove Button */}
-                          <button onClick={() => removeFromCart(item.id)}>
+                          <button onClick={() => removeFromCart(item.ProductId)}>
                             <FontAwesomeIcon
                               icon={faTrash}
                               className="text-red-500 hover:text-red-700 text-base transition"

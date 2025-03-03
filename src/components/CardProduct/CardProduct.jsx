@@ -1,23 +1,21 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
-
-
-function CardProduct({ product, addToCart , addToCompare}) {
+function CardProduct({ product, addToCart, addToCompare }) {
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
         <Link
           className="relative mx-4 mt-3 flex-col overflow-hidden rounded-xl"
-          to={`/product/${product.id}`}
+          to={`/product/${product.ProductId}`}
         >
           <img
             className="w-auto h-auto object-cover"
-            src={product.image}
-            alt={product.name}
+            src={product.PictureUrl}
+            alt={product.ProductName}
           />
           {product.discount && (
             <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
@@ -27,16 +25,16 @@ function CardProduct({ product, addToCart , addToCompare}) {
         </Link>
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
-          <Link to={`/product/${product.id}`}>
+          <Link to={`/product/${product.ProductId}`}>
             <h5 className="text-lg tracking-tight text-slate-900 truncate">
-              {product.name}
+              {product.ProductName}
             </h5>
           </Link>
 
           <div className="mt-2 mb-5 flex items-center justify-between">
             <p>
               <span className="text-xl font-bold text-slate-900">
-                ${product.price}
+                ${product.Variations[0].Price}
               </span>
               {product.originalPrice && (
                 <span className="text-sm text-slate-900 line-through ml-2">
@@ -56,9 +54,9 @@ function CardProduct({ product, addToCart , addToCompare}) {
             <button
               className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md  bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition  hover:bg-emerald-700"
               onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              addToCart(product);
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
               }}
             >
               Add to cart
@@ -72,7 +70,10 @@ function CardProduct({ product, addToCart , addToCompare}) {
                 addToCompare(product);
               }}
             >
-              <FontAwesomeIcon icon={faCodeCompare} className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700" />
+              <FontAwesomeIcon
+                icon={faCodeCompare}
+                className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700"
+              />
             </button>
           </div>
         </div>
