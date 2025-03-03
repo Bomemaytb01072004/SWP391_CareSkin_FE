@@ -5,32 +5,44 @@ import bgImage from '../../assets/bg-login.png';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-
-import { GoogleLogin } from '@react-oauth/google';
+// import { GoogleLogin } from '@react-oauth/google';
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
+
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginPasswordType, setLoginPasswordType] = useState('password');
+
+  const [registerUsername, setRegisterUsername] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [registerPasswordType, setRegisterPasswordType] = useState('password');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmPasswordType, setConfirmPasswordType] = useState('password');
+
   const navigate = useNavigate();
 
-  const togglePassword = (idField) => {
-    const passwordField = document.getElementById(idField);
-    if (passwordField) {
-      passwordField.type =
-        passwordField.type === 'password' ? 'text' : 'password';
-    }
+  const toggleLoginPassword = () => {
+    setLoginPasswordType((prev) => (prev === 'password' ? 'text' : 'password'));
+  };
+
+  const toggleRegisterPassword = () => {
+    setRegisterPasswordType((prev) =>
+      prev === 'password' ? 'text' : 'password'
+    );
+  };
+
+  const toggleConfirmPassword = () => {
+    setConfirmPasswordType((prev) =>
+      prev === 'password' ? 'text' : 'password'
+    );
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    const enteredUsername = document
-      .getElementById('loginUsername')
-      .value.trim();
-    const enteredPassword = document
-      .getElementById('passwordLogin')
-      .value.trim();
-
-    if (!enteredUsername || !enteredPassword) {
+    if (!loginUsername.trim() || !loginPassword.trim()) {
       toast.error('Please fill in all fields.');
       return;
     }
@@ -42,41 +54,43 @@ const LoginPage = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json',
           },
           body: JSON.stringify({
-            UserName: enteredUsername,
-            Password: enteredPassword,
+            UserName: loginUsername,
+            Password: loginPassword,
           }),
         }
       );
 
-      // Parse the response once and store it
-      const responseData = await response.json();
-      console.log('Response:', responseData); // Debugging
-
-      if (!responseData.Success) {
-        throw new Error(responseData.Message || 'Login failed');
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Login failed with error:', errorData);
+        throw new Error(errorData.message || 'Login failed');
       }
 
-      // Extract token correctly from response data
-      const token = responseData.Data;
-      if (token) {
-        localStorage.setItem('token', token);
+      const data = await response.json();
 
-        // Decode JWT (if needed)
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const decodedPayload = JSON.parse(window.atob(base64));
-        localStorage.setItem('user', JSON.stringify(decodedPayload));
-
-        toast.success('Login successful', { autoClose: 2000 });
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
-      } else {
-        toast.error('Invalid username or password.');
+      if (!data.Token) {
+        toast.error(
+          data.message || data.error || 'Invalid username or password.'
+        );
+        return;
       }
+
+      const token = data.Token;
+      const CustomerId = data.CustomerId;
+      localStorage.setItem('Token', token);
+      localStorage.setItem('CustomerId', CustomerId);
+
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const decodedPayload = JSON.parse(window.atob(base64));
+      localStorage.setItem('user', JSON.stringify(decodedPayload));
+
+      toast.success('Login successful', { autoClose: 2000 });
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
     } catch (error) {
       console.error('Login Error:', error);
       toast.error(error.message || 'An error occurred while logging in.');
@@ -85,45 +99,47 @@ const LoginPage = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    const UserName = document.getElementById('registerUserName')?.value.trim();
-    const Email = document.getElementById('registerEmail')?.value.trim();
-    const Password = document.getElementById('passwordRegister')?.value.trim();
-    const ConfirmPassword = document
-      .getElementById('ConfirmPassword')
-      ?.value.trim();
-    if (!UserName || !Email || !Password || !ConfirmPassword) {
+
+    if (
+      !registerUsername.trim() ||
+      !registerEmail.trim() ||
+      !registerPassword.trim() ||
+      !confirmPassword.trim()
+    ) {
       toast.error('All fields are required.');
       return;
     }
-  
-    if (Password !== ConfirmPassword) {
+
+    if (registerPassword !== confirmPassword) {
       toast.error('Passwords do not match. Please try again.');
       return;
     }
-  
+
     try {
       const formData = new FormData();
-      formData.append('UserName', UserName);
-      formData.append('Email', Email);
-      formData.append('Password', Password);
-      formData.append('ConfirmPassword', ConfirmPassword);
-  
-      const registerResponse = await fetch('http://careskinbeauty.shop:4456/api/Customer/register', {
-        method: 'POST',
-        body: formData,
-      });
-  
+      formData.append('UserName', registerUsername);
+      formData.append('Email', registerEmail);
+      formData.append('Password', registerPassword);
+      formData.append('ConfirmPassword', confirmPassword);
+
+      const registerResponse = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/register',
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
       if (!registerResponse.ok) {
         const errorData = await registerResponse.json();
         toast.error(errorData.message || 'Registration failed');
         return;
       }
-  
-      const data = await registerResponse.json();
+
+      await registerResponse.json();
       toast.success('Registration successful! You can now log in.');
-  
+
       setRightPanelActive(false);
-  
     } catch (error) {
       console.error('Error:', error);
       toast.error('An error occurred. Please try again later.');
@@ -150,6 +166,7 @@ const LoginPage = () => {
       >
         ← Homepage
       </button>
+
       <div
         className="h-screen flex items-center justify-center bg-cover bg-center p-4"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -214,6 +231,7 @@ const LoginPage = () => {
             )}
           </div>
 
+          {/* Form Đăng Nhập */}
           <form
             onSubmit={handleLogin}
             style={{
@@ -244,14 +262,16 @@ const LoginPage = () => {
               Sign In
             </h1>
             <div style={{ marginBottom: '20px' }}>
-              {/* <GoogleLogin
+              {/* 
+              <GoogleLogin
                 onSuccess={credentialResponse => {
                   console.log(credentialResponse);
                 }}
                 onError={() => {
                   console.log('Login Failed');
                 }}
-              /> */}
+              /> 
+              */}
               <a href="#facebook-login">
                 <i
                   className="fa-brands fa-facebook"
@@ -289,9 +309,9 @@ const LoginPage = () => {
             </span>
             <input
               type="text"
-              id="loginUsername"
               name="username"
               placeholder="Username"
+              autoComplete="username"
               required
               style={{
                 width: '80%',
@@ -300,13 +320,15 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
+              value={loginUsername}
+              onChange={(e) => setLoginUsername(e.target.value)}
             />
             <div style={{ position: 'relative', width: '80%' }}>
               <input
-                type="password"
-                id="passwordLogin"
+                type={loginPasswordType}
                 name="password"
                 placeholder="Password"
+                autoComplete="current-password"
                 required
                 style={{
                   width: '100%',
@@ -314,10 +336,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
               />
               <i
                 className="fa-solid fa-eye toggle-password"
-                onClick={() => togglePassword('passwordLogin')}
+                onClick={toggleLoginPassword}
                 style={{
                   position: 'absolute',
                   top: '50%',
@@ -422,9 +446,9 @@ const LoginPage = () => {
             </span>
             <input
               type="text"
-              id="registerUserName"
               name="UserName"
               placeholder="Username"
+              autoComplete="username"
               required
               style={{
                 width: '80%',
@@ -433,12 +457,14 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
+              value={registerUsername}
+              onChange={(e) => setRegisterUsername(e.target.value)}
             />
             <input
               type="email"
-              id="registerEmail"
               name="Email"
               placeholder="Email"
+              autoComplete="email"
               required
               style={{
                 width: '80%',
@@ -447,6 +473,8 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
+              value={registerEmail}
+              onChange={(e) => setRegisterEmail(e.target.value)}
             />
             <div
               style={{
@@ -456,10 +484,10 @@ const LoginPage = () => {
               }}
             >
               <input
-                type="password"
-                id="passwordRegister"
+                type={registerPasswordType}
                 name="Password"
                 placeholder="Password"
+                autoComplete="new-password"
                 required
                 style={{
                   width: '100%',
@@ -467,10 +495,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
+                value={registerPassword}
+                onChange={(e) => setRegisterPassword(e.target.value)}
               />
               <i
                 className="fa-solid fa-eye toggle-password"
-                onClick={() => togglePassword('passwordRegister')}
+                onClick={toggleRegisterPassword}
                 style={{
                   position: 'absolute',
                   top: '50%',
@@ -482,10 +512,10 @@ const LoginPage = () => {
             </div>
             <div style={{ position: 'relative', width: '80%' }}>
               <input
-                type="password"
-                id="ConfirmPassword"
+                type={confirmPasswordType}
                 name="ConfirmPassword"
                 placeholder="Confirm Password"
+                autoComplete="new-password"
                 required
                 style={{
                   width: '100%',
@@ -493,10 +523,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <i
                 className="fa-solid fa-eye toggle-password"
-                onClick={() => togglePassword('ConfirmPassword')}
+                onClick={toggleConfirmPassword}
                 style={{
                   position: 'absolute',
                   top: '50%',
