@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchProductById } from '../../utils/api';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import styles from './ProductDetailedPage.module.css';
 import Navbar from '../../components/Layout/Navbar';
@@ -9,6 +9,10 @@ import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import LoadingPage from '../LoadingPage/LoadingPage';
 import ComparePopup from '../../components/ComparePopup/ComparePopup';
 import Accordion from '../../components/DetailsProduct/Accordion';
+import LightGallery from 'lightgallery/react'; // <-- LightGallery core
+import lgZoom from 'lightgallery/plugins/zoom'; // <-- Zoom plugin
+import 'lightgallery/css/lightgallery.css';
+import 'lightgallery/css/lg-zoom.css';
 import {
   faTruckFast,
   faArrowRotateLeft,
@@ -16,12 +20,16 @@ import {
   faCodeCompare,
 } from '@fortawesome/free-solid-svg-icons';
 import 'bootstrap/dist/css/bootstrap-grid.min.css';
+import './LightGalleryOverrides.css'; // Must come after the above
 
 function ProductDetailedPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
+  const [quantity, setQuantity] = useState(0); // Default quantity set to 1
+  const [openStates, setOpenStates] = useState([true, false, false, false]);
 
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
@@ -51,8 +59,21 @@ function ProductDetailedPage() {
     getProduct();
   }, [id]);
 
+  // Toggle a specific accordion index
+  const toggleAccordion = (index) => {
+    setOpenStates((prev) => {
+      // Copy the array
+      const newStates = [...prev];
+      // Flip just the clicked index
+      newStates[index] = !newStates[index];
+      return newStates;
+    });
+  };
   const handleVariationChange = (variation) => {
     setSelectedVariation(variation);
+  };
+  const handleQuantityChange = (increment) => {
+    setQuantity((prev) => Math.max(1, prev + increment));
   };
 
   const addToCart = (product) => {
@@ -66,6 +87,21 @@ function ProductDetailedPage() {
       existingProduct.quantity += 1;
     } else {
       cart.push({ ...product, quantity: 1 });
+    }
+    const itemToAdd = {
+      ...product,
+      ProductId: selectedVariation.ProductVariationId,
+      Price: selectedVariation.Price,
+      quantity,
+    };
+
+    const index = cart.findIndex(
+      (item) => item.ProductId === itemToAdd.ProductId
+    );
+    if (index !== -1) {
+      cart[index].quantity += quantity;
+    } else {
+      cart.push(itemToAdd);
     }
 
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -121,11 +157,29 @@ function ProductDetailedPage() {
           <Breadcrumb items={breadcrumbItems} />
           <div className="col-lg-6 col-md-9 col-sm-12 text-center">
             <div className={styles.productImages}>
-              <img
-                className={styles.img}
-                src={product.PictureUrl}
-                alt={product.ProductName}
-              />
+              {/* LightGallery wrapper: 
+                 "plugins={[lgZoom]}" enables zoom within the lightbox. 
+                 "a href" points to the large image source. */}
+              <LightGallery
+                plugins={[lgZoom]}
+                elementClassNames="lightgallery-container"
+                speed={500} // adjust animation speed
+                download={false} // hide download button (optional)
+              >
+                {/* Single main image link */}
+                <a href={product.PictureUrl}>
+                  <img
+                    className={styles.img}
+                    src={product.PictureUrl}
+                    alt={product.ProductName}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </a>
+              </LightGallery>
+
+              {/* If you want more images in the same lightbox gallery:
+                   Just add more <a> tags, each with its own img. */}
+
               <div className="d-flex justify-content-center flex-wrap mt-3">
                 <img
                   className={`${styles.thumbnail} mx-2`}
@@ -147,7 +201,17 @@ function ProductDetailedPage() {
                   ? formatPrice(selectedVariation.Price)
                   : 'N/A'}
               </div>
-              <p className={styles.description}>{product.Description}</p>
+              <p className={styles.description}>
+                <ul>
+                  {product.MainIngredients.map((ingredient, i) => (
+                    <li key={i}>
+                      {ingredient.IngredientName !== 'null'
+                        ? ingredient.IngredientName
+                        : 'No specific main ingredient listed'}
+                    </li>
+                  ))}
+                </ul>
+              </p>
               <div className="d-flex align-items-center my-3">
                 <span className="fw-bold me-2">Size:</span>
                 {product.Variations.map((variation) => (
@@ -165,9 +229,19 @@ function ProductDetailedPage() {
                 className={`d-flex align-items-center my-2 ${styles.quantitySelection}`}
               >
                 <div className={styles.quantityGroupFirst}>
-                  <button className={styles.quantityCount}>-</button>
-                  <span>1</span>
-                  <button className={styles.quantityCount}>+</button>
+                  <button
+                    className={styles.quantityCount}
+                    onClick={() => handleQuantityChange(-1)}
+                  >
+                    -
+                  </button>
+                  <span>{quantity + 1}</span>
+                  <button
+                    className={styles.quantityCount}
+                    onClick={() => handleQuantityChange(1)}
+                  >
+                    +
+                  </button>
                 </div>
                 <button
                   className={styles.addToCart}
@@ -207,28 +281,29 @@ function ProductDetailedPage() {
               </div>
             </div>
           </div>
-          <Accordion title="Description">
+          <Accordion
+            title="Description"
+            isOpen={openStates[0]}
+            onToggle={() => toggleAccordion(0)}
+          >
             <p>{product.Description}</p>
           </Accordion>
-          <Accordion title="Main Ingredients">
-            <ul>
-              {product.MainIngredients.map((ingredient, index) => (
-                <li key={index}>
-                  {ingredient.IngredientName !== 'null'
-                    ? ingredient.IngredientName
-                    : 'No specific main ingredient listed'}
-                </li>
-              ))}
-            </ul>
-          </Accordion>
-          <Accordion title="Full Ingredients">
+          <Accordion
+            title="Full Ingredients"
+            isOpen={openStates[1]}
+            onToggle={() => toggleAccordion(1)}
+          >
             <p>
-              {product.DetailIngredients.map(
-                (ingredient) => ingredient.IngredientName
-              ).join(', ')}
+              {product.DetailIngredients.map((ing) => ing.IngredientName).join(
+                ', '
+              )}
             </p>
           </Accordion>
-          <Accordion title="How To Use">
+          <Accordion
+            title="How To Use"
+            isOpen={openStates[2]}
+            onToggle={() => toggleAccordion(2)}
+          >
             <p>{product.Usages.map((usage) => usage.Instruction).join('. ')}</p>
           </Accordion>
         </div>

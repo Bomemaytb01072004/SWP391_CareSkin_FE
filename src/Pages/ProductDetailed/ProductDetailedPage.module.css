@@ -168,7 +168,7 @@
   height: 40px;
   width: 80%;
   padding: 0 20px;
-  background: #5cb85c;
+  background: rgb(5, 150, 105);
   color: white;
   font-size: 18px;
   border-radius: 8px;
@@ -178,7 +178,7 @@
 }
 
 .addToCart:hover {
-  background: #4cae4c;
+  background: rgb(4 120 87);
 }
 
 .quantityCompare {
@@ -204,3 +204,4 @@
   justify-content: center;
   gap: 10px;
 }
+
