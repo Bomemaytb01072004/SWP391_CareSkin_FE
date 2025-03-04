@@ -22,6 +22,8 @@ function Navbar() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const Token = localStorage.getItem('token');
+  const CustomerId = localStorage.getItem('CustomerId');
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   let closeTimeout = null;
@@ -33,9 +35,11 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user'); // Clear user session
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('CustomerId');
     setIsLoggedIn(false);
-    navigate('/'); // Redirect to homepage after logout
+    navigate('/');
   };
 
   useEffect(() => {
@@ -62,26 +66,208 @@ function Navbar() {
   }, [lastScrollY]);
 
   useEffect(() => {
+    const fetchCart = async () => {
+      if (CustomerId) {
+        try {
+          const response = await fetch(
+            `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${Token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Error fetching cart from server: ${response.status}`
+            );
+          }
+
+          const cartData = await response.json();
+
+          // Enrich cart items with product details
+          const enrichedItems = await Promise.all(
+            cartData.map(async (item) => {
+              try {
+                const productRes = await fetch(
+                  `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${Token}`,
+                    },
+                  }
+                );
+
+                if (!productRes.ok) {
+                  throw new Error(
+                    `Error fetching product ${item.ProductId}: ${productRes.status}`
+                  );
+                }
+
+                const productData = await productRes.json();
+
+                return {
+                  ...item,
+                  PictureUrl: productData.PictureUrl,
+                  Variations: productData.Variations,
+                };
+              } catch (error) {
+                console.error('Error enriching cart item:', error);
+                return item; // Return the item without modification in case of error
+              }
+            })
+          );
+
+          setCart(enrichedItems);
+        } catch (error) {
+          console.error('Error fetching cart from server:', error);
+        }
+      } else {
+        // Fallback to localStorage cart if user is not logged in
+        const storedCart = JSON.parse(localStorage.getItem('cart'));
+        if (storedCart && storedCart.length > 0) {
+          setCart(storedCart);
+        }
+
+        const mergedCart = storedCart.reduce((acc, item) => {
+          const existingItem = acc.find((i) => i.ProductId === item.ProductId);
+          if (existingItem) {
+            existingItem.quantity += item.quantity || 1;
+          } else {
+            acc.push({ ...item, quantity: item.quantity || 1 });
+          }
+          return acc;
+        }, []);
+
+        setCart(mergedCart);
+      }
+    };
+
+    fetchCart();
+  }, [CustomerId, Token]);
+  useEffect(() => {
     const updateCart = () => {
       const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
       setCart(storedCart);
+      setGlobalCart(storedCart);
     };
 
-    updateCart();
     window.addEventListener('storage', updateCart);
-    return () => {
-      window.removeEventListener('storage', updateCart);
-    };
+    return () => window.removeEventListener('storage', updateCart);
   }, []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const handleQuantityChange = async (
+    productId,
+    newQuantity,
+    productVariationId
+  ) => {
+    if (newQuantity < 1) return; // Prevent invalid quantity
 
-  const removeFromCart = (id) => {
-    const updatedCart = cart.filter((item) => item.ProductId !== id);
-    setCart(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    const cartItem = cart.find((item) => item.ProductId === productId);
+    if (!cartItem) {
+      console.error(`Cart item with ProductId ${productId} not found.`);
+      return;
+    }
 
-    window.dispatchEvent(new Event('storage'));
+    if (CustomerId) {
+      try {
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/update`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Token}`,
+            },
+            body: JSON.stringify({
+              CustomerId: parseInt(CustomerId),
+              ProductId: cartItem.ProductId,
+              ProductVariationId:
+                productVariationId ?? cartItem.ProductVariationId,
+              Quantity: newQuantity,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update quantity (ProductId: ${cartItem.ProductId})`
+          );
+        }
+
+        // ✅ Update the cart state in React
+        setCart((prevCart) =>
+          prevCart.map((item) =>
+            item.ProductId === productId
+              ? {
+                  ...item,
+                  Quantity: newQuantity,
+                  ProductVariationId:
+                    productVariationId ?? item.ProductVariationId,
+                  Price:
+                    cartItem.Variations.find(
+                      (v) => v.ProductVariationId === productVariationId
+                    )?.Price || item.Price,
+                }
+              : item
+          )
+        );
+      } catch (error) {
+        console.error('Error updating cart quantity:', error);
+      }
+    } else {
+      // ✅ Guest users: update localStorage
+      setCart((prevCart) => {
+        const updatedCart = prevCart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                Quantity: newQuantity,
+                ProductVariationId:
+                  productVariationId ?? item.ProductVariationId,
+                Price:
+                  cartItem.Variations.find(
+                    (v) => v.ProductVariationId === productVariationId
+                  )?.Price || item.Price,
+              }
+            : item
+        );
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const removeFromCart = async (cartId) => {
+    if (CustomerId) {
+      try {
+        await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
+          {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${Token}` },
+          }
+        );
+        setCart((prevCart) =>
+          prevCart.filter((item) => item.CartId !== cartId)
+        );
+        setGlobalCart((prevCart) =>
+          prevCart.filter((item) => item.CartId !== cartId)
+        );
+      } catch (error) {
+        console.error('Error removing item:', error);
+      }
+    } else {
+      const updatedCart = cart.filter((item) => item.CartId !== cartId);
+      setCart(updatedCart);
+      setGlobalCart(updatedCart);
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   const handleProfileClick = () => {
@@ -241,15 +427,51 @@ function Navbar() {
                             <p className="text-xs font-semibold text-gray-800">
                               {item.ProductName}
                             </p>
-                            <p className="text-xs text-gray-600">
-                              x{item.quantity}
+                            <p className="text-xs font-semibold text-gray-800">
+                              <select
+                                value={item.ProductVariationId}
+                                onChange={(e) => {
+                                  const newVariationId = parseInt(
+                                    e.target.value
+                                  );
+                                  const newVariation = item.Variations.find(
+                                    (v) =>
+                                      v.ProductVariationId === newVariationId
+                                  );
+
+                                  handleQuantityChange(
+                                    item.ProductId,
+                                    item.Quantity,
+                                    newVariationId,
+                                    newVariation?.Price
+                                  );
+                                }}
+                                className="border rounded px-2 py-1 text-gray-700"
+                              >
+                                {item.Variations.map((variation) => (
+                                  <option
+                                    key={variation.ProductVariationId}
+                                    value={variation.ProductVariationId}
+                                  >
+                                    {variation.Ml}ml
+                                  </option>
+                                ))}
+                              </select>
+                            </p>
+                            <p className="text-xs mt-1 text-gray-600">
+                              x{item.Quantity ?? 1}
                             </p>
                           </div>
                           <p className="text-sm font-bold text-gray-700">
-                            ${(item.Variations[0].Price * item.quantity).toFixed(2)}
+                            $
+                            {(
+                              (item?.Price || 0) * (item.Quantity || 1)
+                            ).toFixed(2)}
                           </p>
                           {/* Remove Button */}
-                          <button onClick={() => removeFromCart(item.ProductId)}>
+                          <button
+                            onClick={() => removeFromCart(item.ProductId)}
+                          >
                             <FontAwesomeIcon
                               icon={faTrash}
                               className="text-red-500 hover:text-red-700 text-base transition"
