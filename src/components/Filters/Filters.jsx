@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './Filters.css';
 import SearchProduct from "../SearchProduct/SearchProduct";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { fetchCategories } from '../../utils/api'
 
 const Filters = ({ onFilterChange }) => {
   const [selectedFilters, setSelectedFilters] = useState({
@@ -11,12 +12,32 @@ const Filters = ({ onFilterChange }) => {
     skinType: [],
   });
 
-  const categories = [
-    { label: "Cleansers (45)", value: "cleansers" },
-    { label: "Moisturizers (32)", value: "moisturizers" },
-    { label: "Serums (28)", value: "serums" },
-    { label: "Face Masks (19)", value: "face_masks" },
-  ];
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchCategories();
+
+        const splittedCategories = data.flatMap(item =>
+          item.split(",").map(str => str.trim())
+        );
+        const uniqueCategories = Array.from(new Set(splittedCategories));
+
+        const mappedCategories = uniqueCategories.map(cat => {
+          const capitalizedLabel = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+          return {
+            label: capitalizedLabel,
+            value: capitalizedLabel.replace(/\s+/g, '_') 
+          };
+        });        
+
+        setCategories(mappedCategories);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    })();
+  }, []);
 
   const priceRanges = [
     { label: "Under $25", value: "under_25" },
@@ -42,10 +63,14 @@ const Filters = ({ onFilterChange }) => {
       } else {
         updatedFilters[filterType].push(value);
       }
-      onFilterChange(updatedFilters);
+      console.log("Updated Filters:", updatedFilters);
+      if (onFilterChange && typeof onFilterChange === "function") {
+        onFilterChange(updatedFilters);
+      }
       return updatedFilters;
     });
   };
+  
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -55,7 +80,7 @@ const Filters = ({ onFilterChange }) => {
         <div className="bg-white shadow-md">
           <div className="flex items-center justify-between p-4">
             {!isOpen && <SearchProduct />}
-            
+
             <button
               className="bg-blue-500 text-white px-4 py-3 rounded fixed right-4 top-4 shadow-lg focus:outline-none"
               onClick={() => setIsOpen(!isOpen)}

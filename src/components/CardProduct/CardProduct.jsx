@@ -28,12 +28,15 @@ function CardProduct({ product, addToCart , addToCompare}) {
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
           <Link to={`/product/${product.ProductId}`}>
-            <h5 className="text-lg tracking-tight text-slate-900 truncate">
+            <h5 className="mt-3 mx-1 text-lg tracking-tight text-slate-900 truncate">
               {product.ProductName}
             </h5>
           </Link>
+          <h6 className="text-md mx-1 tracking-tight text-slate-600 truncate">
+            {product.Category}
+          </h6>
 
-          <div className="mt-2 mb-5 flex items-center justify-between">
+          <div className="my-3 mx-1 flex items-center justify-between">
             <p>
               <span className="text-xl font-bold text-slate-900">
                 ${product.Variations[0].Price}

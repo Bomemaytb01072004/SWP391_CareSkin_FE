@@ -31,14 +31,14 @@ const SearchProduct = () => {
 
   const filteredProducts = searchTerm
     ? products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        product.ProductName.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : [];
 
   const displayedProducts = filteredProducts.slice(0, MAX_SUGGESTIONS);
 
   const handleProductClick = (product) => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${product.ProductId}`);
   };
 
   return (
@@ -55,11 +55,11 @@ const SearchProduct = () => {
         <ul className={styles.suggestList}>
           {displayedProducts.map((product) => (
             <li
-              key={product.id}
+              key={product.ProductId}
               className={styles.suggestItem}
               onClick={() => handleProductClick(product)}
             >
-              {product.name}
+              {product.ProductName}
             </li>
           ))}
         </ul>
