@@ -210,7 +210,32 @@ const LoginPage = () => {
 
             {rightPanelActive && (
               <button
-                onClick={() => setRightPanelActive(false)}
+                onClick={() => {
+                  // Gọi hàm đăng nhập trước
+                  setRightPanelActive(false);
+
+                  // Xóa giỏ hàng khi đăng nhập thành công
+                  const CustomerId = localStorage.getItem('CustomerId');
+                  const Token = localStorage.getItem('Token');
+
+                  if (CustomerId && Token) {
+                    console.log(
+                      'User is logged in. Clearing cart and checkout...'
+                    );
+
+                    // ✅ Clear session storage
+                    localStorage.removeItem('cart');
+                    localStorage.removeItem('checkoutItems');
+
+                    // ✅ Update state
+                    setCart([]);
+
+                    // ✅ Notify UI components of changes
+                    window.dispatchEvent(new Event('storage'));
+
+                    console.log('Cart and checkout items have been cleared.');
+                  }
+                }}
                 style={{
                   position: 'absolute',
                   bottom: '85px',

@@ -5,7 +5,7 @@ import Footer from '../../components/Layout/Footer';
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const Token = localStorage.getItem('token');
+  const Token = localStorage.getItem('Token');
   const CustomerId = localStorage.getItem('CustomerId');
 
   const [cart, setCart] = useState([]);
@@ -102,10 +102,25 @@ const CartPage = () => {
 
     fetchCart();
   }, [CustomerId, Token]);
+  useEffect(() => {
+    const updateCart = () => {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
+    };
 
-  const removeFromCart = async (cartId) => {
-    if (CustomerId) {
+    window.addEventListener('storage', updateCart);
+    return () => window.removeEventListener('storage', updateCart);
+  }, []);
+
+  const removeFromCart = async (cartId, productId, productVariationId) => {
+    const CustomerId = localStorage.getItem('CustomerId');
+    const Token = localStorage.getItem('Token');
+
+    // ✅ Part 1: Logged-in Users (Remove from API first)
+    if (CustomerId && Token) {
       try {
+        console.log(`Removing CartId: ${cartId} from API...`);
+
         const response = await fetch(
           `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
           {
@@ -120,37 +135,46 @@ const CartPage = () => {
           throw new Error(`Failed to remove item (CartId: ${cartId})`);
         }
 
+        console.log('Item removed from API successfully');
+
+        // ✅ Remove from local state & sync localStorage as backup
         setCart((prevCart) => {
           const updatedCart = prevCart.filter((item) => item.CartId !== cartId);
-
-          // Ensure selectedItems updates when an item is removed
-          setSelectedItems((prevSelected) =>
-            prevSelected.filter((itemId) =>
-              updatedCart.some((item) => item.ProductId === itemId)
-            )
-          );
-
+          localStorage.setItem('cart', JSON.stringify(updatedCart));
+          window.dispatchEvent(new Event('storage')); // Sync across components
           return updatedCart;
         });
       } catch (error) {
         console.error('Error removing item from cart:', error);
       }
-    } else {
-      // Guest user: remove from localStorage
-      const updatedCart = cart.filter((item) => item.CartId !== cartId);
-      setCart(updatedCart);
+      return; // Stop execution after API request
+    }
 
-      setSelectedItems((prevSelected) =>
-        prevSelected.filter((itemId) =>
-          updatedCart.some((item) => item.ProductId === itemId)
-        )
+    // ✅ Part 2: Guest Users (Remove from LocalStorage only)
+    if (!productId || !productVariationId) {
+      console.error(
+        'Error: Missing productId or productVariationId for local cart removal.'
+      );
+      return;
+    }
+
+    console.log(
+      `Removing ProductId: ${productId} and VariationId: ${productVariationId} from local cart`
+    );
+
+    setCart((prevCart) => {
+      const updatedCart = prevCart.filter(
+        (item) =>
+          !(
+            item.ProductId === productId &&
+            item.ProductVariationId === productVariationId
+          )
       );
 
       localStorage.setItem('cart', JSON.stringify(updatedCart));
-      localStorage.setItem('selectedItems', JSON.stringify(selectedItems));
-
-      window.dispatchEvent(new Event('storage'));
-    }
+      window.dispatchEvent(new Event('storage')); // Ensure navbar updates
+      return updatedCart;
+    });
   };
 
   const handleQuantityChange = async (
@@ -485,7 +509,13 @@ const CartPage = () => {
                   {/* Remove Button */}
                   <button
                     className="text-red-500 hover:text-red-700 text-sm ml-6 transition"
-                    onClick={() => removeFromCart(item.CartId)} // Updated to use CartId
+                    onClick={() =>
+                      removeFromCart(
+                        item.CartId,
+                        item.ProductId,
+                        item.ProductVariationId
+                      )
+                    } // Updated to use CartId
                   >
                     Remove
                   </button>

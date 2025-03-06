@@ -22,7 +22,7 @@ function Navbar() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const Token = localStorage.getItem('token');
+  const Token = localStorage.getItem('Token');
   const CustomerId = localStorage.getItem('CustomerId');
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -35,10 +35,21 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    console.log('Logging out... Clearing localStorage');
+
+    // ✅ Remove all user-related session data
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('CustomerId');
+
+    // ✅ Clear cart and checkout items when logging out
+    localStorage.removeItem('cart');
+    localStorage.removeItem('checkoutItems');
+
+    // ✅ Update state and navigate to home
     setIsLoggedIn(false);
+    setCart([]); // Reset cart state
+    window.dispatchEvent(new Event('storage')); // Ensure UI updates
     navigate('/');
   };
 
@@ -67,8 +78,9 @@ function Navbar() {
 
   useEffect(() => {
     const fetchCart = async () => {
-      if (CustomerId) {
+      if (CustomerId && Token) {
         try {
+          console.log('Fetching cart from API...');
           const response = await fetch(
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
@@ -84,11 +96,17 @@ function Navbar() {
             );
           }
 
-          const cartData = await response.json();
+          let cartData = await response.json();
+          console.log('Cart data fetched:', cartData);
 
-          // Enrich cart items with product details
+          // ✅ Enrich cart items with product details
           const enrichedItems = await Promise.all(
             cartData.map(async (item) => {
+              if (!item.ProductId) {
+                console.error('Skipping item without ProductId:', item);
+                return item;
+              }
+
               try {
                 const productRes = await fetch(
                   `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
@@ -100,57 +118,50 @@ function Navbar() {
                 );
 
                 if (!productRes.ok) {
-                  throw new Error(
+                  console.error(
                     `Error fetching product ${item.ProductId}: ${productRes.status}`
                   );
+                  return { ...item, PictureUrl: '', Variations: [] }; // Return empty data to avoid crashes
                 }
 
                 const productData = await productRes.json();
 
                 return {
                   ...item,
-                  PictureUrl: productData.PictureUrl,
-                  Variations: productData.Variations,
+                  PictureUrl: productData.PictureUrl || '',
+                  Variations: productData.Variations || [],
                 };
               } catch (error) {
                 console.error('Error enriching cart item:', error);
-                return item; // Return the item without modification in case of error
+                return { ...item, PictureUrl: '', Variations: [] }; // Handle failure
               }
             })
           );
 
+          console.log('Final enriched cart:', enrichedItems);
+
+          // ✅ Save the enriched cart data to localStorage
+          localStorage.setItem('cart', JSON.stringify(enrichedItems));
+
+          // ✅ Update state
           setCart(enrichedItems);
         } catch (error) {
           console.error('Error fetching cart from server:', error);
         }
       } else {
-        // Fallback to localStorage cart if user is not logged in
-        const storedCart = JSON.parse(localStorage.getItem('cart'));
-        if (storedCart && storedCart.length > 0) {
-          setCart(storedCart);
-        }
-
-        const mergedCart = storedCart.reduce((acc, item) => {
-          const existingItem = acc.find((i) => i.ProductId === item.ProductId);
-          if (existingItem) {
-            existingItem.quantity += item.quantity || 1;
-          } else {
-            acc.push({ ...item, quantity: item.quantity || 1 });
-          }
-          return acc;
-        }, []);
-
-        setCart(mergedCart);
+        console.log('Fetching cart from localStorage...');
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCart(storedCart);
       }
     };
 
     fetchCart();
   }, [CustomerId, Token]);
+
   useEffect(() => {
     const updateCart = () => {
       const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
       setCart(storedCart);
-      setGlobalCart(storedCart);
     };
 
     window.addEventListener('storage', updateCart);
@@ -242,32 +253,69 @@ function Navbar() {
     }
   };
 
-  const removeFromCart = async (cartId) => {
-    if (CustomerId) {
+  const removeFromCart = async (cartId, productId, productVariationId) => {
+    const CustomerId = localStorage.getItem('CustomerId'); // Get CustomerId inside function
+    const Token = localStorage.getItem('Token');
+
+    // ✅ Part 1: Logged-in Users (Remove from API)
+    if (CustomerId && Token) {
       try {
-        await fetch(
+        console.log(`Removing CartId: ${cartId} from API...`);
+
+        const response = await fetch(
           `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
           {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${Token}` },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${Token}`,
+            },
           }
         );
-        setCart((prevCart) =>
-          prevCart.filter((item) => item.CartId !== cartId)
-        );
-        setGlobalCart((prevCart) =>
-          prevCart.filter((item) => item.CartId !== cartId)
-        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+
+        console.log('Item removed from API successfully');
+
+        // ✅ Remove from local state and sync localStorage as a backup
+        const updatedCart = cart.filter((item) => item.CartId !== cartId);
+        setCart(updatedCart);
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event('storage')); // Sync across components
       } catch (error) {
-        console.error('Error removing item:', error);
+        console.error('Error removing item from API:', error);
       }
-    } else {
-      const updatedCart = cart.filter((item) => item.CartId !== cartId);
-      setCart(updatedCart);
-      setGlobalCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-      window.dispatchEvent(new Event('storage'));
+      return; // Stop execution here if API method was used
     }
+
+    // ✅ Part 2: Guest Users (Remove from LocalStorage)
+    if (!productId || !productVariationId) {
+      console.error(
+        'Error: Missing productId or productVariationId for local cart removal.'
+      );
+      return;
+    }
+
+    console.log(
+      `Removing ProductId: ${productId} and VariationId: ${productVariationId} from local cart`
+    );
+    let localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // ✅ Remove only the matching ProductId AND ProductVariationId
+    const updatedCart = localCart.filter(
+      (item) =>
+        !(
+          item.ProductId === productId &&
+          item.ProductVariationId === productVariationId
+        )
+    );
+
+    setCart(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('storage')); // Ensure navbar updates
   };
 
   const handleProfileClick = () => {
@@ -429,12 +477,12 @@ function Navbar() {
                             </p>
                             <p className="text-xs font-semibold text-gray-800">
                               <select
-                                value={item.ProductVariationId}
+                                value={item.ProductVariationId || ''}
                                 onChange={(e) => {
                                   const newVariationId = parseInt(
                                     e.target.value
                                   );
-                                  const newVariation = item.Variations.find(
+                                  const newVariation = item.Variations?.find(
                                     (v) =>
                                       v.ProductVariationId === newVariationId
                                   );
@@ -448,14 +496,26 @@ function Navbar() {
                                 }}
                                 className="border rounded px-2 py-1 text-gray-700"
                               >
-                                {item.Variations.map((variation) => (
-                                  <option
-                                    key={variation.ProductVariationId}
-                                    value={variation.ProductVariationId}
-                                  >
-                                    {variation.Ml}ml
+                                {Array.isArray(item.Variations) &&
+                                item.Variations.length > 0 ? (
+                                  item.Variations.map((variation) =>
+                                    variation &&
+                                    variation.ProductVariationId ? (
+                                      <option
+                                        key={variation.ProductVariationId}
+                                        value={variation.ProductVariationId}
+                                      >
+                                        {variation.Ml
+                                          ? `${variation.Ml}ml`
+                                          : 'Unknown Size'}
+                                      </option>
+                                    ) : null
+                                  )
+                                ) : (
+                                  <option disabled>
+                                    No Variations Available
                                   </option>
-                                ))}
+                                )}
                               </select>
                             </p>
                             <p className="text-xs mt-1 text-gray-600">
@@ -470,7 +530,13 @@ function Navbar() {
                           </p>
                           {/* Remove Button */}
                           <button
-                            onClick={() => removeFromCart(item.ProductId)}
+                            onClick={() =>
+                              removeFromCart(
+                                item.CartId,
+                                item.ProductId,
+                                item.ProductVariationId
+                              )
+                            }
                           >
                             <FontAwesomeIcon
                               icon={faTrash}

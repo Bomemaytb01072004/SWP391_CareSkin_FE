@@ -7,9 +7,8 @@ import ComparePopup from '../ComparePopup/ComparePopup';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
     return stored ? JSON.parse(stored) : [];
@@ -27,33 +26,41 @@ const ProductList = () => {
         setLoading(false);
       }
     })();
-  }, []); // <= Mảng phụ thuộc
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('compareList', JSON.stringify(compareList));
   }, [compareList]);
 
-  useEffect(() => {
-    localStorage.setItem('compareList', JSON.stringify(compareList));
-  }, [compareList]);
-
-  // ✅ Add Item to Cart
   const addToCart = async (product) => {
     const CustomerId = localStorage.getItem('CustomerId');
-    const Token = localStorage.getItem('token');
+    const Token = localStorage.getItem('Token');
 
-    if (!CustomerId) {
-      console.warn('CustomerId is missing! Using localStorage for guest cart.');
+    if (!CustomerId || !Token) {
+      console.warn('No CustomerId found! Using localStorage for guest cart.');
 
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const existingProduct = cart.find(
-        (item) => item.ProductId === product.ProductId
+
+      const firstVariation =
+        Array.isArray(product.Variations) && product.Variations.length > 0
+          ? product.Variations[0]
+          : null;
+
+      const existingProductIndex = cart.findIndex(
+        (item) =>
+          item.ProductId === product.ProductId &&
+          item.ProductVariationId === firstVariation?.ProductVariationId
       );
 
-      if (existingProduct) {
-        existingProduct.quantity += 1;
+      if (existingProductIndex !== -1) {
+        cart[existingProductIndex].Quantity += 1;
       } else {
-        cart.push({ ...product, quantity: 1 });
+        cart.push({
+          ...product,
+          Quantity: 1,
+          Price: firstVariation?.Price || 0,
+          ProductVariationId: firstVariation?.ProductVariationId || null,
+        });
       }
 
       localStorage.setItem('cart', JSON.stringify(cart));
@@ -63,14 +70,17 @@ const ProductList = () => {
     }
 
     try {
+      const firstVariation =
+        Array.isArray(product.Variations) && product.Variations.length > 0
+          ? product.Variations[0]
+          : null;
+
       const newCartItem = {
         CustomerId: parseInt(CustomerId),
         ProductId: product.ProductId,
-        ProductVariationId: product.Variations[0].ProductVariationId, // First variation
+        ProductVariationId: firstVariation?.ProductVariationId,
         Quantity: 1,
       };
-
-      console.log('Sending API Request:', JSON.stringify(newCartItem, null, 2));
 
       const response = await fetch(
         `http://careskinbeauty.shop:4456/api/Cart/add`,
@@ -90,10 +100,29 @@ const ProductList = () => {
         throw new Error(`Failed to add item to cart: ${response.status}`);
       }
 
-      // Fetch updated cart after adding an item
-      await fetchCart(); // 🔥 Ensure the UI updates with fresh cart data
+      console.log('Cart successfully updated in API!');
 
-      console.log('Cart successfully updated!');
+      const cartResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        {
+          headers: { Authorization: `Bearer ${Token}` },
+        }
+      );
+
+      if (!cartResponse.ok) {
+        throw new Error(`Failed to fetch updated cart: ${cartResponse.status}`);
+      }
+
+      const updatedCart = await cartResponse.json();
+
+      if (!Array.isArray(updatedCart)) {
+        console.error('Fetched cart is not an array:', updatedCart);
+        return;
+      }
+
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      setCart(updatedCart);
+      window.dispatchEvent(new Event('storage'));
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
@@ -110,20 +139,12 @@ const ProductList = () => {
   };
 
   const handleCompareNow = () => {
-    let subpath = '';
-
-    if (compareList.length === 3) {
-      for (let i = 0; i < 2; i++) {
-        const product = compareList[i];
-        subpath += `${product.ProductId}-${product.name.replaceAll(' ', '-')}/`;
-      }
-      navigate(`/compare/${subpath}?product_id=${compareList[2].ProductId}`);
-    } else {
-      for (let product of compareList) {
-        subpath += `${product.ProductId}-${product.name.replaceAll(' ', '-')}/`;
-      }
-      navigate(`/compare/${subpath}`);
-    }
+    const subpath = compareList
+      .map(
+        (product) => `${product.ProductId}-${product.name.replaceAll(' ', '-')}`
+      )
+      .join('/');
+    navigate(`/compare/${subpath}`);
   };
 
   if (loading) {
