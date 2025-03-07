@@ -17,7 +17,7 @@ const UserProfile = () => {
     Address: '',
   });
 
-  const [Token, setToken] = useState(localStorage.getItem('Token'));
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [CustomerId, setCustomerId] = useState(
     localStorage.getItem('CustomerId')
   );
@@ -28,28 +28,28 @@ const UserProfile = () => {
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    if (!Token) {
-      console.error('No Token found. User is not logged in.');
+    if (!token) {
+      console.error('No token found. User is not logged in.');
       return;
     }
 
     if (!CustomerId) {
       try {
-        const decodedToken = jwtDecode(Token);
+        const decodedToken = jwtDecode(token);
 
         if (decodedToken.CustomerId) {
           setCustomerId(decodedToken.CustomerId);
           localStorage.setItem('CustomerId', decodedToken.CustomerId);
         } else {
-          console.error('CustomerId not found in Token');
+          console.error('CustomerId not found in token');
           return; // Stop execution if no CustomerId
         }
       } catch (error) {
-        console.error('Error decoding Token:', error);
+        console.error('Error decoding token:', error);
         return;
       }
     }
-  }, [Token]);
+  }, [token]);
 
   useEffect(() => {
     if (!CustomerId) {
@@ -59,7 +59,7 @@ const UserProfile = () => {
 
     fetch(`http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`, {
       headers: {
-        Authorization: `Bearer ${Token}`,
+        Authorization: `Bearer ${token}`,
       },
     })
       .then((response) => {
@@ -82,7 +82,7 @@ const UserProfile = () => {
         });
       })
       .catch((error) => console.error('Error fetching profile:', error));
-  }, [CustomerId, Token]);
+  }, [CustomerId, token]);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
@@ -116,7 +116,7 @@ const UserProfile = () => {
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${Token}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: formData,
         }

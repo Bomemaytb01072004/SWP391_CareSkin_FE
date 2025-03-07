@@ -6,143 +6,172 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 // import { GoogleLogin } from '@react-oauth/google';
+import { Formik, useFormik } from 'formik';
+import * as Yup from 'yup'
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
 
-  const [loginUsername, setLoginUsername] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginPasswordType, setLoginPasswordType] = useState('password');
+  const [loginPassword, setLoginPassword] = useState('password');
+  const [loginPasswordType, setLoginPasswordType] = useState(false);
 
-  const [registerUsername, setRegisterUsername] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
-  const [registerPasswordType, setRegisterPasswordType] = useState('password');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [confirmPasswordType, setConfirmPasswordType] = useState('password');
+
+  const [registerPassword, setRegisterPassword] = useState('password');
+  const [confirmPassword , setConfirmPassword] = useState('password')
+  const [registerPasswordType, setRegisterPasswordType] = useState(false);
+  const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
   const navigate = useNavigate();
 
+  const formikLogin = useFormik({
+    initialValues: {
+      username: "",
+      password: ""
+    },
+    validationSchema: Yup.object({
+      username: Yup.string()
+        .required("This field is required"),
+      password: Yup.string()
+        .required("You must enter a password")
+        .min(3, "Password must be at least 8 characters")
+    }),
+    onSubmit: async (values) => {
+      const { username, password } = values;
+      try {
+        const response = await fetch(
+          'http://careskinbeauty.shop:4456/api/Auth/Login',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              UserName: username,
+              Password: password,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+
+        const data = await response.json();
+
+        if (!data.token) {
+          toast.error(data.message || data.error || 'Invalid username or password.');
+          return;
+        }
+
+        const token = data.token;
+        const CustomerId = data.CustomerId;
+        localStorage.setItem('token', token);
+        localStorage.setItem('CustomerId', CustomerId);
+
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedPayload = JSON.parse(window.atob(base64));
+        localStorage.setItem('user', JSON.stringify(decodedPayload));
+
+        toast.success('Login successful', { autoClose: 2000 });
+        setTimeout(() => {
+          if (data.Role === 'User') {
+            navigate('/');
+          } else {
+            navigate('/admin');
+          }
+        }, 2000);
+      } catch (error) {
+        console.error('Login Error:', error);
+        toast.error(error.message || 'An error occurred while logging in.');
+      }
+    },
+  });
+
+  const formikRegister = useFormik({
+    initialValues: {
+      userName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationSchema: Yup.object({
+      userName: Yup.string()
+        .required('Please enter username')
+        .min(6, 'Username must be at least 6 characters'),
+      email: Yup.string()
+        .email('Invalid email')
+        .required('Please enter email'),
+      password: Yup.string()
+        .required('Please enter password')
+        .min(3, 'Password minimum 3 characters'),
+      confirmPassword: Yup.string()
+        .oneOf([Yup.ref('password'), null], 'Confirmation password does not match')
+        .required('Please confirm password'),
+    }),
+    onSubmit: async (values) => {
+      // Code xử lý đăng ký ở đây
+      const { userName, email, password, confirmPassword } = values;
+
+      try {
+        const formData = new FormData();
+        formData.append('UserName', userName);
+        formData.append('Email', email);
+        formData.append('Password', password);
+        formData.append('ConfirmPassword', confirmPassword);
+
+        const registerResponse = await fetch(
+          'http://careskinbeauty.shop:4456/api/Customer/register',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        if (!registerResponse.ok) {
+          const errorData = await registerResponse.json();
+          toast.error(errorData.message || 'Registration failed');
+          return;
+        }
+
+        await registerResponse.json();
+        toast.success('Registration successful! You can now log in.');
+
+        // Switch về màn hình đăng nhập
+        setRightPanelActive(false);
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('An error occurred. Please try again later.');
+      }
+    },
+  });
+
   const toggleLoginPassword = () => {
-    setLoginPasswordType((prev) => (prev === 'password' ? 'text' : 'password'));
+    setLoginPasswordType(!loginPasswordType)
+    if (loginPasswordType == true) {
+      setLoginPassword('password')
+    } else {
+      setLoginPassword('text')
+    }
   };
 
   const toggleRegisterPassword = () => {
-    setRegisterPasswordType((prev) =>
-      prev === 'password' ? 'text' : 'password'
-    );
+    setRegisterPasswordType(!registerPasswordType)
+    if (registerPasswordType == true) {
+      setRegisterPassword('password')
+    } else {
+      setRegisterPassword('text')
+    }
   };
 
   const toggleConfirmPassword = () => {
-    setConfirmPasswordType((prev) =>
-      prev === 'password' ? 'text' : 'password'
-    );
-  };
+    setConfirmPasswordType(!confirmPasswordType)
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-
-    if (!loginUsername.trim() || !loginPassword.trim()) {
-      toast.error('Please fill in all fields.');
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/Login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            UserName: loginUsername,
-            Password: loginPassword,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Login failed with error:', errorData);
-        throw new Error(errorData.message || 'Login failed');
-      }
-
-      const data = await response.json();
-
-      if (!data.Token) {
-        toast.error(
-          data.message || data.error || 'Invalid username or password.'
-        );
-        return;
-      }
-
-      const token = data.Token;
-      const CustomerId = data.CustomerId;
-      localStorage.setItem('Token', token);
-      localStorage.setItem('CustomerId', CustomerId);
-
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const decodedPayload = JSON.parse(window.atob(base64));
-      localStorage.setItem('user', JSON.stringify(decodedPayload));
-
-      toast.success('Login successful', { autoClose: 2000 });
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-    } catch (error) {
-      console.error('Login Error:', error);
-      toast.error(error.message || 'An error occurred while logging in.');
-    }
-  };
-
-  const handleRegister = async (e) => {
-    e.preventDefault();
-
-    if (
-      !registerUsername.trim() ||
-      !registerEmail.trim() ||
-      !registerPassword.trim() ||
-      !confirmPassword.trim()
-    ) {
-      toast.error('All fields are required.');
-      return;
-    }
-
-    if (registerPassword !== confirmPassword) {
-      toast.error('Passwords do not match. Please try again.');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('UserName', registerUsername);
-      formData.append('Email', registerEmail);
-      formData.append('Password', registerPassword);
-      formData.append('ConfirmPassword', confirmPassword);
-
-      const registerResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/register',
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
-
-      if (!registerResponse.ok) {
-        const errorData = await registerResponse.json();
-        toast.error(errorData.message || 'Registration failed');
-        return;
-      }
-
-      await registerResponse.json();
-      toast.success('Registration successful! You can now log in.');
-
-      setRightPanelActive(false);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('An error occurred. Please try again later.');
+    if (confirmPasswordType == true) {
+      setConfirmPassword('password')
+    } else {
+      setConfirmPassword('text')
     }
   };
 
@@ -233,7 +262,7 @@ const LoginPage = () => {
 
           {/* Form Đăng Nhập */}
           <form
-            onSubmit={handleLogin}
+            onSubmit={formikLogin.handleSubmit}
             style={{
               position: 'absolute',
               top: 0,
@@ -320,12 +349,19 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
-              value={loginUsername}
-              onChange={(e) => setLoginUsername(e.target.value)}
+              value={formikLogin.values.username}
+              onChange={formikLogin.handleChange}
+              onBlur={formikLogin.handleBlur}
             />
+            {formikLogin.touched.username && formikLogin.errors.username && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikLogin.errors.username}
+              </div>
+            )}
+
             <div style={{ position: 'relative', width: '80%' }}>
               <input
-                type={loginPasswordType}
+                type={loginPassword}
                 name="password"
                 placeholder="Password"
                 autoComplete="current-password"
@@ -336,11 +372,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
+                value={formikLogin.values.password}
+                onChange={formikLogin.handleChange}
+                onBlur={formikLogin.handleBlur}
               />
               <i
-                className="fa-solid fa-eye toggle-password"
+                className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
                 onClick={toggleLoginPassword}
                 style={{
                   position: 'absolute',
@@ -351,6 +388,11 @@ const LoginPage = () => {
                 }}
               ></i>
             </div>
+            {formikLogin.touched.password && formikLogin.errors.password && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikLogin.errors.password}
+              </div>
+            )}
             <a
               href="#forgot-password"
               style={{ margin: '15px 0', fontSize: '12px', color: '#059669' }}
@@ -375,7 +417,7 @@ const LoginPage = () => {
 
           {/* Form Đăng Ký */}
           <form
-            onSubmit={handleRegister}
+            onSubmit={formikRegister.handleSubmit}
             style={{
               position: 'absolute',
               top: 0,
@@ -446,7 +488,7 @@ const LoginPage = () => {
             </span>
             <input
               type="text"
-              name="UserName"
+              name="userName"
               placeholder="Username"
               autoComplete="username"
               required
@@ -457,12 +499,18 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
-              value={registerUsername}
-              onChange={(e) => setRegisterUsername(e.target.value)}
+              value={formikRegister.values.userName}
+              onChange={formikRegister.handleChange}
+              onBlur={formikRegister.handleBlur}
             />
+            {formikRegister.touched.userName && formikRegister.errors.userName && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikRegister.errors.email}
+              </div>
+            )}
             <input
               type="email"
-              name="Email"
+              name="email"
               placeholder="Email"
               autoComplete="email"
               required
@@ -473,9 +521,17 @@ const LoginPage = () => {
                 border: '1px solid #ddd',
                 borderRadius: '5px',
               }}
-              value={registerEmail}
-              onChange={(e) => setRegisterEmail(e.target.value)}
+              value={formikRegister.values.email}
+              onChange={formikRegister.handleChange}
+              onBlur={formikRegister.handleBlur}
             />
+
+            {formikRegister.touched.email && formikRegister.errors.email && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikRegister.errors.email}
+              </div>
+            )}
+
             <div
               style={{
                 position: 'relative',
@@ -484,8 +540,8 @@ const LoginPage = () => {
               }}
             >
               <input
-                type={registerPasswordType}
-                name="Password"
+                type={registerPassword}
+                name="password"
                 placeholder="Password"
                 autoComplete="new-password"
                 required
@@ -495,11 +551,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
-                value={registerPassword}
-                onChange={(e) => setRegisterPassword(e.target.value)}
+                value={formikRegister.values.password}
+                onChange={formikRegister.handleChange}
+                onBlur={formikRegister.handleBlur}
               />
               <i
-                className="fa-solid fa-eye toggle-password"
+                className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
                 onClick={toggleRegisterPassword}
                 style={{
                   position: 'absolute',
@@ -508,12 +565,18 @@ const LoginPage = () => {
                   transform: 'translateY(-50%)',
                   cursor: 'pointer',
                 }}
+
               ></i>
             </div>
+            {formikRegister.touched.password && formikRegister.errors.password && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikRegister.errors.password}
+              </div>
+            )}
             <div style={{ position: 'relative', width: '80%' }}>
               <input
-                type={confirmPasswordType}
-                name="ConfirmPassword"
+                type={confirmPassword}
+                name="confirmPassword"
                 placeholder="Confirm Password"
                 autoComplete="new-password"
                 required
@@ -523,11 +586,12 @@ const LoginPage = () => {
                   border: '1px solid #ddd',
                   borderRadius: '5px',
                 }}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={formikRegister.values.confirmPassword}
+                onChange={formikRegister.handleChange}
+                onBlur={formikRegister.handleBlur}
               />
               <i
-                className="fa-solid fa-eye toggle-password"
+                className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
                 onClick={toggleConfirmPassword}
                 style={{
                   position: 'absolute',
@@ -538,6 +602,12 @@ const LoginPage = () => {
                 }}
               ></i>
             </div>
+            {formikRegister.touched.confirmPassword &&
+              formikRegister.errors.confirmPassword && (
+                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                  {formikRegister.errors.confirmPassword}
+                </div>
+              )}
             <button
               type="submit"
               style={{
