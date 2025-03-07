@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   PieChart,
@@ -8,44 +8,48 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { fetchProducts } from '../../utils/api';
+// import { useQuery } from '@tanstack/react-query';
+// import { fetchProducts } from '../../utils/api';
 
 const COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B'];
 
-const CategoryDistributionChart = () => {
-  const [categoryData, setCategoryData] = useState([]);
+const CategoryDistributionChart = ({ products }) => {
+  // Dùng TanStack Query v5 để fetch dữ liệu
+  // const {
+  //   data: products,
+  //   isLoading,
+  //   error,
+  // } = useQuery({
+  //   queryKey: ['products'], // query key
+  //   queryFn: fetchProducts, // hàm fetch
+  // });
 
-  useEffect(() => {
-    const getCategoryData = async () => {
-      try {
-        const products = await fetchProducts();
-        const categoryMap = {};
+  // Tính toán categoryData từ products
+  const categoryData = useMemo(() => {
+    if (!products) return [];
 
-        // Group products by category
-        products.forEach((product) => {
-          if (categoryMap[product.category]) {
-            categoryMap[product.category] += 1; // Increase count for this category
-          } else {
-            categoryMap[product.category] = 1; // Initialize category count
-          }
-        });
+    const categoryMap = {};
+    products.forEach((product) => {
+      if (!product.Category || typeof product.Category !== 'string') return;
 
-        // Convert object into array format suitable for Recharts
-        const formattedData = Object.keys(categoryMap).map((key) => ({
-          name: key,
-          value: categoryMap[key],
-        }));
+      // Tách các danh mục (nếu có nhiều) bằng dấu phẩy
+      const categories = product.Category.split(',').map((cat) => cat.trim());
 
-        setCategoryData(formattedData);
-      } catch (error) {
-        console.error(
-          'Failed to fetch products for category distribution:',
-          error
-        );
-      }
-    };
-    getCategoryData();
-  }, []);
+      categories.forEach((cat) => {
+        if (cat) {
+          categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+        }
+      });
+    });
+
+    // Chuyển sang dạng { name, value } cho Recharts
+    return Object.keys(categoryMap).map((key) => ({
+      name: key,
+      value: categoryMap[key],
+    }));
+  }, [products]);
+
+
 
   return (
     <motion.div
@@ -58,12 +62,12 @@ const CategoryDistributionChart = () => {
         Category Distribution
       </h2>
       <div className="h-80">
-        <ResponsiveContainer width={'100%'} height={'100%'}>
+        <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={categoryData}
-              cx={'50%'}
-              cy={'50%'}
+              cx="50%"
+              cy="50%"
               labelLine={false}
               outerRadius={80}
               fill="#8884d8"
