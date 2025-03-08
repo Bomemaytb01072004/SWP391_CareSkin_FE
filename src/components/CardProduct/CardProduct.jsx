@@ -5,6 +5,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
 function CardProduct({ product, addToCart, addToCompare }) {
+  // Extract pricing details from the first variation (assuming products have at least one variation)
+  const originalPrice = product.Variations[0]?.Price;
+  const hasPromotion =
+    product.PromotionProducts && product.PromotionProducts.length > 0;
+
+  // If there is a promotion, use SalePrice; otherwise, just use original Price
+  const currentPrice =
+    hasPromotion && product.Variations[0]?.SalePrice !== 0
+      ? product.Variations[0]?.SalePrice
+      : originalPrice;
+
+  const isDiscounted = hasPromotion && currentPrice < originalPrice;
+
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -17,9 +30,12 @@ function CardProduct({ product, addToCart, addToCompare }) {
             src={product.PictureUrl}
             alt={product.ProductName}
           />
-          {product.discount && (
+          {isDiscounted && (
             <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
-              {product.discount} OFF
+              {Math.round(
+                ((originalPrice - currentPrice) / originalPrice) * 100
+              )}
+              % OFF
             </span>
           )}
         </Link>
@@ -34,11 +50,11 @@ function CardProduct({ product, addToCart, addToCompare }) {
           <div className="mt-2 mb-5 flex items-center justify-between">
             <p>
               <span className="text-xl font-bold text-slate-900">
-                ${product.Variations[0].Price}
+                ${currentPrice.toFixed(2)}
               </span>
-              {product.originalPrice && (
-                <span className="text-sm text-slate-900 line-through ml-2">
-                  ${product.originalPrice}
+              {isDiscounted && (
+                <span className="text-sm text-gray-500 line-through ml-2">
+                  ${originalPrice.toFixed(2)}
                 </span>
               )}
             </p>
@@ -52,7 +68,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
 
           <div className="flex items-center w-full sm:justify-around justify-between">
             <button
-              className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md  bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition  hover:bg-emerald-700"
+              className="sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition hover:bg-emerald-700"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -63,7 +79,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
             </button>
 
             <button
-              className="flex items-center justify-center p-1 w-6 h-8 max-h-[40px] sm:max-h-[40 px] sm:w-10 sm:h-10 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm active:scale-95"
+              className="flex items-center justify-center p-1 w-6 h-8 max-h-[40px] sm:max-h-[40px] sm:w-10 sm:h-10 rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 hover:border-gray-400 transition-all duration-200 shadow-sm active:scale-95"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
