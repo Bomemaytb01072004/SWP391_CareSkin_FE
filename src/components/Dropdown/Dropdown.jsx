@@ -1,9 +1,18 @@
-import { useState } from "react";
-import styles from "./Dropdown.module.css";
-import { ChevronDown } from "lucide-react";
+import React, { useState } from 'react';
+import styles from './Dropdown.module.css';
+import { ChevronDown } from 'lucide-react';
 
-export default function Dropdown() {
+export default function Dropdown({ onSortChange }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleMenuClick = (option) => {
+    // Đóng menu
+    setIsOpen(false);
+    // Gọi callback lên cha
+    if (onSortChange) {
+      onSortChange(option);
+    }
+  };
 
   return (
     <div className={styles.dropdownContainer}>
@@ -16,18 +25,30 @@ export default function Dropdown() {
       {isOpen && (
         <ul className={styles.dropdownMenu}>
           <li>
-            <button className={styles.dropdownItem} type="button">
-              <a href="/">Newest</a>
+            <button
+              className={styles.dropdownItem}
+              type="button"
+              onClick={() => handleMenuClick('newest')}
+            >
+              Newest
             </button>
           </li>
           <li>
-            <button className={styles.dropdownItem} type="button">
-            Price: Low to High
+            <button
+              className={styles.dropdownItem}
+              type="button"
+              onClick={() => handleMenuClick('priceLowToHigh')}
+            >
+              Price: Low to High
             </button>
           </li>
           <li>
-            <button className={styles.dropdownItem} type="button">
-            Price: High to Low
+            <button
+              className={styles.dropdownItem}
+              type="button"
+              onClick={() => handleMenuClick('priceHighToLow')}
+            >
+              Price: High to Low
             </button>
           </li>
         </ul>

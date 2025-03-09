@@ -5,15 +5,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
 function CardProduct({ product, addToCart, addToCompare }) {
-  // Extract pricing details from the first variation (assuming products have at least one variation)
-  const originalPrice = product.Variations[0]?.Price;
+  const originalPrice = product.Variations?.[0]?.Price || 0;
   const hasPromotion =
     product.PromotionProducts && product.PromotionProducts.length > 0;
 
-  // If there is a promotion, use SalePrice; otherwise, just use original Price
   const currentPrice =
-    hasPromotion && product.Variations[0]?.SalePrice !== 0
-      ? product.Variations[0]?.SalePrice
+    hasPromotion && product.Variations?.[0]?.SalePrice !== 0
+      ? product.Variations?.[0]?.SalePrice || 0
       : originalPrice;
 
   const isDiscounted = hasPromotion && currentPrice < originalPrice;
@@ -42,12 +40,12 @@ function CardProduct({ product, addToCart, addToCompare }) {
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
           <Link to={`/product/${product.ProductId}`}>
-            <h5 className="text-lg tracking-tight text-slate-900 truncate">
+            <h5 className="mt-3 mx-1 text-lg tracking-tight text-slate-900 truncate">
               {product.ProductName}
             </h5>
           </Link>
 
-          <div className="mt-2 mb-5 flex items-center justify-between">
+          <div className="my-3 mx-1 flex items-center justify-between">
             <p>
               <span className="text-xl font-bold text-slate-900">
                 ${currentPrice.toFixed(2)}
