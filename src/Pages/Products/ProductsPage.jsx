@@ -20,7 +20,7 @@ function ProductsPage() {
 
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [sortOption, setSortOption] = useState("featured");
+  const [sortOption, setSortOption] = useState("");
   const [filters, setFilters] = useState({
     category: [],
     priceRange: [],
@@ -50,7 +50,7 @@ function ProductsPage() {
       try {
         const data = await fetchProducts();
         setProducts(data);
-        setFilteredProducts(data);  
+        setFilteredProducts(data);
         setTotalProduct(data.length);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -78,64 +78,80 @@ function ProductsPage() {
     // Lọc theo priceRange
     if (filters.priceRange.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        // product.Variations là mảng các biến thể
-        // Ví dụ: [{ ProductVariationId: 33, Ml: 80, Price: 24.98 }, ...]
+        if (!product.Variations || product.Variations.length === 0) {
+          return false;
+        }
 
-        // 1. Lấy tất cả giá (Price) từ Variations
-        const prices = product.Variations.map((variation) => variation.Price);
+        const firstVariation = product.Variations[0];
 
-        // 2. Cách A: Chỉ cần 1 biến thể hợp lệ => sản phẩm qua
-        // Ta dùng some() để kiểm tra từng biến thể
-        return prices.some((price) => {
-          // Kiểm tra xem "price" này có khớp 1 trong các khoảng người dùng chọn không
-          return filters.priceRange.some((range) => {
-            switch (range) {
-              case "under_25":
-                return price < 25;
-              case "25_50":
-                return price >= 25 && price < 50;
-              case "50_100":
-                return price >= 50 && price < 100;
-              case "over_100":
-                return price >= 100;
-              default:
-                return true; // hoặc false tuỳ ý
-            }
-          });
+        const priceToCompare =
+          firstVariation.SalePrice && firstVariation.SalePrice > 0
+            ? firstVariation.SalePrice
+            : firstVariation.Price;
+
+        return filters.priceRange.some((range) => {
+          switch (range) {
+            case "under_25":
+              return priceToCompare < 25;
+            case "25_50":
+              return priceToCompare >= 25 && priceToCompare < 50;
+            case "50_100":
+              return priceToCompare >= 50 && priceToCompare < 100;
+            case "over_100":
+              return priceToCompare >= 100;
+            default:
+              return true;
+          }
         });
       });
     }
 
-
-    // Lọc theo skinType
     if (filters.skinType.length > 0) {
-      newFiltered = newFiltered.filter((product) =>
-        // tuỳ thuộc vào field thực tế (nếu product có "SkinType" hoặc "skinTypeValue")
-        filters.skinType.includes(product.skinTypeValue)
-      );
+      newFiltered = newFiltered.filter((product) => {
+        if (!Array.isArray(product.ProductForSkinTypes) || product.ProductForSkinTypes.length === 0) {
+          return false;
+        }
+        return product.ProductForSkinTypes.some((skinItem) =>
+          filters.skinType.includes(skinItem.SkinTypeId)
+        );
+      });
     }
 
+
     switch (sortOption) {
-      case "newest":
-        // Giả sử bạn coi "mới nhất" là ID lớn nhất
-        // Sắp xếp mảng sao cho ID giảm dần (tức sản phẩm có ID lớn hơn nằm trước)
-        newFiltered.sort((a, b) => b.ProductId - a.ProductId);
+      case "Newest":
+        newFiltered.sort((a, b) => {
+          const aId = Number(a.ProductId) || 0; // Nếu NaN => 0
+          const bId = Number(b.ProductId) || 0; // Nếu NaN => 0
+          return bId - aId;
+        });
         break;
 
 
-      case "priceLowToHigh":
-        // Lấy giá thấp nhất của mỗi product để so sánh
+
+
+
+      case "Price Low to High":
         newFiltered.sort((a, b) => {
-          const aPrice = Math.min(...a.Variations.map(v => v.Price));
-          const bPrice = Math.min(...b.Variations.map(v => v.Price));
+          const aPrice = a.Variations && a.Variations.length > 0
+            ? Math.min(...a.Variations.map(v => v.Price))
+            : Infinity; // hoặc 0, tuỳ logic
+          const bPrice = b.Variations && b.Variations.length > 0
+            ? Math.min(...b.Variations.map(v => v.Price))
+            : Infinity;
+
           return aPrice - bPrice;
         });
         break;
 
-      case "priceHighToLow":
+      case "Price High to Low":
         newFiltered.sort((a, b) => {
-          const aPrice = Math.min(...a.Variations.map(v => v.Price));
-          const bPrice = Math.min(...b.Variations.map(v => v.Price));
+          const aPrice = a.Variations && a.Variations.length > 0
+            ? Math.min(...a.Variations.map(v => v.Price))
+            : 0; // hoặc một giá trị mặc định phù hợp
+          const bPrice = b.Variations && b.Variations.length > 0
+            ? Math.min(...b.Variations.map(v => v.Price))
+            : 0;
           return bPrice - aPrice;
         });
         break;
@@ -164,7 +180,7 @@ function ProductsPage() {
   if (loading) {
     return <LoadingPage />;
   }
-  
+
 
   return (
 
@@ -189,7 +205,7 @@ function ProductsPage() {
             <div className={`d-flex align-items-center mb-3`}>
               <div className={`fw-bold ${styles.totalProducts}`}>{totalProduct} products</div>
               <div className={styles.sortByFeature}>
-                <Dropdown onSortChange={handleSortChange} />
+                <Dropdown onSortChange={handleSortChange} sortOption={sortOption} />
               </div>
             </div>
 

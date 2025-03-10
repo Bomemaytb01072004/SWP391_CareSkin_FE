@@ -3,7 +3,7 @@ import './Filters.css';
 import SearchProduct from "../SearchProduct/SearchProduct";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { fetchCategories } from '../../utils/api'
+import { fetchCategories, fetchSkinTypeProduct } from '../../utils/api'
 
 const Filters = ({ onFilterChange }) => {
   const [selectedFilters, setSelectedFilters] = useState({
@@ -13,6 +13,7 @@ const Filters = ({ onFilterChange }) => {
   });
 
   const [categories, setCategories] = useState([]);
+  const [skinTypes, setSkinTypes] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -28,9 +29,9 @@ const Filters = ({ onFilterChange }) => {
           const capitalizedLabel = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
           return {
             label: capitalizedLabel,
-            value: capitalizedLabel.replace(/\s+/g, '_') 
+            value: capitalizedLabel.replace(/\s+/g, '_')
           };
-        });        
+        });
 
         setCategories(mappedCategories);
       } catch (error) {
@@ -46,12 +47,27 @@ const Filters = ({ onFilterChange }) => {
     { label: "Over $100", value: "over_100" },
   ];
 
-  const skinTypes = [
-    { label: "Normal", value: "normal" },
-    { label: "Dry", value: "dry" },
-    { label: "Oily", value: "oily" },
-    { label: "Combination", value: "combination" },
-  ];
+  useEffect(() => {
+    (async () => {
+      try {
+        
+        const dataSkinType = await fetchSkinTypeProduct();
+  
+        const mappedSkinTypes = dataSkinType.map((item) => {
+          const labelWithoutSkin = item.TypeName.replace(" Skin", "");
+          return {
+            label: labelWithoutSkin,
+            value: item.SkinTypeId,
+          };
+        });
+  
+        setSkinTypes(mappedSkinTypes);
+      } catch (error) {
+        console.error("Error fetching skin type:", error);
+      }
+    })();
+  }, []);
+  
 
   const handleFilterChange = (filterType, value) => {
     setSelectedFilters((prev) => {
@@ -70,7 +86,7 @@ const Filters = ({ onFilterChange }) => {
       return updatedFilters;
     });
   };
-  
+
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -99,7 +115,7 @@ const Filters = ({ onFilterChange }) => {
                 <h4 className="font-semibold">Category</h4>
                 {categories.map((item) => (
                   <label key={item.value} className="block my-1">
-                    <input
+                    <input  
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.category.includes(item.value)}

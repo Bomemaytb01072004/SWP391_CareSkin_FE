@@ -6,7 +6,8 @@ import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
 
 
 
-function CardProduct({ product, addToCart , addToCompare}) {
+function CardProduct({ product, addToCart, addToCompare }) {
+
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -19,12 +20,15 @@ function CardProduct({ product, addToCart , addToCompare}) {
             src={product.PictureUrl}
             alt={product.ProductName}
           />
-          {product.discount && (
-            <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
-              {product.discount} OFF
-            </span>
-          )}
+          {product.PromotionProducts &&
+            product.PromotionProducts.length > 0 &&
+            product.PromotionProducts[0].DiscountPercent && (
+              <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
+                {product.PromotionProducts[0].DiscountPercent}% OFF
+              </span>
+            )}
         </Link>
+
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
           <Link to={`/product/${product.ProductId}`}>
@@ -38,14 +42,22 @@ function CardProduct({ product, addToCart , addToCompare}) {
 
           <div className="my-3 mx-1 flex items-center justify-between">
             <p>
-              <span className="text-xl font-bold text-slate-900">
-                ${product.Variations[0].Price}
-              </span>
-              {product.originalPrice && (
-                <span className="text-sm text-slate-900 line-through ml-2">
-                  ${product.originalPrice}
+              {product.Variations[0].SalePrice !== 0 && (
+                <span className="text-xl font-bold text-slate-900">
+                  ${product.Variations[0].SalePrice.toFixed(2)}
                 </span>
               )}
+              {product.Variations[0].SalePrice !== 0 && (
+                <span className="text-sm text-slate-900 line-through ml-2">
+                  ${product.Variations[0].Price.toFixed(2)}
+                </span>
+              )}
+              {product.Variations[0].SalePrice === 0 && (
+              <span className="text-xl font-bold text-slate-900">
+                ${product.Variations[0].Price.toFixed(2)}
+              </span>
+              )}
+
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
@@ -59,9 +71,9 @@ function CardProduct({ product, addToCart , addToCompare}) {
             <button
               className=" sm:w-5/6 max-w-[240px] whitespace-nowrap rounded-md  bg-emerald-600 px-3 py-2 text-xs xs:text-sm sm:text-base font-medium text-white transition  hover:bg-emerald-700"
               onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              addToCart(product);
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
               }}
             >
               Add to cart
@@ -80,7 +92,7 @@ function CardProduct({ product, addToCart , addToCompare}) {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
