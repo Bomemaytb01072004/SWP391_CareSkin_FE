@@ -6,6 +6,7 @@ const apiURLorders =
 const apiURLcategories =
   'http://careskinbeauty.shop:4456/api/Product/categories';
 const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
+const apiURLSkinTypeProduct = 'http://careskinbeauty.shop:4456/api/SkinType';
 
 /* ===============================
         CUSTOMERS API
@@ -121,6 +122,21 @@ export async function createBrand(brandData) {
   }
 }
 
+/* ===============================
+        SKIN TYPE PRODUCT API
+================================== */
+
+export async function fetchSkinTypeProduct() {
+  try {
+    const response = await fetch(apiURLSkinTypeProduct);
+    if (!response.ok) throw new Error('Error fetching skin type');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching skin type', error);
+    throw error;
+  }
+}
+
 // Create a new product
 export async function createProduct(productData) {
   try {
@@ -136,6 +152,10 @@ export async function createProduct(productData) {
     } else {
       formData.append('PictureFile', productData.PictureFile);
     }
+
+    productData.ProductForSkinTypes.forEach((v, i) => {
+      formData.append(`ProductForSkinTypes[${i}].SkinTypeId`, v.SkinTypeId);
+    });
 
     productData.Variations.forEach((v, i) => {
       formData.append(`Variations[${i}].Ml`, v.Ml);

@@ -5,6 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
 
 function ProductList({ products }) {
+  const [cart, setCart] = useState(() => {
+    const storedCart = localStorage.getItem('cart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
+
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
     return stored ? JSON.parse(stored) : [];
@@ -44,8 +49,8 @@ function ProductList({ products }) {
 
   const addToCart = async (product) => {
     const CustomerId = localStorage.getItem('CustomerId');
-    const Token = localStorage.getItem('Token');
-    if (!CustomerId || !Token) {
+    const token = localStorage.getItem('token');
+    if (!CustomerId || !token) {
       console.warn('No CustomerId found! Using localStorage for guest cart.');
       let cart = JSON.parse(localStorage.getItem('cart')) || [];
       const firstVariation =
@@ -89,7 +94,7 @@ function ProductList({ products }) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${Token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(newCartItem),
         }
@@ -102,7 +107,7 @@ function ProductList({ products }) {
       console.log('Cart successfully updated in API!');
       const cartResponse = await fetch(
         `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
-        { headers: { Authorization: `Bearer ${Token}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!cartResponse.ok) {
         throw new Error(`Failed to fetch updated cart: ${cartResponse.status}`);

@@ -22,7 +22,7 @@ function Navbar() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const Token = localStorage.getItem('Token');
+  const token = localStorage.getItem('token');
   const CustomerId = localStorage.getItem('CustomerId');
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -78,14 +78,14 @@ function Navbar() {
 
   useEffect(() => {
     const fetchCart = async () => {
-      if (CustomerId && Token) {
+      if (CustomerId && token) {
         try {
           console.log('Fetching cart from API...');
           const response = await fetch(
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
               headers: {
-                Authorization: `Bearer ${Token}`,
+                Authorization: `Bearer ${token}`,
               },
             }
           );
@@ -112,7 +112,7 @@ function Navbar() {
                   `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
                   {
                     headers: {
-                      Authorization: `Bearer ${Token}`,
+                      Authorization: `Bearer ${token}`,
                     },
                   }
                 );
@@ -156,7 +156,7 @@ function Navbar() {
     };
 
     fetchCart();
-  }, [CustomerId, Token]);
+  }, [CustomerId, token]);
 
   useEffect(() => {
     const updateCart = () => {
@@ -190,7 +190,7 @@ function Navbar() {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${Token}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               CustomerId: parseInt(CustomerId),
@@ -255,10 +255,10 @@ function Navbar() {
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId'); // Get CustomerId inside function
-    const Token = localStorage.getItem('Token');
+    const token = localStorage.getItem('token');
 
     // ✅ Part 1: Logged-in Users (Remove from API)
-    if (CustomerId && Token) {
+    if (CustomerId && token) {
       try {
         console.log(`Removing CartId: ${cartId} from API...`);
 
@@ -268,7 +268,7 @@ function Navbar() {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${Token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );

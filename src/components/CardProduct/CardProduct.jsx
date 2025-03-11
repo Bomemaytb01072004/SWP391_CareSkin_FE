@@ -17,11 +17,13 @@ function CardProduct({ product, addToCart, addToCompare }) {
             src={product.PictureUrl}
             alt={product.ProductName}
           />
-          {product.discount && (
-            <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
-              {product.discount} OFF
-            </span>
-          )}
+          {product.PromotionProducts &&
+            product.PromotionProducts.length > 0 &&
+            product.PromotionProducts[0].DiscountPercent && (
+              <span className="absolute top-0 left-0 rounded-full bg-black px-3 text-center text-xs text-white">
+                {product.PromotionProducts[0].DiscountPercent}% OFF
+              </span>
+            )}
         </Link>
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
@@ -36,12 +38,19 @@ function CardProduct({ product, addToCart, addToCompare }) {
 
           <div className="my-3 mx-1 flex items-center justify-between">
             <p>
-              <span className="text-xl font-bold text-slate-900">
-                ${product.Variations[0].Price}
-              </span>
-              {product.originalPrice && (
+              {product.Variations[0].SalePrice !== 0 && (
+                <span className="text-xl font-bold text-slate-900">
+                  ${product.Variations[0].SalePrice.toFixed(2)}
+                </span>
+              )}
+              {product.Variations[0].SalePrice !== 0 && (
                 <span className="text-sm text-slate-900 line-through ml-2">
-                  ${product.originalPrice}
+                  ${product.Variations[0].Price.toFixed(2)}
+                </span>
+              )}
+              {product.Variations[0].SalePrice === 0 && (
+                <span className="text-xl font-bold text-slate-900">
+                  ${product.Variations[0].Price.toFixed(2)}
                 </span>
               )}
             </p>
