@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
-import Header from "../../components/common/Header";
-import StatCard from "../../components/common/StatCard";
+import Header from '../../components/common/Header';
+import StatCard from '../../components/common/StatCard';
 
 import { AlertTriangle, DollarSign, Package, TrendingUp } from "lucide-react";
 

@@ -183,15 +183,15 @@ function ProductsPage() {
 
 
   return (
-
     <>
       <Navbar />
       <div className={`mt-20 ${styles.productPage_container}`}>
         <div className="row">
           <div className="col-12 mb-3">
-            <div className={`d-flex flex-column flex-md-row justify-content-between align-items-center ${styles.productPage_breadcrumb}`}>
+            <div
+              className={`d-flex flex-column flex-md-row justify-content-between align-items-center ${styles.productPage_breadcrumb}`}
+            >
               <Breadcrumb items={breadcrumbItems} />
-
             </div>
           </div>
         </div>

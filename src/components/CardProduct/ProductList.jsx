@@ -5,11 +5,16 @@ import { useNavigate } from 'react-router-dom';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
 
 function ProductList({ products }) {
+  const [cart, setCart] = useState(() => {
+    const storedCart = localStorage.getItem('cart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
+
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
     return stored ? JSON.parse(stored) : [];
   });
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,21 +47,83 @@ function ProductList({ products }) {
     }
   };
 
-  const addToCart = (product) => {
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingProduct = cart.find((item) => item.ProductId === product.ProductId);
-
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
+  const addToCart = async (product) => {
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token = localStorage.getItem('token');
+    if (!CustomerId || !token) {
+      console.warn('No CustomerId found! Using localStorage for guest cart.');
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const firstVariation =
+        Array.isArray(product.Variations) && product.Variations.length > 0
+          ? product.Variations[0]
+          : null;
+      const existingProductIndex = cart.findIndex(
+        (item) =>
+          item.ProductId === product.ProductId &&
+          item.ProductVariationId === firstVariation?.ProductVariationId
+      );
+      if (existingProductIndex !== -1) {
+        cart[existingProductIndex].Quantity += 1;
+      } else {
+        cart.push({
+          ...product,
+          Quantity: 1,
+          Price: firstVariation?.Price || 0,
+          ProductVariationId: firstVariation?.ProductVariationId || null,
+        });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('storage'));
+      setCart(cart);
+      return;
     }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('storage'));
+    try {
+      const firstVariation =
+        Array.isArray(product.Variations) && product.Variations.length > 0
+          ? product.Variations[0]
+          : null;
+      const newCartItem = {
+        CustomerId: parseInt(CustomerId),
+        ProductId: product.ProductId,
+        ProductVariationId: firstVariation?.ProductVariationId,
+        Quantity: 1,
+      };
+      const response = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/add`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newCartItem),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Response Error:', errorData);
+        throw new Error(`Failed to add item to cart: ${response.status}`);
+      }
+      console.log('Cart successfully updated in API!');
+      const cartResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!cartResponse.ok) {
+        throw new Error(`Failed to fetch updated cart: ${cartResponse.status}`);
+      }
+      const updatedCart = await cartResponse.json();
+      if (!Array.isArray(updatedCart)) {
+        console.error('Fetched cart is not an array:', updatedCart);
+        return;
+      }
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      setCart(updatedCart);
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
-
-
 
   return (
     <div className="mx-auto p-2">

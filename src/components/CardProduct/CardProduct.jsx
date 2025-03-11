@@ -1,13 +1,10 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCodeCompare } from "@fortawesome/free-solid-svg-icons";
-
-
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Star } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
 function CardProduct({ product, addToCart, addToCompare }) {
-
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -53,10 +50,11 @@ function CardProduct({ product, addToCart, addToCompare }) {
                 </span>
               )}
               {product.Variations[0].SalePrice === 0 && (
-              <span className="text-xl font-bold text-slate-900">
-                ${product.Variations[0].Price.toFixed(2)}
-              </span>
+                <span className="text-xl font-bold text-slate-900">
+                  ${product.Variations[0].Price.toFixed(2)}
+                </span>
               )}
+              
 
             </p>
             <div className="flex items-center">
@@ -87,7 +85,10 @@ function CardProduct({ product, addToCart, addToCompare }) {
                 addToCompare(product);
               }}
             >
-              <FontAwesomeIcon icon={faCodeCompare} className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700" />
+              <FontAwesomeIcon
+                icon={faCodeCompare}
+                className="w-5 h-5 sm:w-5 sm:h-5 text-gray-500 transition-colors duration-200 hover:text-gray-700"
+              />
             </button>
           </div>
         </div>

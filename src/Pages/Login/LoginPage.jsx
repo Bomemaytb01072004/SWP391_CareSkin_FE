@@ -17,7 +17,7 @@ const LoginPage = () => {
 
 
   const [registerPassword, setRegisterPassword] = useState('password');
-  const [confirmPassword , setConfirmPassword] = useState('password')
+  const [confirmPassword, setConfirmPassword] = useState('password')
   const [registerPasswordType, setRegisterPasswordType] = useState(false);
   const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
@@ -196,6 +196,7 @@ const LoginPage = () => {
         ← Homepage
       </button>
 
+
       <div
         className="h-screen flex items-center justify-center bg-cover bg-center p-4"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -293,6 +294,8 @@ const LoginPage = () => {
             <div style={{ marginBottom: '20px' }}>
               {/* 
               <GoogleLogin
+              {/* 
+              <GoogleLogin
                 onSuccess={credentialResponse => {
                   console.log(credentialResponse);
                 }}
@@ -301,6 +304,7 @@ const LoginPage = () => {
                 }}
               /> 
               */}
+              
               <a href="#facebook-login">
                 <i
                   className="fa-brands fa-facebook"
@@ -377,7 +381,7 @@ const LoginPage = () => {
                 onBlur={formikLogin.handleBlur}
               />
               <i
-                className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
+                className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleLoginPassword}
                 style={{
                   position: 'absolute',
@@ -400,6 +404,32 @@ const LoginPage = () => {
               Forgot your password?
             </a>
             <button
+              onClick={() => {
+                // Gọi hàm đăng nhập trước
+                setRightPanelActive(false);
+
+                // Xóa giỏ hàng khi đăng nhập thành công
+                const CustomerId = localStorage.getItem('CustomerId');
+                const Token = localStorage.getItem('Token');
+
+                if (CustomerId && Token) {
+                  console.log(
+                    'User is logged in. Clearing cart and checkout...'
+                  );
+
+                  // ✅ Clear session storage
+                  localStorage.removeItem('cart');
+                  localStorage.removeItem('checkoutItems');
+
+                  // ✅ Update state
+                  setCart([]);
+
+                  // ✅ Notify UI components of changes
+                  window.dispatchEvent(new Event('storage'));
+
+                  console.log('Cart and checkout items have been cleared.');
+                }
+              }}
               type="submit"
               style={{
                 padding: '12px 40px',
@@ -556,7 +586,7 @@ const LoginPage = () => {
                 onBlur={formikRegister.handleBlur}
               />
               <i
-                className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
+                className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleRegisterPassword}
                 style={{
                   position: 'absolute',
@@ -591,7 +621,7 @@ const LoginPage = () => {
                 onBlur={formikRegister.handleBlur}
               />
               <i
-                className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash" } toggle-password`}
+                className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleConfirmPassword}
                 style={{
                   position: 'absolute',

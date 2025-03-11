@@ -23,6 +23,7 @@
     "bootstrap": "^5.3.3",
     "formik": "^2.4.6",
     "jwt-decode": "^4.0.0",
+    "lightgallery": "^2.8.3",
     "lucide-react": "^0.474.0",
     "motion": "^12.4.4",
     "react": "^18.3.1",

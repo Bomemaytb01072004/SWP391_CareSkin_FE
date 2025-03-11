@@ -11,20 +11,23 @@ const CheckoutPage = () => {
     phone: '',
     address: '',
     paymentMethod: 'cod', // Default payment method
+    voucherCode: '', // ✅ Ensure this is always initialized as an empty string
   });
 
   const shippingCost = 5.0; // Fixed shipping fee
   const taxRate = 0.1; // 10% tax
   const navigate = useNavigate();
 
+  // ✅ Load only the selected items for checkout
   useEffect(() => {
     const storedSelectedItems =
       JSON.parse(localStorage.getItem('checkoutItems')) || [];
     setSelectedItems(storedSelectedItems);
   }, []);
 
+  // ✅ Calculate totals based on selected items
   const subtotal = selectedItems.reduce(
-    (total, item) => total + item.price * (item.quantity || 1),
+    (total, item) => total + (item.Price || 0) * (item.Quantity || 1),
     0
   );
   const tax = subtotal * taxRate;
@@ -49,21 +52,80 @@ const CheckoutPage = () => {
     }
   };
 
-  const handleCODCheckout = () => {
-    alert('Order placed successfully!');
+  const handleCODCheckout = async () => {
+    const CustomerId = localStorage.getItem('CustomerId')
+      ? parseInt(localStorage.getItem('CustomerId'))
+      : null;
 
-    // Remove selected items from cart
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const updatedCart = cart.filter(
-      (item) => !selectedItems.find((s) => s.id === item.id)
-    );
+    // ✅ Ensure Cart IDs are collected
+    const selectedCartItemIds = selectedItems
+      .map((item) => item.CartId)
+      .filter((id) => id !== null && id !== undefined);
 
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    localStorage.removeItem('checkoutItems');
+    // ✅ Set `PromotionId` based on voucher code
+    const PromotionId = customerInfo.voucherCode.trim() ? 2 : 1; // Assuming 2 is a valid promotion ID for a voucher
 
-    window.dispatchEvent(new Event('storage'));
+    console.log('🔹 CustomerId:', CustomerId);
+    console.log('🔹 SelectedCartItemIds:', selectedCartItemIds);
+    console.log('🔹 PromotionId:', PromotionId);
+    console.log('🔹 Voucher Code:', customerInfo.voucherCode);
 
-    navigate('/order-confirmation');
+    if (selectedCartItemIds.length === 0) {
+      alert('No valid items selected for checkout.');
+      return;
+    }
+
+    const orderPayload = {
+      CustomerId,
+      OrderStatusId: 1, // Assuming 1 = "Pending"
+      PromotionId, // ✅ Apply promotion or default to 1
+      Name: customerInfo.name,
+      Phone: customerInfo.phone,
+      Address: customerInfo.address,
+      SelectedCartItemIds: selectedCartItemIds,
+    };
+
+    console.log('🔹 Sending Order Payload:', JSON.stringify(orderPayload));
+
+    try {
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Order',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
+
+      const responseText = await response.text();
+
+      if (!response.ok) {
+        console.error('⚠️ Server Response:', responseText);
+        alert(`Failed to place order: ${responseText}`);
+        return;
+      }
+
+      console.log('✅ Order Response:', responseText);
+      alert('Order placed successfully!');
+
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const updatedCart = cart.filter(
+        (item) => !selectedItems.find((s) => s.CartId === item.CartId)
+      );
+
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      localStorage.removeItem('checkoutItems');
+
+      window.dispatchEvent(new Event('storage'));
+
+      navigate('/order-confirmation');
+    } catch (error) {
+      console.error('❌ Order API Error:', error);
+      alert('An error occurred while placing the order.');
+    }
   };
 
   // Handle MoMo / VNPay Online Payment (Not Working)
@@ -150,7 +212,18 @@ const CheckoutPage = () => {
               required
               className="w-full border px-3 py-2 rounded-md mb-4"
             />
-
+            {/* ✅ Voucher Code Field */}
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Voucher Code (Optional)
+            </label>
+            <input
+              type="text"
+              name="voucherCode"
+              value={customerInfo.voucherCode}
+              onChange={handleInputChange}
+              placeholder="Enter voucher code"
+              className="w-full border px-3 py-2 rounded-md mb-4"
+            />
             {/* Payment Methods */}
             <h3 className="text-xl font-semibold text-gray-800 mt-6">
               Payment Method
@@ -232,14 +305,17 @@ const CheckoutPage = () => {
               <div className="max-h-80 overflow-y-auto pr-2">
                 {selectedItems.length > 0 ? (
                   selectedItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 mb-2">
+                    <div
+                      key={item.ProductId}
+                      className="flex items-center gap-2 mb-2"
+                    >
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.PictureUrl}
+                        alt={item.ProductName}
                         className="w-12 h-12 object-cover rounded-md border"
                       />
                       <span className="text-gray-700 text-sm">
-                        {item.name} x{item.quantity}
+                        {item.ProductName} x{item.Quantity}
                       </span>
                     </div>
                   ))

@@ -22,6 +22,8 @@ function Navbar() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const token = localStorage.getItem('token');
+  const CustomerId = localStorage.getItem('CustomerId');
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   let closeTimeout = null;
@@ -33,9 +35,22 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user'); // Clear user session
+    console.log('Logging out... Clearing localStorage');
+
+    // ✅ Remove all user-related session data
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('CustomerId');
+
+    // ✅ Clear cart and checkout items when logging out
+    localStorage.removeItem('cart');
+    localStorage.removeItem('checkoutItems');
+
+    // ✅ Update state and navigate to home
     setIsLoggedIn(false);
-    navigate('/'); // Redirect to homepage after logout
+    setCart([]); // Reset cart state
+    window.dispatchEvent(new Event('storage')); // Ensure UI updates
+    navigate('/');
   };
 
   useEffect(() => {
@@ -62,26 +77,245 @@ function Navbar() {
   }, [lastScrollY]);
 
   useEffect(() => {
+    const fetchCart = async () => {
+      if (CustomerId && token) {
+        try {
+          console.log('Fetching cart from API...');
+          const response = await fetch(
+            `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Error fetching cart from server: ${response.status}`
+            );
+          }
+
+          let cartData = await response.json();
+          console.log('Cart data fetched:', cartData);
+
+          // ✅ Enrich cart items with product details
+          const enrichedItems = await Promise.all(
+            cartData.map(async (item) => {
+              if (!item.ProductId) {
+                console.error('Skipping item without ProductId:', item);
+                return item;
+              }
+
+              try {
+                const productRes = await fetch(
+                  `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+
+                if (!productRes.ok) {
+                  console.error(
+                    `Error fetching product ${item.ProductId}: ${productRes.status}`
+                  );
+                  return { ...item, PictureUrl: '', Variations: [] }; // Return empty data to avoid crashes
+                }
+
+                const productData = await productRes.json();
+
+                return {
+                  ...item,
+                  PictureUrl: productData.PictureUrl || '',
+                  Variations: productData.Variations || [],
+                };
+              } catch (error) {
+                console.error('Error enriching cart item:', error);
+                return { ...item, PictureUrl: '', Variations: [] }; // Handle failure
+              }
+            })
+          );
+
+          console.log('Final enriched cart:', enrichedItems);
+
+          // ✅ Save the enriched cart data to localStorage
+          localStorage.setItem('cart', JSON.stringify(enrichedItems));
+
+          // ✅ Update state
+          setCart(enrichedItems);
+        } catch (error) {
+          console.error('Error fetching cart from server:', error);
+        }
+      } else {
+        console.log('Fetching cart from localStorage...');
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCart(storedCart);
+      }
+    };
+
+    fetchCart();
+  }, [CustomerId, token]);
+
+  useEffect(() => {
     const updateCart = () => {
       const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
       setCart(storedCart);
     };
 
-    updateCart();
     window.addEventListener('storage', updateCart);
-    return () => {
-      window.removeEventListener('storage', updateCart);
-    };
+    return () => window.removeEventListener('storage', updateCart);
   }, []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const handleQuantityChange = async (
+    productId,
+    newQuantity,
+    productVariationId
+  ) => {
+    if (newQuantity < 1) return; // Prevent invalid quantity
 
-  const removeFromCart = (id) => {
-    const updatedCart = cart.filter((item) => item.id !== id);
+    const cartItem = cart.find((item) => item.ProductId === productId);
+    if (!cartItem) {
+      console.error(`Cart item with ProductId ${productId} not found.`);
+      return;
+    }
+
+    if (CustomerId) {
+      try {
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/update`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              CustomerId: parseInt(CustomerId),
+              ProductId: cartItem.ProductId,
+              ProductVariationId:
+                productVariationId ?? cartItem.ProductVariationId,
+              Quantity: newQuantity,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update quantity (ProductId: ${cartItem.ProductId})`
+          );
+        }
+
+        // ✅ Update the cart state in React
+        setCart((prevCart) =>
+          prevCart.map((item) =>
+            item.ProductId === productId
+              ? {
+                  ...item,
+                  Quantity: newQuantity,
+                  ProductVariationId:
+                    productVariationId ?? item.ProductVariationId,
+                  Price:
+                    cartItem.Variations.find(
+                      (v) => v.ProductVariationId === productVariationId
+                    )?.Price || item.Price,
+                }
+              : item
+          )
+        );
+      } catch (error) {
+        console.error('Error updating cart quantity:', error);
+      }
+    } else {
+      // ✅ Guest users: update localStorage
+      setCart((prevCart) => {
+        const updatedCart = prevCart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                Quantity: newQuantity,
+                ProductVariationId:
+                  productVariationId ?? item.ProductVariationId,
+                Price:
+                  cartItem.Variations.find(
+                    (v) => v.ProductVariationId === productVariationId
+                  )?.Price || item.Price,
+              }
+            : item
+        );
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const removeFromCart = async (cartId, productId, productVariationId) => {
+    const CustomerId = localStorage.getItem('CustomerId'); // Get CustomerId inside function
+    const token = localStorage.getItem('token');
+
+    // ✅ Part 1: Logged-in Users (Remove from API)
+    if (CustomerId && token) {
+      try {
+        console.log(`Removing CartId: ${cartId} from API...`);
+
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API Error: ${response.status} - ${errorText}`);
+        }
+
+        console.log('Item removed from API successfully');
+
+        // ✅ Remove from local state and sync localStorage as a backup
+        const updatedCart = cart.filter((item) => item.CartId !== cartId);
+        setCart(updatedCart);
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event('storage')); // Sync across components
+      } catch (error) {
+        console.error('Error removing item from API:', error);
+      }
+      return; // Stop execution here if API method was used
+    }
+
+    // ✅ Part 2: Guest Users (Remove from LocalStorage)
+    if (!productId || !productVariationId) {
+      console.error(
+        'Error: Missing productId or productVariationId for local cart removal.'
+      );
+      return;
+    }
+
+    console.log(
+      `Removing ProductId: ${productId} and VariationId: ${productVariationId} from local cart`
+    );
+    let localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    // ✅ Remove only the matching ProductId AND ProductVariationId
+    const updatedCart = localCart.filter(
+      (item) =>
+        !(
+          item.ProductId === productId &&
+          item.ProductVariationId === productVariationId
+        )
+    );
+
     setCart(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
-
-    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('storage')); // Ensure navbar updates
   };
 
   const handleProfileClick = () => {
@@ -229,27 +463,81 @@ function Navbar() {
                     <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
                       {cart.map((item) => (
                         <div
-                          key={item.id}
+                          key={item.ProductId}
                           className="flex items-center gap-3 border-b pb-2 mb-2 last:border-none"
                         >
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.PictureUrl}
+                            alt={item.ProductName}
                             className="w-14 h-14 object-cover rounded-md"
                           />
                           <div className="flex-1">
                             <p className="text-xs font-semibold text-gray-800">
-                              {item.name}
+                              {item.ProductName}
                             </p>
-                            <p className="text-xs text-gray-600">
-                              x{item.quantity}
+                            <p className="text-xs font-semibold text-gray-800">
+                              <select
+                                value={item.ProductVariationId || ''}
+                                onChange={(e) => {
+                                  const newVariationId = parseInt(
+                                    e.target.value
+                                  );
+                                  const newVariation = item.Variations?.find(
+                                    (v) =>
+                                      v.ProductVariationId === newVariationId
+                                  );
+
+                                  handleQuantityChange(
+                                    item.ProductId,
+                                    item.Quantity,
+                                    newVariationId,
+                                    newVariation?.Price
+                                  );
+                                }}
+                                className="border rounded px-2 py-1 text-gray-700"
+                              >
+                                {Array.isArray(item.Variations) &&
+                                item.Variations.length > 0 ? (
+                                  item.Variations.map((variation) =>
+                                    variation &&
+                                    variation.ProductVariationId ? (
+                                      <option
+                                        key={variation.ProductVariationId}
+                                        value={variation.ProductVariationId}
+                                      >
+                                        {variation.Ml
+                                          ? `${variation.Ml}ml`
+                                          : 'Unknown Size'}
+                                      </option>
+                                    ) : null
+                                  )
+                                ) : (
+                                  <option disabled>
+                                    No Variations Available
+                                  </option>
+                                )}
+                              </select>
+                            </p>
+                            <p className="text-xs mt-1 text-gray-600">
+                              x{item.Quantity ?? 1}
                             </p>
                           </div>
                           <p className="text-sm font-bold text-gray-700">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            $
+                            {(
+                              (item?.Price || 0) * (item.Quantity || 1)
+                            ).toFixed(2)}
                           </p>
                           {/* Remove Button */}
-                          <button onClick={() => removeFromCart(item.id)}>
+                          <button
+                            onClick={() =>
+                              removeFromCart(
+                                item.CartId,
+                                item.ProductId,
+                                item.ProductVariationId
+                              )
+                            }
+                          >
                             <FontAwesomeIcon
                               icon={faTrash}
                               className="text-red-500 hover:text-red-700 text-base transition"

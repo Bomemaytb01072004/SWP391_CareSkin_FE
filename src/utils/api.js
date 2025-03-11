@@ -159,6 +159,14 @@ export async function createProduct(productData) {
       formData.append('PictureFile', productData.PictureFile);
     }
 
+    if (productData.AdditionalPictures && productData.AdditionalPictures.length > 0) {
+      productData.AdditionalPictures.forEach((file) => {
+        formData.append("AdditionalPictures", file);
+        // Hoặc nếu backend yêu cầu "AdditionalPictures[]" thì:
+        // formData.append("AdditionalPictures[]", file);
+      });
+    }
+
     productData.ProductForSkinTypes.forEach((v, i) => {
       formData.append(`ProductForSkinTypes[${i}].SkinTypeId`, v.SkinTypeId);
     });

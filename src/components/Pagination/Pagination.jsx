@@ -1,5 +1,5 @@
-import React from "react";
-import "./Pagination.css";
+import React from 'react';
+import './Pagination.css';
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
   // Nếu chỉ có 1 trang thì không cần hiển thị
@@ -21,7 +21,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
     <nav aria-label="Page navigation example">
       <ul className="pagination justify-content-center">
         {/* Nút Previous */}
-        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
           <button
             className="page-link"
             onClick={handlePrev}
@@ -37,7 +37,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           return (
             <li
               key={pageNumber}
-              className={`page-item ${currentPage === pageNumber ? "active" : ""}`}
+              className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}
             >
               <button
                 className="page-link"
@@ -50,7 +50,9 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         })}
 
         {/* Nút Next */}
-        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+        <li
+          className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}
+        >
           <button
             className="page-link"
             onClick={handleNext}

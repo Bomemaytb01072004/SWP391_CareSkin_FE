@@ -43,6 +43,7 @@ const UserProfile = () => {
         } else {
           console.error('CustomerId not found in token');
           return; // Stop execution if no CustomerId
+          
         }
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -113,6 +114,7 @@ const UserProfile = () => {
     try {
       const response = await fetch(
         `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+        `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
         {
           method: 'PUT',
           headers: {
@@ -156,6 +158,16 @@ const UserProfile = () => {
                 alt="Profile"
                 className="w-24 h-24 rounded-full border-4 border-blue-500 shadow-md"
               />
+              <h6>Upload your image</h6>
+              {editMode && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="mt-2 p-3"
+                />
+              )}
+              <h2 className="mt-3 font-semibold text-lg">{user.FullName}</h2>
               <h6>Upload your image</h6>
               {editMode && (
                 <input

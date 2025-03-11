@@ -15,6 +15,11 @@ import {
  */
 const ProductsTable = ({ products }) => {
   const [localProducts, setLocalProducts] = useState([]);
+/**
+ * @param {Object[]} products - Danh sách sản phẩm
+ */
+const ProductsTable = ({ products }) => {
+  const [localProducts, setLocalProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,6 +32,8 @@ const ProductsTable = ({ products }) => {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Dữ liệu để edit
 
   // Dữ liệu để edit
   const [editProduct, setEditProduct] = useState(null);
@@ -65,8 +72,15 @@ const ProductsTable = ({ products }) => {
     fetchBrands()
       .then((data) => setBrandList(data))
       .catch((err) => console.error('Error fetching brands:', err));
+    fetchBrands()
+      .then((data) => setBrandList(data))
+      .catch((err) => console.error('Error fetching brands:', err));
   }, []);
 
+  // Tìm kiếm
+  useEffect(() => {
+    const term = searchTerm.toLowerCase();
+    const filtered = localProducts.filter(
   // Tìm kiếm
   useEffect(() => {
     const term = searchTerm.toLowerCase();
@@ -74,11 +88,15 @@ const ProductsTable = ({ products }) => {
       (product) =>
         product.ProductName.toLowerCase().includes(term) ||
         product.Category.toLowerCase().includes(term)
+        product.ProductName.toLowerCase().includes(term) ||
+        product.Category.toLowerCase().includes(term)
     );
     setFilteredProducts(filtered);
     setCurrentPage(1);
   }, [searchTerm, localProducts]);
+  }, [searchTerm, localProducts]);
 
+  // Phân trang
   // Phân trang
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -87,8 +105,11 @@ const ProductsTable = ({ products }) => {
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
+  // Xoá sản phẩm
+  const handleDelete = async (productId) => {
   // Xoá sản phẩm
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
@@ -102,9 +123,13 @@ const ProductsTable = ({ products }) => {
   };
 
   // Cập nhật sản phẩm
+  // Cập nhật sản phẩm
   const handleEdit = async () => {
     if (!editProduct) return;
     try {
+      const updated = await updateProduct(editProduct.ProductId, editProduct);
+      setLocalProducts((prev) =>
+        prev.map((p) => (p.ProductId === updated.ProductId ? updated : p))
       const updated = await updateProduct(editProduct.ProductId, editProduct);
       setLocalProducts((prev) =>
         prev.map((p) => (p.ProductId === updated.ProductId ? updated : p))
@@ -117,6 +142,7 @@ const ProductsTable = ({ products }) => {
   };
 
   // Thêm sản phẩm (payload chỉ chứa BrandId, không chứa BrandName và các trường ID trong mảng)
+  // Thêm sản phẩm (payload chỉ chứa BrandId, không chứa BrandName và các trường ID trong mảng)
   const handleAddProduct = async () => {
     if (!newProduct.ProductName || !newProduct.Category || !newProduct.BrandId) {
       alert('Please fill in required fields: ProductName, Category, BrandId');
@@ -126,7 +152,10 @@ const ProductsTable = ({ products }) => {
     try {
       const created = await createProduct(newProduct);
       setLocalProducts((prev) => [created, ...prev]);
+      const created = await createProduct(newProduct);
+      setLocalProducts((prev) => [created, ...prev]);
       setIsModalOpen(false);
+      // Reset form
       // Reset form
       setNewProduct({
         ProductName: '',
@@ -140,6 +169,7 @@ const ProductsTable = ({ products }) => {
         DetailIngredients: [{ IngredientName: '' }],
         Usages: [{ Step: 1, Instruction: '' }],
       });
+      setBrandNameInput('');
       setBrandNameInput('');
     } catch (error) {
       console.error('Failed to add product:', error);
@@ -251,7 +281,9 @@ const ProductsTable = ({ products }) => {
       pages.push(
         <button
           key="page-1"
+          key="page-1"
           onClick={() => handlePageChange(1)}
+          className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
           className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
         >
           1
@@ -266,7 +298,9 @@ const ProductsTable = ({ products }) => {
       pages.push(
         <button
           key={`page-${i}`}
+          key={`page-${i}`}
           onClick={() => handlePageChange(i)}
+          className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
           className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
         >
           {i}
@@ -281,7 +315,9 @@ const ProductsTable = ({ products }) => {
       pages.push(
         <button
           key={`page-${totalPages}`}
+          key={`page-${totalPages}`}
           onClick={() => handlePageChange(totalPages)}
+          className={`px-4 py-2 rounded-lg ${currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
           className={`px-4 py-2 rounded-lg ${currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
         >
           {totalPages}
@@ -290,6 +326,7 @@ const ProductsTable = ({ products }) => {
     }
     return pages;
   };
+
 
   return (
     <motion.div
@@ -300,12 +337,16 @@ const ProductsTable = ({ products }) => {
     >
       {/* Modal Edit */}
       {isEditing && editProduct && (
+      {/* Modal Edit */}
+      {isEditing && editProduct && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+          onClick={() => setIsEditing(false)}
           onClick={() => setIsEditing(false)}
         >
           <div
             className="bg-white p-6 rounded-lg shadow-lg w-1/3 max-w-lg"
+            onClick={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
@@ -317,6 +358,7 @@ const ProductsTable = ({ products }) => {
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
+                placeholder="ProductName"
                 placeholder="ProductName"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={editProduct.ProductName || ''}
@@ -333,12 +375,15 @@ const ProductsTable = ({ products }) => {
               <input
                 type="text"
                 placeholder="BrandId"
+                type="text"
+                placeholder="BrandId"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={editProduct.BrandId || ''}
                 onChange={(e) => setEditProduct({ ...editProduct, BrandId: e.target.value })}
               />
               <input
                 type="text"
+                placeholder="PictureUrl"
                 placeholder="PictureUrl"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={editProduct.PictureUrl || ''}
@@ -360,12 +405,15 @@ const ProductsTable = ({ products }) => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-100">Products</h2>
+        <h2 className="text-xl font-semibold text-gray-100">Products</h2>
         <div className="flex gap-4">
           <div className="relative">
             <input
               type="text"
               placeholder="Search by name or category..."
+              placeholder="Search by name or category..."
               className="bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setSearchTerm(e.target.value)}
               onChange={(e) => setSearchTerm(e.target.value)}
               value={searchTerm}
             />
@@ -382,12 +430,18 @@ const ProductsTable = ({ products }) => {
       </div>
 
       {/* Modal Thêm mới */}
+
+      {/* Modal Thêm mới */}
       {isModalOpen && (
         <div
           className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[9999]"
           onClick={() => setIsModalOpen(false)}
+          className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[9999]"
+          onClick={() => setIsModalOpen(false)}
         >
           <div
+            className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl overflow-auto z-[10000]"
+            onClick={(e) => e.stopPropagation()}
             className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl overflow-auto z-[10000]"
             onClick={(e) => e.stopPropagation()}
           >
@@ -400,13 +454,19 @@ const ProductsTable = ({ products }) => {
 
             {/* Thông tin cơ bản */}
             <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Thông tin cơ bản */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <input
                 type="text"
+                placeholder="ProductName"
                 placeholder="ProductName"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.ProductName}
                 autoFocus
+                value={newProduct.ProductName}
+                autoFocus
                 onChange={(e) =>
+                  setNewProduct({ ...newProduct, ProductName: e.target.value })
                   setNewProduct({ ...newProduct, ProductName: e.target.value })
                 }
               />
@@ -415,7 +475,9 @@ const ProductsTable = ({ products }) => {
                 placeholder="Category"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 value={newProduct.Category}
+                value={newProduct.Category}
                 onChange={(e) =>
+                  setNewProduct({ ...newProduct, Category: e.target.value })
                   setNewProduct({ ...newProduct, Category: e.target.value })
                 }
               />
@@ -463,6 +525,9 @@ const ProductsTable = ({ products }) => {
                 type="file"
                 accept="image/*"
                 title="Upload image of product"
+                type="file"
+                accept="image/*"
+                title="Upload image of product"
                 className="p-2 border border-gray-300 text-gray-900 rounded-lg"
                 onChange={(e) => {
                   if (e.target.files && e.target.files[0]) {
@@ -470,6 +535,14 @@ const ProductsTable = ({ products }) => {
                   }
                 }}
               />
+            </div>
+
+            <div className="mb-4">
+              <textarea
+                rows={3}
+                placeholder="Description"
+                className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg"
+                value={newProduct.Description}
             </div>
 
             <div className="mb-4">
@@ -697,6 +770,8 @@ const ProductsTable = ({ products }) => {
 
             {/* Buttons */}
             <div className="flex justify-end gap-4">
+            {/* Buttons */}
+            <div className="flex justify-end gap-4">
               <button
                 className="px-4 py-2 bg-gray-400 text-white rounded-lg"
                 onClick={() => setIsModalOpen(false)}
@@ -715,6 +790,8 @@ const ProductsTable = ({ products }) => {
       )}
 
       {/* Table */}
+
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
@@ -727,8 +804,10 @@ const ProductsTable = ({ products }) => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                 Brand
+                Brand
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                Price (1st Variation)
                 Price (1st Variation)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
@@ -789,9 +868,63 @@ const ProductsTable = ({ products }) => {
                 </motion.tr>
               );
             })}
+            {displayedProducts.map((product, index) => {
+              const firstVariation = product.Variations?.[0];
+              return (
+                <motion.tr
+                  key={product.ProductId || index}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center">
+                    <img
+                      src={
+                        product.PictureUrl && product.PictureUrl !== 'string'
+                          ? product.PictureUrl
+                          : 'https://via.placeholder.com/50'
+                      }
+                      alt="Product"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                    {product.ProductName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {product.Category}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {product.BrandName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {firstVariation
+                      ? `$${parseFloat(firstVariation.Price || 0).toFixed(2)}`
+                      : 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    <button
+                      className="text-indigo-400 hover:text-indigo-300 mr-2"
+                      onClick={() => {
+                        setEditProduct(product);
+                        setIsEditing(true);
+                      }}
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      className="text-red-400 hover:text-red-300"
+                      onClick={() => handleDelete(product.ProductId)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </motion.tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
 
       {/* Pagination */}
       <div className="flex justify-center mt-4 space-x-2">
@@ -818,6 +951,12 @@ const ProductsTable = ({ products }) => {
         >
           Next
         </button>
+      </div>
+
+      {/* Charts */}
+      <div className="mt-10 grid grid-col-1 lg:grid-cols-2 gap-8 z-0">
+        <SalesTrendChart />
+        <CategoryDistributionChart products={products} />
       </div>
 
       {/* Charts */}

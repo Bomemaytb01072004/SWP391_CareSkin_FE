@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import './Filters.css';
-import SearchProduct from "../SearchProduct/SearchProduct";
+import SearchProduct from '../SearchProduct/SearchProduct';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { fetchCategories, fetchSkinTypeProduct } from '../../utils/api'
+import { fetchCategories, fetchSkinTypeProduct } from '../../utils/api';
 
 const Filters = ({ onFilterChange }) => {
   const [selectedFilters, setSelectedFilters] = useState({
@@ -20,54 +20,53 @@ const Filters = ({ onFilterChange }) => {
       try {
         const data = await fetchCategories();
 
-        const splittedCategories = data.flatMap(item =>
-          item.split(",").map(str => str.trim())
+        const splittedCategories = data.flatMap((item) =>
+          item.split(',').map((str) => str.trim())
         );
         const uniqueCategories = Array.from(new Set(splittedCategories));
 
-        const mappedCategories = uniqueCategories.map(cat => {
-          const capitalizedLabel = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+        const mappedCategories = uniqueCategories.map((cat) => {
+          const capitalizedLabel =
+            cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
           return {
             label: capitalizedLabel,
-            value: capitalizedLabel.replace(/\s+/g, '_')
+            value: capitalizedLabel.replace(/\s+/g, '_'),
           };
         });
 
         setCategories(mappedCategories);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error fetching categories:', error);
       }
     })();
   }, []);
 
   const priceRanges = [
-    { label: "Under $25", value: "under_25" },
-    { label: "$25 - $50", value: "25_50" },
-    { label: "$50 - $100", value: "50_100" },
-    { label: "Over $100", value: "over_100" },
+    { label: 'Under $25', value: 'under_25' },
+    { label: '$25 - $50', value: '25_50' },
+    { label: '$50 - $100', value: '50_100' },
+    { label: 'Over $100', value: 'over_100' },
   ];
 
   useEffect(() => {
     (async () => {
       try {
-        
         const dataSkinType = await fetchSkinTypeProduct();
-  
+
         const mappedSkinTypes = dataSkinType.map((item) => {
-          const labelWithoutSkin = item.TypeName.replace(" Skin", "");
+          const labelWithoutSkin = item.TypeName.replace(' Skin', '');
           return {
             label: labelWithoutSkin,
             value: item.SkinTypeId,
           };
         });
-  
+
         setSkinTypes(mappedSkinTypes);
       } catch (error) {
-        console.error("Error fetching skin type:", error);
+        console.error('Error fetching skin type:', error);
       }
     })();
   }, []);
-  
 
   const handleFilterChange = (filterType, value) => {
     setSelectedFilters((prev) => {
@@ -79,8 +78,8 @@ const Filters = ({ onFilterChange }) => {
       } else {
         updatedFilters[filterType].push(value);
       }
-      console.log("Updated Filters:", updatedFilters);
-      if (onFilterChange && typeof onFilterChange === "function") {
+      console.log('Updated Filters:', updatedFilters);
+      if (onFilterChange && typeof onFilterChange === 'function') {
         onFilterChange(updatedFilters);
       }
       return updatedFilters;
@@ -107,7 +106,7 @@ const Filters = ({ onFilterChange }) => {
           <div
             className={`
               transition-all duration-300 overflow-hidden 
-              ${isOpen ? "max-h-[auto] opacity-100" : "max-h-0 opacity-0"}
+              ${isOpen ? 'max-h-[auto] opacity-100' : 'max-h-0 opacity-0'}
             `}
           >
             <div className="p-4">
@@ -119,7 +118,9 @@ const Filters = ({ onFilterChange }) => {
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.category.includes(item.value)}
-                      onChange={() => handleFilterChange("category", item.value)}
+                      onChange={() =>
+                        handleFilterChange('category', item.value)
+                      }
                       className="mr-2"
                     />
                     {item.label}
@@ -134,7 +135,9 @@ const Filters = ({ onFilterChange }) => {
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.priceRange.includes(item.value)}
-                      onChange={() => handleFilterChange("priceRange", item.value)}
+                      onChange={() =>
+                        handleFilterChange('priceRange', item.value)
+                      }
                       className="mr-2"
                     />
                     {item.label}
@@ -149,7 +152,9 @@ const Filters = ({ onFilterChange }) => {
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.skinType.includes(item.value)}
-                      onChange={() => handleFilterChange("skinType", item.value)}
+                      onChange={() =>
+                        handleFilterChange('skinType', item.value)
+                      }
                       className="mr-2"
                     />
                     {item.label}
@@ -174,7 +179,7 @@ const Filters = ({ onFilterChange }) => {
                   type="checkbox"
                   value={item.value}
                   checked={selectedFilters.category.includes(item.value)}
-                  onChange={() => handleFilterChange("category", item.value)}
+                  onChange={() => handleFilterChange('category', item.value)}
                   className="mr-2"
                 />
                 {item.label}
@@ -189,7 +194,7 @@ const Filters = ({ onFilterChange }) => {
                   type="checkbox"
                   value={item.value}
                   checked={selectedFilters.priceRange.includes(item.value)}
-                  onChange={() => handleFilterChange("priceRange", item.value)}
+                  onChange={() => handleFilterChange('priceRange', item.value)}
                   className="mr-2"
                 />
                 {item.label}
@@ -204,7 +209,7 @@ const Filters = ({ onFilterChange }) => {
                   type="checkbox"
                   value={item.value}
                   checked={selectedFilters.skinType.includes(item.value)}
-                  onChange={() => handleFilterChange("skinType", item.value)}
+                  onChange={() => handleFilterChange('skinType', item.value)}
                   className="mr-2"
                 />
                 {item.label}
@@ -215,7 +220,6 @@ const Filters = ({ onFilterChange }) => {
       </div>
     </>
   );
-
 };
 
 export default Filters;

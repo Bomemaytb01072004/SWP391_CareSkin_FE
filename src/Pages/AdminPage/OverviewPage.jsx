@@ -56,7 +56,7 @@ const OverviewPage = () => {
         </div>
       </main>
     </div>
-  );
-};
+  )};
+
 
 export default OverviewPage;
