@@ -1,27 +1,7 @@
 import React from 'react';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import styles from './IconSlider.module.css';
 
 function IconSlider() {
-  const settings = {
-    infinite: true,
-    speed: 5000, // Smooth transition speed
-    slidesToShow: 4, // Default number of logos visible at once
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 1000, // Slower and smoother auto-slide
-    cssEase: 'ease-in-out', // Smooth easing
-    pauseOnHover: false,
-    arrows: false,
-    responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 4 } }, // Medium screens
-      { breakpoint: 768, settings: { slidesToShow: 3 } }, // Tablets
-      { breakpoint: 480, settings: { slidesToShow: 2 } }, // Mobile
-    ],
-  };
-
-  // Array of brand logos
   const brandLogos = [
     { src: '/src/assets/brands/loreal.png', alt: "L'Oréal" },
     { src: '/src/assets/brands/estee-lauder.png', alt: 'Estée Lauder' },
@@ -34,25 +14,18 @@ function IconSlider() {
     { src: '/src/assets/brands/skinceuticals.png', alt: 'SkinCeuticals' },
   ];
 
+  // Nhân đôi danh sách logo để tạo hiệu ứng cuộn liên tục
+  const logos = [...brandLogos, ...brandLogos];
+
   return (
-    <div className="max-w-full bg-white py-6">
-      <Slider {...settings} className="flex items-center">
-        {brandLogos.concat(brandLogos).map(
-          (
-            brand,
-            index // Duplicate logos for infinite scrolling effect
-          ) => (
-            <div key={index} className="flex justify-center">
-              <img
-                src={brand.src}
-                alt={brand.alt}
-                className="h-16 md:h-20 sm:h-12 xs:h-10 object-contain mx-4"
-                style={{ willChange: 'transform' }} // Enable GPU acceleration
-              />
-            </div>
-          )
-        )}
-      </Slider>
+    <div className={styles.sliderContainer}>
+      <div className={styles.sliderTrack}>
+        {logos.map((brand, index) => (
+          <div key={index} className={styles.slide}>
+            <img src={brand.src} alt={brand.alt} className={styles.logo} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

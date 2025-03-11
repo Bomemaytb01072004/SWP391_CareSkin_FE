@@ -5,7 +5,7 @@ import Footer from '../../components/Layout/Footer';
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const Token = localStorage.getItem('Token');
+  const token = localStorage.getItem('token');
   const CustomerId = localStorage.getItem('CustomerId');
 
   const [cart, setCart] = useState([]);
@@ -29,7 +29,7 @@ const CartPage = () => {
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
               headers: {
-                Authorization: `Bearer ${Token}`,
+                Authorization: `Bearer ${token}`,
               },
             }
           );
@@ -50,7 +50,7 @@ const CartPage = () => {
                   `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
                   {
                     headers: {
-                      Authorization: `Bearer ${Token}`,
+                      Authorization: `Bearer ${token}`,
                     },
                   }
                 );
@@ -101,7 +101,7 @@ const CartPage = () => {
     };
 
     fetchCart();
-  }, [CustomerId, Token]);
+  }, [CustomerId, token]);
   useEffect(() => {
     const updateCart = () => {
       const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -114,10 +114,10 @@ const CartPage = () => {
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId');
-    const Token = localStorage.getItem('Token');
+    const token = localStorage.getItem('token');
 
     // ✅ Part 1: Logged-in Users (Remove from API first)
-    if (CustomerId && Token) {
+    if (CustomerId && token) {
       try {
         console.log(`Removing CartId: ${cartId} from API...`);
 
@@ -126,7 +126,7 @@ const CartPage = () => {
           {
             method: 'DELETE',
             headers: {
-              Authorization: `Bearer ${Token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -198,7 +198,7 @@ const CartPage = () => {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${Token}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               CustomerId: parseInt(CustomerId),
@@ -303,7 +303,7 @@ const CartPage = () => {
         const removeRequests = cartIdsToRemove.map((cartId) =>
           fetch(`http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`, {
             method: 'DELETE',
-            headers: { Authorization: `Bearer ${Token}` },
+            headers: { Authorization: `Bearer ${token}` },
           })
         );
 
@@ -342,11 +342,15 @@ const CartPage = () => {
 
     localStorage.setItem('checkoutItems', JSON.stringify(selectedProducts));
 
-    // Reuse removeSelectedItems to remove selected items from cart
-    await removeSelectedItems();
+    // Guest user: remove selected items from localStorage only
+    const updatedCart = cart.filter(
+      (item) => !selectedItems.includes(item.ProductId)
+    );
+    setCart(updatedCart);
+    setSelectedItems([]); // Clear selected items in real time
 
-    // Ensure `selectedItems` is reset after checkout
-    setSelectedItems([]);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    window.dispatchEvent(new Event('storage'));
 
     navigate('/checkout'); // Navigate to checkout page
   };

@@ -1,39 +1,61 @@
-import React, { useState } from "react";
-import "./Pagination.css";
+import React from 'react';
+import './Pagination.css';
 
-function Pagination() {
-  const [currentPage, setCurrentPage] = useState(1);
+function Pagination({ currentPage, totalPages, onPageChange }) {
+  // Nếu chỉ có 1 trang thì không cần hiển thị
+  if (totalPages <= 1) return null;
 
-  const totalPages = 3;
+  const handlePrev = () => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  };
 
   return (
     <nav aria-label="Page navigation example">
       <ul className="pagination justify-content-center">
-        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+        {/* Nút Previous */}
+        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
           <button
             className="page-link"
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={handlePrev}
             disabled={currentPage === 1}
           >
             Previous
           </button>
         </li>
 
+        {/* Hiển thị danh sách trang */}
         {[...Array(totalPages)].map((_, index) => {
           const pageNumber = index + 1;
           return (
-            <li key={pageNumber} className={`page-item ${currentPage === pageNumber ? "active" : ""}`}>
-              <button className="page-link" onClick={() => setCurrentPage(pageNumber)}>
+            <li
+              key={pageNumber}
+              className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}
+            >
+              <button
+                className="page-link"
+                onClick={() => onPageChange(pageNumber)}
+              >
                 {pageNumber}
               </button>
             </li>
           );
         })}
 
-        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+        {/* Nút Next */}
+        <li
+          className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}
+        >
           <button
             className="page-link"
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={handleNext}
             disabled={currentPage === totalPages}
           >
             Next
