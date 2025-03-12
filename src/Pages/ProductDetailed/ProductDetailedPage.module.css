@@ -26,7 +26,7 @@
 
 .productImages {
   flex: 1;
-  min-width: 400px;
+  min-width: 500px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -38,15 +38,12 @@
   border-radius: 8px;
 }
 
-.thumbnailContainer {
-  display: flex;
-  gap: 15px;
-  margin-top: 10px;
-}
-
 .thumbnail {
-  width: 150px;
-  height: 140px;
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  width: 80px;
+  height: 80px;
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.2s;
@@ -204,4 +201,3 @@
   justify-content: center;
   gap: 10px;
 }
-
