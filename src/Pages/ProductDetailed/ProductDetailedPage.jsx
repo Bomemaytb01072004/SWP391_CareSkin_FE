@@ -160,13 +160,7 @@ function ProductDetailedPage() {
               {/* LightGallery wrapper: 
                  "plugins={[lgZoom]}" enables zoom within the lightbox. 
                  "a href" points to the large image source. */}
-              <LightGallery
-                plugins={[lgZoom]}
-                elementClassNames="lightgallery-container"
-                speed={500} // adjust animation speed
-                download={false} // hide download button (optional)
-              >
-                {/* Single main image link */}
+              <LightGallery plugins={[lgZoom]} elementClassNames="lightgallery-container" speed={500} download={false}>
                 <a href={product.PictureUrl}>
                   <img
                     className={styles.img}
@@ -175,18 +169,28 @@ function ProductDetailedPage() {
                     style={{ cursor: 'pointer' }}
                   />
                 </a>
+
+                {product.ProductPictures?.map((picture, index) => (
+                  <a key={index} href={picture.PictureUrl} style={{
+                    display: 'inline-block',
+                    margin: '0 8px 8px 0', // chút margin phải & dưới
+                    verticalAlign: 'top',  // giúp các ảnh căn cùng dòng
+                  }}>
+                    <img
+                      className={`${styles.thumbnail} mx-2`}
+                      src={picture.PictureUrl}
+                      alt={picture.ProductName}
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </a>
+                ))}
               </LightGallery>
-
-              {/* If you want more images in the same lightbox gallery:
-                   Just add more <a> tags, each with its own img. */}
-
-              <div className="d-flex justify-content-center flex-wrap mt-3">
-                <img
-                  className={`${styles.thumbnail} mx-2`}
-                  src={product.PictureUrl}
-                  alt="Thumbnail"
-                />
-              </div>
             </div>
           </div>
           <div className="col-lg-6 col-md-12">
