@@ -358,19 +358,21 @@ const CartPage = () => {
   const selectedProducts = cart.filter((item) =>
     selectedItems.includes(item.ProductId)
   );
-  const subtotal = selectedProducts.reduce((total, item) => {
-    const variationPrice =
-      item?.Variations?.find(
-        (v) => v.ProductVariationId === item.ProductVariationId
-      )?.Price ||
-      item?.Price ||
-      0;
-
-    return total + variationPrice * (item.Quantity || 1);
+  const originalTotal = selectedProducts.reduce((total, item) => {
+    return total + (item.Price || 0) * (item.Quantity || 1);
   }, 0);
 
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax + (subtotal > 0 ? shippingCost : 0);
+  const discountTotal = selectedProducts.reduce((total, item) => {
+    const discount =
+      item.SalePrice && item.SalePrice < item.Price
+        ? (item.Price - item.SalePrice) * (item.Quantity || 1)
+        : 0;
+    return total + discount;
+  }, 0);
+
+  const totalOrder = selectedProducts.reduce((total, item) => {
+    return total + (item.SalePrice || item.Price || 0) * (item.Quantity || 1);
+  }, 0);
 
   return (
     <>
@@ -443,7 +445,10 @@ const CartPage = () => {
                     </h3>
                     <p className="text-gray-600 text-sm">
                       <select
-                        value={item.ProductVariationId}
+                        value={
+                          item.ProductVariationId ||
+                          item.Variations[0]?.ProductVariationId
+                        } // Ensure it defaults to the first variation
                         onChange={(e) => {
                           const newVariationId = parseInt(e.target.value);
                           const newVariation = item.Variations.find(
@@ -454,7 +459,7 @@ const CartPage = () => {
                             item.ProductId,
                             item.Quantity,
                             newVariationId,
-                            newVariation?.Price
+                            newVariation?.SalePrice ?? newVariation?.Price // ✅ Use SalePrice if available
                           );
                         }}
                         className="border rounded px-2 py-1 text-gray-700"
@@ -505,9 +510,14 @@ const CartPage = () => {
                     </button>
                   </div>
 
-                  {/* Price */}
-                  <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-12">
-                    ${((item?.Price || 0) * (item.Quantity || 1)).toFixed(2)}
+                  {/* Price (Updated to Show SalePrice) */}
+                  <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-20">
+                    $
+                    {(
+                      ((item.SalePrice ?? item.Price) || 0) *
+                      (item.Quantity || 1)
+                    ) // ✅ Uses SalePrice if available
+                      .toFixed(2)}
                   </p>
 
                   {/* Remove Button */}
@@ -534,20 +544,16 @@ const CartPage = () => {
           <h3 className="text-xl font-semibold text-gray-800">Order Summary</h3>
           <div className="mt-3 space-y-4">
             <div className="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>Original Price</span>
+              <span>${originalTotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span>${subtotal > 0 ? shippingCost.toFixed(2) : '0.00'}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax (10%)</span>
-              <span>${tax.toFixed(2)}</span>
+            <div className="flex justify-between text-red-500 font-semibold">
+              <span>Discount</span>
+              <span>-${discountTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-800 font-semibold text-lg">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${totalOrder.toFixed(2)}</span>
             </div>
           </div>
 

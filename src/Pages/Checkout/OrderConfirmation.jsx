@@ -13,7 +13,7 @@ const OrderConfirmation = () => {
   return (
     <>
       <Navbar />
-      <div className="max-w-4xl mx-auto px-6 py-12 mt-32 mb-24 text-center bg-white shadow-lg rounded-lg">
+      <div className="max-w-4xl mx-auto px-6 py-12 mt-32 mb-24 text-center  bg-white shadow-lg rounded-lg">
         <div className="flex flex-col items-center">
           {/* Success Icon with Animation */}
           <div className="relative">
@@ -21,14 +21,11 @@ const OrderConfirmation = () => {
               icon={faCheckCircle}
               className="text-6xl text-emerald-500 animate-bounce"
             />
-            <span className="absolute top-[-0.938rem] right-[-0.625rem] text-xl animate-ping">
-              🎊
-            </span>
           </div>
 
           {/* Order Confirmation Message */}
           <h2 className="text-3xl font-bold text-gray-800 mt-4">
-            🎉 Order Confirmed!
+            Order Confirmed!
           </h2>
 
           <p className="text-gray-600 mt-3 max-w-lg">
@@ -47,8 +44,8 @@ const OrderConfirmation = () => {
               🚚 3 - 5 Business Days
             </p>
           </div>
-
           {/* Back to Home Button */}
+
           <Link
             to="/"
             className="mt-6 px-6 py-3 bg-emerald-600 text-white font-semibold rounded-md shadow-md hover:bg-emerald-700 transition transform hover:scale-105"
