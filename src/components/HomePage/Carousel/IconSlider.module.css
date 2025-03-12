@@ -1,37 +1,37 @@
 /* IconSlider.module.css */
 .sliderContainer {
-    overflow: hidden;
-    background-color: transparent;
-    padding: 1rem 0;
+  overflow: hidden;
+  background-color: transparent;
+  padding: 1rem 0;
+}
+
+.sliderTrack {
+  display: flex;
+  width: calc(200%); /* Vì nội dung được nhân đôi */
+  animation: scroll 60s linear infinite;
+  gap: 100px;
+}
+
+.slide {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 1rem;
+}
+
+.logo {
+  width: 10rem;
+  height: 4rem;
+  object-fit: contain;
+  /* filter: brightness(100%) saturate(0%); */
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
   }
-  
-  .sliderTrack {
-    display: flex;
-    width: calc(200%); /* Vì nội dung được nhân đôi */
-    animation: scroll 60s linear infinite;
-    gap: 100px;
+  100% {
+    transform: translateX(-50%);
   }
-  
-  .slide {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 1rem;
-  }
-  
-  .logo {
-    height: 4rem;
-    object-fit: contain;
-    filter: brightness(100%) saturate(0%);
-  }
-  
-  @keyframes scroll {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
-  }
-  
+}
