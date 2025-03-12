@@ -4,9 +4,12 @@ import Footer from '../../components/Layout/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-
+import { fetchAvailablePromotions } from '../../utils/api';
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
+  const [promotions, setPromotions] = useState([]); // ✅ Stores available promotions
+  const [discountPercent, setDiscountPercent] = useState(0); // ✅ Store selected promotion discount
+
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     email: '',
@@ -23,6 +26,10 @@ const CheckoutPage = () => {
     const storedSelectedItems =
       JSON.parse(localStorage.getItem('checkoutItems')) || [];
     setSelectedItems(storedSelectedItems);
+    // ✅ Fetch available promotions from API
+    fetchAvailablePromotions()
+      .then(setPromotions) // ✅ Set the filtered promotions into state
+      .catch((error) => console.error('❌ Error fetching promotions:', error));
   }, []);
 
   // ✅ Calculate totals using SalePrice if available
@@ -38,7 +45,10 @@ const CheckoutPage = () => {
     );
   }, 0);
 
-  const totalOrder = originalTotal - discountTotal;
+  // ✅ Dynamically update `totalOrder` when a promotion is selected
+  const totalBeforePromotion = originalTotal - discountTotal;
+  const discountAmount = (totalBeforePromotion * discountPercent) / 100;
+  const totalOrder = totalBeforePromotion - discountAmount;
 
   const handleInputChange = (e) => {
     setCustomerInfo({ ...customerInfo, [e.target.name]: e.target.value });
@@ -67,7 +77,7 @@ const CheckoutPage = () => {
       phone: '',
       address: '',
       paymentMethod: 'cod',
-      voucherCode: '',
+      promotionId: '', // ✅ Stores selected promotion
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Full name is required'),
@@ -77,18 +87,18 @@ const CheckoutPage = () => {
         .required('Phone number is required'),
       address: Yup.string().required('Address is required'),
       paymentMethod: Yup.string().required('Payment method is required'),
-      voucherCode: Yup.string(),
+      promotionId: Yup.string(),
     }),
     onSubmit: (values) => {
       if (values.paymentMethod === 'cod') {
-        handleCODCheckout(values);
+        handleCODCheckout(values); // ✅ FIX: Pass Formik values
       } else {
         handleOnlinePayment(values);
       }
     },
   });
 
-  const handleCODCheckout = async () => {
+  const handleCODCheckout = async (values) => {
     const CustomerId = localStorage.getItem('CustomerId')
       ? parseInt(localStorage.getItem('CustomerId'))
       : null;
@@ -98,26 +108,22 @@ const CheckoutPage = () => {
       .map((item) => item.CartId)
       .filter((id) => id !== null && id !== undefined);
 
-    // ✅ Set `PromotionId` based on voucher code
-    const PromotionId = customerInfo.voucherCode.trim() ? 2 : 1; // Assuming 2 is a valid promotion ID for a voucher
-
-    console.log('🔹 CustomerId:', CustomerId);
-    console.log('🔹 SelectedCartItemIds:', selectedCartItemIds);
-    console.log('🔹 PromotionId:', PromotionId);
-    console.log('🔹 Voucher Code:', customerInfo.voucherCode);
-
     if (selectedCartItemIds.length === 0) {
       alert('No valid items selected for checkout.');
       return;
     }
 
+    // ✅ Get PromotionId from Formik
+    const PromotionId = values.promotionId ? parseInt(values.promotionId) : 1;
+
+    // ✅ Build order payload using Formik values
     const orderPayload = {
       CustomerId,
       OrderStatusId: 1, // Assuming 1 = "Pending"
-      PromotionId, // ✅ Apply promotion or default to 1
-      Name: customerInfo.name,
-      Phone: customerInfo.phone,
-      Address: customerInfo.address,
+      PromotionId, // ✅ Apply selected promotion or default to 1
+      Name: values.name, // ✅ FIX: Use Formik values
+      Phone: values.phone, // ✅ FIX: Use Formik values
+      Address: values.address, // ✅ FIX: Use Formik values
       SelectedCartItemIds: selectedCartItemIds,
     };
 
@@ -147,6 +153,7 @@ const CheckoutPage = () => {
       console.log('✅ Order Response:', responseText);
       alert('Order placed successfully!');
 
+      // ✅ Remove purchased items from cart
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
       const updatedCart = cart.filter(
         (item) => !selectedItems.find((s) => s.CartId === item.CartId)
@@ -186,6 +193,23 @@ const CheckoutPage = () => {
     window.location.href = paymentUrl;
   };
 
+  // ✅ Handle Promotion Selection
+  const handlePromotionChange = (e) => {
+    const selectedPromotionId = e.target.value;
+    formik.setFieldValue('promotionId', selectedPromotionId);
+
+    // ✅ Find the selected promotion's discount percent
+    const selectedPromotion = promotions.find(
+      (promo) => promo.PromotionId.toString() === selectedPromotionId
+    );
+
+    if (selectedPromotion) {
+      setDiscountPercent(selectedPromotion.DiscountPercent);
+    } else {
+      setDiscountPercent(0); // Reset if no promotion is selected
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -218,7 +242,7 @@ const CheckoutPage = () => {
 
             {/* ✅ Email Field */}
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Email (Optional)
+              Email
             </label>
             <input
               type="email"
@@ -258,16 +282,27 @@ const CheckoutPage = () => {
               <p className="text-red-500 text-sm">{formik.errors.address}</p>
             )}
 
-            {/* ✅ Voucher Code Field */}
+            {/* ✅ Select Available Promotion */}
             <label className="block text-gray-700 text-sm font-bold mb-2">
-              Voucher Code (Optional)
+              Select Promotion
             </label>
-            <input
-              type="text"
-              name="voucherCode"
-              {...formik.getFieldProps('voucherCode')}
+            <select
+              name="promotionId"
+              value={formik.values.promotionId}
+              onChange={handlePromotionChange}
               className="w-full border px-3 py-2 rounded-md mb-4"
-            />
+            >
+              <option value="">No Promotion</option>
+              {promotions.length > 0 ? (
+                promotions.map((promo) => (
+                  <option key={promo.PromotionId} value={promo.PromotionId}>
+                    {promo.Name} - {promo.DiscountPercent}% Off
+                  </option>
+                ))
+              ) : (
+                <option disabled>No promotions available</option>
+              )}
+            </select>
 
             {/* ✅ Payment Method Section */}
             <h3 className="text-xl font-semibold text-gray-800 mt-6">
@@ -328,6 +363,14 @@ const CheckoutPage = () => {
                   -${discountTotal.toFixed(2)}
                 </span>
               </div>
+              {/* ✅ Discount from Promotion */}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Voucher Discount</span>
+                <span className="text-red-500 font-semibold">
+                  -${discountAmount.toFixed(2)}
+                </span>
+              </div>
+              {/* ✅ Total after Promotion */}
               <div className="flex justify-between text-gray-800 font-semibold text-lg">
                 <span>Total</span>
                 <span>${totalOrder.toFixed(2)}</span>
