@@ -86,6 +86,7 @@ const Filters = ({ onFilterChange }) => {
     });
   };
 
+
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -113,7 +114,7 @@ const Filters = ({ onFilterChange }) => {
                 <h4 className="font-semibold">Category</h4>
                 {categories.map((item) => (
                   <label key={item.value} className="block my-1">
-                    <input
+                    <input  
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.category.includes(item.value)}

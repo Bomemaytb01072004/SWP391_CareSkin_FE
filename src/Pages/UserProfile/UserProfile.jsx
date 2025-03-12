@@ -43,6 +43,7 @@ const UserProfile = () => {
         } else {
           console.error('CustomerId not found in token');
           return; // Stop execution if no CustomerId
+          
         }
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -105,6 +106,7 @@ const UserProfile = () => {
     formData.append('Address', user.Address);
     formData.append('PictureFile', user.PictureUrl);
 
+
     if (selectedFile) {
       formData.append('PictureFile', selectedFile);
     }
@@ -112,10 +114,11 @@ const UserProfile = () => {
     try {
       const response = await fetch(
         `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+        `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
         {
           method: 'PUT',
           headers: {
-            Authorization: `Bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: formData,
         }
@@ -124,6 +127,7 @@ const UserProfile = () => {
       const responseData = await response.json();
       console.log('Update response status:', response.status);
       console.log('Update response data:', responseData);
+
 
       if (!response.ok) {
         throw new Error(responseData.message || 'Failed to update profile');
@@ -164,19 +168,27 @@ const UserProfile = () => {
                 />
               )}
               <h2 className="mt-3 font-semibold text-lg">{user.FullName}</h2>
+              <h6>Upload your image</h6>
+              {editMode && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="mt-2 p-3"
+                />
+              )}
+              <h2 className="mt-3 font-semibold text-lg">{user.FullName}</h2>
             </div>
             <div className="mt-6">
               <ul className="space-y-4">
-                {['Account', 'Password', 'Order History', 'Notification'].map(
-                  (tab) => (
-                    <li
-                      key={tab}
-                      className="p-3 rounded-md cursor-pointer text-gray-700 hover:bg-gray-200 transition"
-                    >
-                      {tab}
-                    </li>
-                  )
-                )}
+                {['Account', 'Password', 'Order History', 'Notification'].map((tab) => (
+                  <li
+                    key={tab}
+                    className="p-3 rounded-md cursor-pointer text-gray-700 hover:bg-gray-200 transition"
+                  >
+                    {tab}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -184,9 +196,7 @@ const UserProfile = () => {
           {/* Main Content */}
           <div className="w-2/3 p-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Account Settings
-              </h2>
+              <h2 className="text-2xl font-semibold text-gray-800">Account Settings</h2>
               <button
                 onClick={() => setEditMode(!editMode)}
                 className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition"
@@ -204,9 +214,8 @@ const UserProfile = () => {
                   value={user.FullName}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`w-full border p-2 rounded-md focus:ring ${
-                    editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
-                  }`}
+                  className={`w-full border p-2 rounded-md focus:ring ${editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
+                    }`}
                 />
               </div>
               <div>
@@ -227,9 +236,8 @@ const UserProfile = () => {
                   value={user.Phone}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`w-full border p-2 rounded-md focus:ring ${
-                    editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
-                  }`}
+                  className={`w-full border p-2 rounded-md focus:ring ${editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
+                    }`}
                 />
               </div>
               <div>
@@ -240,9 +248,8 @@ const UserProfile = () => {
                   value={user.Dob}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`w-full border p-2 rounded-md focus:ring ${
-                    editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
-                  }`}
+                  className={`w-full border p-2 rounded-md focus:ring ${editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
+                    }`}
                 />
               </div>
               <div>
@@ -252,9 +259,8 @@ const UserProfile = () => {
                   value={user.Gender}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`w-full border p-2 rounded-md focus:ring ${
-                    editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
-                  }`}
+                  className={`w-full border p-2 rounded-md focus:ring ${editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
+                    }`}
                 >
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -269,9 +275,8 @@ const UserProfile = () => {
                   value={user.Address}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`w-full border p-2 rounded-md focus:ring ${
-                    editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
-                  }`}
+                  className={`w-full border p-2 rounded-md focus:ring ${editMode ? 'focus:ring-blue-200' : 'bg-gray-100'
+                    }`}
                 />
               </div>
             </div>

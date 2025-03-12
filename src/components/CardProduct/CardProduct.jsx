@@ -26,6 +26,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
             )}
         </Link>
 
+
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
           <Link to={`/product/${product.ProductId}`}>
             <h5 className="mt-3 mx-1 text-lg tracking-tight text-slate-900 truncate">
@@ -53,6 +54,8 @@ function CardProduct({ product, addToCart, addToCompare }) {
                   ${product.Variations[0].Price.toFixed(2)}
                 </span>
               )}
+              
+
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
@@ -90,7 +93,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

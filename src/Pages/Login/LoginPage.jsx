@@ -7,7 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 // import { GoogleLogin } from '@react-oauth/google';
 import { Formik, useFormik } from 'formik';
-import * as Yup from 'yup';
+import * as Yup from 'yup'
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
@@ -15,8 +15,9 @@ const LoginPage = () => {
   const [loginPassword, setLoginPassword] = useState('password');
   const [loginPasswordType, setLoginPasswordType] = useState(false);
 
+
   const [registerPassword, setRegisterPassword] = useState('password');
-  const [confirmPassword, setConfirmPassword] = useState('password');
+  const [confirmPassword, setConfirmPassword] = useState('password')
   const [registerPasswordType, setRegisterPasswordType] = useState(false);
   const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
@@ -24,14 +25,15 @@ const LoginPage = () => {
 
   const formikLogin = useFormik({
     initialValues: {
-      username: '',
-      password: '',
+      username: "",
+      password: ""
     },
     validationSchema: Yup.object({
-      username: Yup.string().required('This field is required'),
+      username: Yup.string()
+        .required("This field is required"),
       password: Yup.string()
-        .required('You must enter a password')
-        .min(3, 'Password must be at least 8 characters'),
+        .required("You must enter a password")
+        .min(3, "Password must be at least 8 characters")
     }),
     onSubmit: async (values) => {
       const { username, password } = values;
@@ -58,9 +60,7 @@ const LoginPage = () => {
         const data = await response.json();
 
         if (!data.token) {
-          toast.error(
-            data.message || data.error || 'Invalid username or password.'
-          );
+          toast.error(data.message || data.error || 'Invalid username or password.');
           return;
         }
 
@@ -100,15 +100,14 @@ const LoginPage = () => {
       userName: Yup.string()
         .required('Please enter username')
         .min(6, 'Username must be at least 6 characters'),
-      email: Yup.string().email('Invalid email').required('Please enter email'),
+      email: Yup.string()
+        .email('Invalid email')
+        .required('Please enter email'),
       password: Yup.string()
         .required('Please enter password')
         .min(3, 'Password minimum 3 characters'),
       confirmPassword: Yup.string()
-        .oneOf(
-          [Yup.ref('password'), null],
-          'Confirmation password does not match'
-        )
+        .oneOf([Yup.ref('password'), null], 'Confirmation password does not match')
         .required('Please confirm password'),
     }),
     onSubmit: async (values) => {
@@ -149,30 +148,30 @@ const LoginPage = () => {
   });
 
   const toggleLoginPassword = () => {
-    setLoginPasswordType(!loginPasswordType);
+    setLoginPasswordType(!loginPasswordType)
     if (loginPasswordType == true) {
-      setLoginPassword('password');
+      setLoginPassword('password')
     } else {
-      setLoginPassword('text');
+      setLoginPassword('text')
     }
   };
 
   const toggleRegisterPassword = () => {
-    setRegisterPasswordType(!registerPasswordType);
+    setRegisterPasswordType(!registerPasswordType)
     if (registerPasswordType == true) {
-      setRegisterPassword('password');
+      setRegisterPassword('password')
     } else {
-      setRegisterPassword('text');
+      setRegisterPassword('text')
     }
   };
 
   const toggleConfirmPassword = () => {
-    setConfirmPasswordType(!confirmPasswordType);
+    setConfirmPasswordType(!confirmPasswordType)
 
     if (confirmPasswordType == true) {
-      setConfirmPassword('password');
+      setConfirmPassword('password')
     } else {
-      setConfirmPassword('text');
+      setConfirmPassword('text')
     }
   };
 
@@ -196,6 +195,7 @@ const LoginPage = () => {
       >
         ← Homepage
       </button>
+
 
       <div
         className="h-screen flex items-center justify-center bg-cover bg-center p-4"
@@ -294,6 +294,8 @@ const LoginPage = () => {
             <div style={{ marginBottom: '20px' }}>
               {/* 
               <GoogleLogin
+              {/* 
+              <GoogleLogin
                 onSuccess={credentialResponse => {
                   console.log(credentialResponse);
                 }}
@@ -302,6 +304,7 @@ const LoginPage = () => {
                 }}
               /> 
               */}
+              
               <a href="#facebook-login">
                 <i
                   className="fa-brands fa-facebook"
@@ -355,15 +358,7 @@ const LoginPage = () => {
               onBlur={formikLogin.handleBlur}
             />
             {formikLogin.touched.username && formikLogin.errors.username && (
-              <div
-                style={{
-                  color: 'red',
-                  fontSize: '12px',
-                  marginBottom: '10px',
-                  textAlign: 'left',
-                  width: '80%',
-                }}
-              >
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
                 {formikLogin.errors.username}
               </div>
             )}
@@ -386,7 +381,7 @@ const LoginPage = () => {
                 onBlur={formikLogin.handleBlur}
               />
               <i
-                className={`fa-solid ${loginPasswordType ? 'fa-eye' : 'fa-eye-slash'} toggle-password`}
+                className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleLoginPassword}
                 style={{
                   position: 'absolute',
@@ -398,15 +393,7 @@ const LoginPage = () => {
               ></i>
             </div>
             {formikLogin.touched.password && formikLogin.errors.password && (
-              <div
-                style={{
-                  color: 'red',
-                  fontSize: '12px',
-                  marginBottom: '10px',
-                  textAlign: 'left',
-                  width: '80%',
-                }}
-              >
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
                 {formikLogin.errors.password}
               </div>
             )}
@@ -546,20 +533,11 @@ const LoginPage = () => {
               onChange={formikRegister.handleChange}
               onBlur={formikRegister.handleBlur}
             />
-            {formikRegister.touched.userName &&
-              formikRegister.errors.userName && (
-                <div
-                  style={{
-                    color: 'red',
-                    fontSize: '12px',
-                    marginBottom: '10px',
-                    textAlign: 'left',
-                    width: '80%',
-                  }}
-                >
-                  {formikRegister.errors.email}
-                </div>
-              )}
+            {formikRegister.touched.userName && formikRegister.errors.userName && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikRegister.errors.email}
+              </div>
+            )}
             <input
               type="email"
               name="email"
@@ -579,15 +557,7 @@ const LoginPage = () => {
             />
 
             {formikRegister.touched.email && formikRegister.errors.email && (
-              <div
-                style={{
-                  color: 'red',
-                  fontSize: '12px',
-                  marginBottom: '10px',
-                  textAlign: 'left',
-                  width: '80%',
-                }}
-              >
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
                 {formikRegister.errors.email}
               </div>
             )}
@@ -616,7 +586,7 @@ const LoginPage = () => {
                 onBlur={formikRegister.handleBlur}
               />
               <i
-                className={`fa-solid ${registerPasswordType ? 'fa-eye' : 'fa-eye-slash'} toggle-password`}
+                className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleRegisterPassword}
                 style={{
                   position: 'absolute',
@@ -625,22 +595,14 @@ const LoginPage = () => {
                   transform: 'translateY(-50%)',
                   cursor: 'pointer',
                 }}
+
               ></i>
             </div>
-            {formikRegister.touched.password &&
-              formikRegister.errors.password && (
-                <div
-                  style={{
-                    color: 'red',
-                    fontSize: '12px',
-                    marginBottom: '10px',
-                    textAlign: 'left',
-                    width: '80%',
-                  }}
-                >
-                  {formikRegister.errors.password}
-                </div>
-              )}
+            {formikRegister.touched.password && formikRegister.errors.password && (
+              <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                {formikRegister.errors.password}
+              </div>
+            )}
             <div style={{ position: 'relative', width: '80%' }}>
               <input
                 type={confirmPassword}
@@ -659,7 +621,7 @@ const LoginPage = () => {
                 onBlur={formikRegister.handleBlur}
               />
               <i
-                className={`fa-solid ${confirmPasswordType ? 'fa-eye' : 'fa-eye-slash'} toggle-password`}
+                className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
                 onClick={toggleConfirmPassword}
                 style={{
                   position: 'absolute',
@@ -672,15 +634,7 @@ const LoginPage = () => {
             </div>
             {formikRegister.touched.confirmPassword &&
               formikRegister.errors.confirmPassword && (
-                <div
-                  style={{
-                    color: 'red',
-                    fontSize: '12px',
-                    marginBottom: '10px',
-                    textAlign: 'left',
-                    width: '80%',
-                  }}
-                >
+                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
                   {formikRegister.errors.confirmPassword}
                 </div>
               )}
