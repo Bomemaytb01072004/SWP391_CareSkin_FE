@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = 'http://careskinbeauty.shop:4456/api/Product';
 
-const BestSellers = () => {
+const NewArrivals = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +23,7 @@ const BestSellers = () => {
         const formattedProducts = data.map((product) => {
           const variation = product.Variations?.[0] || {};
           const promotion = product.PromotionProducts?.[0] || null;
+
           return {
             id: product.ProductId,
             name: product.ProductName || 'Unnamed Product',
@@ -52,22 +53,21 @@ const BestSellers = () => {
     return () => controller.abort(); // Cleanup fetch on unmount
   }, []);
 
-  const bestSellers = useMemo(
-    () =>
-      [...products].sort((a, b) => b.rating - a.rating).slice(0, itemsPerPage),
+  const newestProducts = useMemo(
+    () => [...products].sort((a, b) => b.id - a.id).slice(0, itemsPerPage),
     [products]
   );
 
   if (loading)
     return (
-      <p className="text-center text-gray-500 py-8">Loading bestsellers...</p>
+      <p className="text-center text-gray-500 py-8">Loading new arrivals...</p>
     );
   if (error)
     return <p className="text-center text-red-500 py-8">Error: {error}</p>;
 
   return (
     <div className="mx-auto px-4 py-8 max-w-screen-2xl relative">
-      <h2 className="text-3xl font-bold mt-8 mb-10 text-black">Bestsellers</h2>
+      <h2 className="text-3xl font-bold mt-8 mb-10 text-black">New Arrivals</h2>
       <div className="w-full flex justify-center overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -77,10 +77,10 @@ const BestSellers = () => {
             transition={{ duration: 0.5 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {bestSellers.map((product) => (
+            {newestProducts.map((product) => (
               <div
                 key={product.id}
-                className="relative rounded-lg p-6 bg-white border border-gray-200 shadow-lg hover:shadow-2xl transition-shadow cursor-pointer"
+                className="relative rounded-lg p-6 bg-white border border-gray-50 shadow-md hover:shadow-xl transition-shadow cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 {product.discount && (
@@ -134,7 +134,9 @@ const BestSellers = () => {
       </div>
       <div className="text-center mt-8">
         <button
-          onClick={() => navigate('/products')}
+          onClick={() =>
+            navigate('/products', { state: { fromNewArrivals: true } })
+          }
           className="bg-black text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors"
         >
           View All
@@ -144,4 +146,4 @@ const BestSellers = () => {
   );
 };
 
-export default BestSellers;
+export default NewArrivals;

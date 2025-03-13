@@ -12,6 +12,7 @@ import CheckoutPage from './Pages/Checkout/CheckoutPage';
 import OrderConfirmation from './Pages/Checkout/OrderConfirmation';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
+import BlogPage from './Pages/Blog/BlogPage';
 export default function App() {
   return (
     <Router>
@@ -23,9 +24,14 @@ export default function App() {
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/product/:id" element={<ProductDetailedPage />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/blogs" element={<BlogPage />} />
+
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/compare/:product1/:product2" element={<CompareProduct />}/>
+        <Route
+          path="/compare/:product1/:product2"
+          element={<CompareProduct />}
+        />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/admin/*" element={<Admin />} />
       </Routes>

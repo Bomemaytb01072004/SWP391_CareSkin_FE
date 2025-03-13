@@ -28,9 +28,7 @@ const CartPage = () => {
           const response = await fetch(
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
 
@@ -42,56 +40,22 @@ const CartPage = () => {
 
           const cartData = await response.json();
 
-          // Enrich cart items with product details
-          const enrichedItems = await Promise.all(
-            cartData.map(async (item) => {
-              try {
-                const productRes = await fetch(
-                  `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }
-                );
-
-                if (!productRes.ok) {
-                  throw new Error(
-                    `Error fetching product ${item.ProductId}: ${productRes.status}`
-                  );
-                }
-
-                const productData = await productRes.json();
-
-                return {
-                  ...item,
-                  PictureUrl: productData.PictureUrl,
-                  Variations: productData.Variations,
-                };
-              } catch (error) {
-                console.error('Error enriching cart item:', error);
-                return item; // Return the item without modification in case of error
-              }
-            })
-          );
-
-          setCart(enrichedItems);
+          // ✅ Directly use API response (no extra request needed)
+          setCart(cartData);
         } catch (error) {
           console.error('Error fetching cart from server:', error);
         }
       } else {
-        // Fallback to localStorage cart if user is not logged in
-        const storedCart = JSON.parse(localStorage.getItem('cart'));
-        if (storedCart && storedCart.length > 0) {
-          setCart(storedCart);
-        }
+        // ✅ Load cart from localStorage for guest users
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
 
+        // ✅ Merge duplicates in guest cart
         const mergedCart = storedCart.reduce((acc, item) => {
           const existingItem = acc.find((i) => i.ProductId === item.ProductId);
           if (existingItem) {
-            existingItem.quantity += item.quantity || 1;
+            existingItem.Quantity += item.Quantity || 1;
           } else {
-            acc.push({ ...item, quantity: item.quantity || 1 });
+            acc.push({ ...item, Quantity: item.Quantity || 1 });
           }
           return acc;
         }, []);
@@ -102,6 +66,7 @@ const CartPage = () => {
 
     fetchCart();
   }, [CustomerId, token]);
+
   useEffect(() => {
     const updateCart = () => {
       const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -447,11 +412,11 @@ const CartPage = () => {
                       <select
                         value={
                           item.ProductVariationId ||
-                          item.Variations[0]?.ProductVariationId
-                        } // Ensure it defaults to the first variation
+                          item.ProductVariations?.[0]?.ProductVariationId
+                        }
                         onChange={(e) => {
                           const newVariationId = parseInt(e.target.value);
-                          const newVariation = item.Variations.find(
+                          const newVariation = item.ProductVariations?.find(
                             (v) => v.ProductVariationId === newVariationId
                           );
 
@@ -464,14 +429,18 @@ const CartPage = () => {
                         }}
                         className="border rounded px-2 py-1 text-gray-700"
                       >
-                        {item.Variations.map((variation) => (
-                          <option
-                            key={variation.ProductVariationId}
-                            value={variation.ProductVariationId}
-                          >
-                            {variation.Ml}ml
-                          </option>
-                        ))}
+                        {item.ProductVariations?.map(
+                          (
+                            variation // ✅ Safe optional chaining
+                          ) => (
+                            <option
+                              key={variation.ProductVariationId}
+                              value={variation.ProductVariationId}
+                            >
+                              {variation.Ml}ml
+                            </option>
+                          )
+                        )}
                       </select>
                     </p>
                   </div>

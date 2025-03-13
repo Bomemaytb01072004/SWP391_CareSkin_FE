@@ -45,7 +45,7 @@ const ServiceFeedback = () => {
         Customer Stories
       </h2>
       <div
-        className={`lg:h-60 max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-500 ${
+        className={`lg:h-60 max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-500 ${
           fade ? 'opacity-100' : 'opacity-0'
         }`}
       >
