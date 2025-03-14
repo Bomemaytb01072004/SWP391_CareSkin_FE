@@ -1,16 +1,11 @@
 // api.js
-const apiURLcustomers =
-  'http://careskinbeauty.shop:4456/api/Customer';
-const apiURLproducts =
-  'http://careskinbeauty.shop:4456/api/Product';
-const apiURLorders =
-  'https://67b44f76392f4aa94faa49b5.mockapi.io/api/order/order';
+const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
+const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
+const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
 const apiURLcategories =
   'http://careskinbeauty.shop:4456/api/Product/categories';
-const apiURLBrands =
-  'http://careskinbeauty.shop:4456/api/Brand';
-const apiURLSkinTypeProduct =
-  'http://careskinbeauty.shop:4456/api/SkinType';
+const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
+const apiURLSkinTypeProduct = 'http://careskinbeauty.shop:4456/api/SkinType';
 
 /* ===============================
         CUSTOMERS API
@@ -130,7 +125,6 @@ export async function createBrand(brandData) {
         SKIN TYPE PRODUCT API
 ================================== */
 
-
 export async function fetchSkinTypeProduct() {
   try {
     const response = await fetch(apiURLSkinTypeProduct);
@@ -141,7 +135,6 @@ export async function fetchSkinTypeProduct() {
     throw error;
   }
 }
-
 
 // Create a new product
 export async function createProduct(productData) {
@@ -159,9 +152,12 @@ export async function createProduct(productData) {
       formData.append('PictureFile', productData.PictureFile);
     }
 
-    if (productData.AdditionalPictures && productData.AdditionalPictures.length > 0) {
+    if (
+      productData.AdditionalPictures &&
+      productData.AdditionalPictures.length > 0
+    ) {
       productData.AdditionalPictures.forEach((file) => {
-        formData.append("AdditionalPictures", file);
+        formData.append('AdditionalPictures', file);
         // Hoặc nếu backend yêu cầu "AdditionalPictures[]" thì:
         // formData.append("AdditionalPictures[]", file);
       });
@@ -180,7 +176,10 @@ export async function createProduct(productData) {
       formData.append(`MainIngredients[${i}].Description`, v.Description);
     });
     productData.DetailIngredients.forEach((v, i) => {
-      formData.append(`DetailIngredients[${i}].IngredientName`, v.IngredientName);
+      formData.append(
+        `DetailIngredients[${i}].IngredientName`,
+        v.IngredientName
+      );
     });
     productData.Usages.forEach((v, i) => {
       formData.append(`Usages[${i}].Step`, v.Step);
@@ -215,8 +214,14 @@ export async function updateProduct(id, updatedData) {
   }
 
   formData.append('Variations', JSON.stringify(updatedData.Variations));
-  formData.append('MainIngredients', JSON.stringify(updatedData.MainIngredients));
-  formData.append('DetailIngredients', JSON.stringify(updatedData.DetailIngredients));
+  formData.append(
+    'MainIngredients',
+    JSON.stringify(updatedData.MainIngredients)
+  );
+  formData.append(
+    'DetailIngredients',
+    JSON.stringify(updatedData.DetailIngredients)
+  );
   formData.append('Usages', JSON.stringify(updatedData.Usages));
 
   try {
