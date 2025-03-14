@@ -59,72 +59,87 @@ function CompareProduct() {
   }
 
   const colSize = products.length === 2 ? 6 : 4;
+  const isTwoProducts = products.length === 2;
 
   return (
     <>
       <Navbar />
 
-      <div className={`container my-20  ${styles.compareProduct}`}>
-        <div className="row mt-4 mb-3">
-          <div className="col-12 ">
-            <Breadcrumb items={breadcrumbItems} />
+      <div className="container py-4 py-md-5">
+        <div className={`${styles.compareProduct} ${isTwoProducts ? styles.twoProductsContainer : ''}`}>
+          <div className="row mt-4 mb-4">
+            <div className="col-12">
+              <Breadcrumb items={breadcrumbItems} />
+            </div>
+            <div className="col-12">
+              <h2 className="text-center mb-4">Product Comparison</h2>
+            </div>
           </div>
-          <div className="col-12">
-            <h2 className="text-center"></h2>
-          </div>
-        </div>
 
-        <div className="row g-4">
-          {products.map((product) => (
-            <div
-              className={`col-12 col-sm-6 col-md-${colSize}`}
-              key={product.id}
-            >
-              <div className="card shadow-md rounded-3xl h-100">
-                <div className="position-relative">
-                  <img
-                    src={product.image}
-                    className="card-img-top"
-                    alt={product.name}
-                  />
-                  {product.tag && (
-                    <span
-                      className="position-absolute top-0 start-0 badge bg-danger"
-                      style={{ margin: '8px' }}
-                    >
-                      {product.tag}
-                    </span>
-                  )}
-                </div>
-                <div className="card-body text-center">
-                  <Link to={`/product/${product.id}`}>
-                    <h5
-                      className={`${styles.textTruncate} ${styles.nameProductTitle}`}
-                    >
-                      {product.name}
-                    </h5>
-                  </Link>
-                  <p className={` ${styles.priceProductCompare}`}>
-                    ${product.price}
-                  </p>
+          <div className={`row g-4 ${isTwoProducts ? styles.twoProductsRow : ''}`}>
+            {products.map((product) => (
+              <div
+                className={`col-12 col-sm-6 col-md-${colSize}`}
+                key={product.ProductId}
+              >
+                <div className={`card shadow ${styles.productCard}`}>
+                  <div className={styles.productImageContainer}>
+                    <img
+                      src={product.PictureUrl}
+                      className={styles.productImage}
+                      alt={product.ProductName}
+                      loading="lazy"
+                    />
+                    {product.PromotionProducts &&
+                      product.PromotionProducts.length > 0 &&
+                      product.PromotionProducts[0].DiscountPercent && (
+                        <span className={styles.discountBadge}>
+                          {product.PromotionProducts[0].DiscountPercent}% OFF
+                        </span>
+                      )}
+                  </div>
+                  <div className={styles.cardBody}>
+                    <div>
+                      <Link to={`/product/${product.ProductId}`}>
+                        <h5 className={styles.nameProductTitle}>
+                          {product.ProductName}
+                        </h5>
+                      </Link>
+                    </div>
+                    <div>
+                      <p className={styles.priceProductCompare}>
+                        {product.Variations[0].SalePrice !== 0 && (
+                          <span className="text-xl">
+                            ${product.Variations[0].SalePrice.toFixed(2)}
+                          </span>
+                        )}
+                        {product.Variations[0].SalePrice !== 0 && (
+                          <span className="text-sm line-through ml-2">
+                            ${product.Variations[0].Price.toFixed(2)}
+                          </span>
+                        )}
+                        {product.Variations[0].SalePrice === 0 && (
+                          <span className="text-xl">
+                            ${product.Variations[0].Price.toFixed(2)}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className={`row mt-5 ${styles.compareTableContainer}`}>
-          <div className="col-12">
+          <div className={`${styles.compareTableContainer} ${isTwoProducts ? styles.twoProductsTable : ''}`}>
             <div className="table-responsive">
-              <table
-                className={`table table-bordered text-center align-middle ${styles.customTable}`}
-              >
-                <thead className="table-light">
+              <table className={`table ${styles.customTable}`}>
+                <thead>
                   <tr>
-                    <th className="fw-bold fs-5">Properties</th>
+                    <th>Properties</th>
                     {products.map((product) => (
-                      <th key={product.id} className="fw-bold fs-5">
-                        {product.name}
+                      <th key={product.ProductId} title={product.ProductName}>
+                        {product.ProductName}
                       </th>
                     ))}
                   </tr>
@@ -133,31 +148,51 @@ function CompareProduct() {
                   <tr>
                     <td>Category</td>
                     {products.map((product) => (
-                      <td key={product.id}>{product.category}</td>
+                      <td key={product.ProductId}>{product.Category}</td>
                     ))}
                   </tr>
                   <tr>
                     <td>Skin Type</td>
                     {products.map((product) => (
-                      <td key={product.id}>{product.skinType}</td>
+                      <td key={product.ProductId}>
+                        {product.ProductForSkinTypes && product.ProductForSkinTypes.length > 0 ? (
+                          <ul className="m-0">
+                            {product.ProductForSkinTypes.map((skinType, index) => (
+                              <li key={index}>{skinType.TypeName}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          "Not specified"
+                        )}
+                      </td>
                     ))}
                   </tr>
                   <tr>
                     <td>Key Ingredients</td>
                     {products.map((product) => (
-                      <td key={product.id}>{product.ingredients}</td>
+                      <td key={product.ProductId}>
+                        {product.MainIngredients && product.MainIngredients.length > 0 ? (
+                          <ul className="m-0">
+                            {product.MainIngredients.map((ingredient, index) => (
+                              <li key={index}>{ingredient.IngredientName}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          "Not specified"
+                        )}
+                      </td>
                     ))}
                   </tr>
                   <tr>
-                    <td>Benefits</td>
+                    <td>Full Ingredients</td>
                     {products.map((product) => (
-                      <td key={product.id}>{product.benefits}</td>
+                      <td key={product.ProductId}>{product.DetailIngredients[0].IngredientName}</td>
                     ))}
                   </tr>
                   <tr>
                     <td>Usage</td>
                     {products.map((product) => (
-                      <td key={product.id}>{product.usage}</td>
+                      <td key={product.ProductId}>{product.Usages[0].Instruction}</td>
                     ))}
                   </tr>
                 </tbody>

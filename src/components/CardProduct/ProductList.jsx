@@ -36,12 +36,12 @@ function ProductList({ products }) {
     if (compareList.length === 3) {
       for (let i = 0; i < 2; i++) {
         const product = compareList[i];
-        subpath += `${product.ProductId}-${product.name.replaceAll(' ', '-')}/`;
+        subpath += `${product.ProductId}-${product.ProductName.replaceAll(' ', '-')}/`;
       }
       navigate(`/compare/${subpath}?product_id=${compareList[2].ProductId}`);
     } else {
       for (let product of compareList) {
-        subpath += `${product.ProductId}-${product.name.replaceAll(' ', '-')}/`;
+        subpath += `${product.ProductId}-${product.ProductName.replaceAll(' ', '-')}/`;
       }
       navigate(`/compare/${subpath}`);
     }

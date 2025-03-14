@@ -3,11 +3,12 @@
   border-color: #ced4da;
   display: flex;
   flex-direction: column;
-  gap: 0px;
+  gap: 20px;
   align-items: flex-start;
   justify-content: flex-start;
   position: relative;
-  overflow: auto;
+  width: 100%;
+  padding: 0 15px;
 }
 
 .textTruncate {
@@ -15,7 +16,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 90%; 
+  max-width: 100%; 
   display: inline-block;
   font-weight: 600;
 }
@@ -23,30 +24,46 @@
 .nameProductTitle {
   font-size: 1.2rem;
   margin-bottom: 1rem;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.nameProductTitle:hover {
+  color: #50c878;
+}
+
+.compareTableContainer {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2rem;
 }
 
 .customTable {
-  table-layout: auto;
-  width: max-content;
+  width: 100%;
   border-collapse: collapse;
   border: 1px solid #dee2e6;
   border-radius: 8px;
-  overflow-x: auto;
+  margin-bottom: 2rem;
+  table-layout: fixed;
 }
 
 .customTable thead th:first-child,
 .customTable tbody td:first-child {
   text-align: start;
-  width: 12%;
+  width: 150px;
+  min-width: 150px;
+  font-weight: 600;
+  background-color: #f8f9fa;
+  vertical-align: top;
 }
 
 .customTable th,
 .customTable td {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   padding: 1rem;
   border: 1px solid #dee2e6;
+  word-wrap: break-word;
+  max-width: 300px;
+  vertical-align: top;
 }
 
 .customTable thead {
@@ -56,19 +73,199 @@
 .customTable th {
   font-size: 1.125rem;
   font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
 }
 
 .customTable td {
   font-size: 1rem;
+  vertical-align: top;
 }
 
 .priceProductCompare {
-  padding: 3px;
+  padding: 8px 15px;
   font-size: 1.2rem;
-  font-weight: 500;
+  font-weight: 600;
   width: 100%;
-  background-color: #50c878;
+  background-color: #047857;
   border-radius: 20px;
+  color: #fff;
+  display: inline-block;
+  margin: 10px 0;
 }
 
-.responsiveTable {  /* Nếu cần cuộn mượt trên iOS thì bật dòng dưới */  -webkit-overflow-scrolling: touch; }
+.productCard {
+  height: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.productCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.productImage {
+  height: 250px;
+  object-fit: contain;
+  width: 100%;
+  padding: 10px;
+  background-color: #ffffff;
+}
+
+.productImageContainer {
+  position: relative;
+  overflow: hidden;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.discountBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-weight: 300;
+  z-index: 5;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* Desktop styles for 2 products comparison */
+@media (min-width: 992px) {
+  .twoProductsContainer {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .twoProductsRow {
+    justify-content: space-evenly;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .twoProductsTable {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  /* Make product cards match table width exactly */
+  .twoProductsRow .col-md-6 {
+    flex: 0 0 auto;
+    width: 450px; /* Increased to exactly 450px */
+    max-width: 450px;
+    padding: 0;
+  }
+  
+  /* Remove default row gutters */
+  .twoProductsRow {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  /* Ensure product cards have the same width as table columns */
+  .twoProductsRow .productCard {
+    width: 100%;
+  }
+  
+  /* Adjust image container for wider cards */
+  .twoProductsRow .productImageContainer {
+    height: 300px;
+  }
+  
+  .twoProductsRow .productImage {
+    height: 300px;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .customTable th,
+  .customTable td {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+  
+  .nameProductTitle {
+    font-size: 1.1rem;
+  }
+  
+  .priceProductCompare {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .compareProduct {
+    padding: 0 10px;
+  }
+  
+  .customTable th,
+  .customTable td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .customTable thead th:first-child,
+  .customTable tbody td:first-child {
+    width: 120px;
+    min-width: 120px;
+  }
+  
+  .productImageContainer {
+    height: 200px;
+  }
+  
+  .productImage {
+    height: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .nameProductTitle {
+    font-size: 1rem;
+  }
+  
+  .priceProductCompare {
+    font-size: 1rem;
+    padding: 6px 12px;
+  }
+  
+  .customTable th,
+  .customTable td {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.85rem;
+  }
+  
+  .customTable thead th:first-child,
+  .customTable tbody td:first-child {
+    width: 100px;
+    min-width: 100px;
+  }
+  
+  .productImageContainer {
+    height: 180px;
+  }
+  
+  .productImage {
+    height: 180px;
+  }
+}
