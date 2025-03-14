@@ -10,7 +10,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 
 function CompareProduct() {
   const breadcrumbItems = [
-    { label: 'Compare', link: '/compare', active: true },
+    { label: 'Compare Products', link: '/compare', active: true },
   ];
 
   const { product1, product2 } = useParams();
@@ -71,9 +71,9 @@ function CompareProduct() {
             <div className="col-12">
               <Breadcrumb items={breadcrumbItems} />
             </div>
-            <div className="col-12">
+            {/* <div className="col-12">
               <h2 className="text-center mb-4">Product Comparison</h2>
-            </div>
+            </div> */}
           </div>
 
           <div className={`row g-4 ${isTwoProducts ? styles.twoProductsRow : ''}`}>
