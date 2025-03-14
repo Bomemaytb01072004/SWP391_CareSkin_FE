@@ -1,8 +1,7 @@
 // api.js
 const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
 const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
-const apiURLorders =
-  'https://67b44f76392f4aa94faa49b5.mockapi.io/api/order/order';
+const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
 const apiURLcategories =
   'http://careskinbeauty.shop:4456/api/Product/categories';
 const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
@@ -326,6 +325,7 @@ export async function deleteOrder(id) {
     throw error;
   }
 }
+
 /* ===============================
         PROMOTIONS API
 ================================== */
