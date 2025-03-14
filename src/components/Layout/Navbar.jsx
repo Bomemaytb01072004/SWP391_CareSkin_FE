@@ -78,78 +78,35 @@ function Navbar() {
 
   useEffect(() => {
     const fetchCart = async () => {
-      if (CustomerId && token) {
+      if (CustomerId) {
         try {
-          console.log('Fetching cart from API...');
           const response = await fetch(
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
 
-          if (!response.ok) {
-            throw new Error(
-              `Error fetching cart from server: ${response.status}`
-            );
-          }
+          if (!response.ok)
+            throw new Error(`Error fetching cart: ${response.status}`);
 
-          let cartData = await response.json();
-          console.log('Cart data fetched:', cartData);
+          const cartData = await response.json();
 
-          // ✅ Enrich cart items with product details
-          const enrichedItems = await Promise.all(
-            cartData.map(async (item) => {
-              if (!item.ProductId) {
-                console.error('Skipping item without ProductId:', item);
-                return item;
-              }
+          // ✅ Ensure `ProductVariations` is always an array
+          const updatedCart = cartData.map((item) => ({
+            ...item,
+            ProductVariationId: item.ProductVariationId, // Keep the selected variation
+            ProductVariations: Array.isArray(item.ProductVariations)
+              ? item.ProductVariations
+              : [],
+          }));
 
-              try {
-                const productRes = await fetch(
-                  `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }
-                );
-
-                if (!productRes.ok) {
-                  console.error(
-                    `Error fetching product ${item.ProductId}: ${productRes.status}`
-                  );
-                  return { ...item, PictureUrl: '', Variations: [] }; // Return empty data to avoid crashes
-                }
-
-                const productData = await productRes.json();
-
-                return {
-                  ...item,
-                  PictureUrl: productData.PictureUrl || '',
-                  Variations: productData.Variations || [],
-                };
-              } catch (error) {
-                console.error('Error enriching cart item:', error);
-                return { ...item, PictureUrl: '', Variations: [] }; // Handle failure
-              }
-            })
-          );
-
-          console.log('Final enriched cart:', enrichedItems);
-
-          // ✅ Save the enriched cart data to localStorage
-          localStorage.setItem('cart', JSON.stringify(enrichedItems));
-
-          // ✅ Update state
-          setCart(enrichedItems);
+          setCart(updatedCart);
         } catch (error) {
           console.error('Error fetching cart from server:', error);
+          setCart([]);
         }
       } else {
-        console.log('Fetching cart from localStorage...');
         const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
         setCart(storedCart);
       }
@@ -169,88 +126,44 @@ function Navbar() {
   }, []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-  const handleQuantityChange = async (
-    productId,
-    newQuantity,
-    productVariationId
-  ) => {
-    if (newQuantity < 1) return; // Prevent invalid quantity
+  useEffect(() => {
+    const updateCart = () => {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
+    };
 
-    const cartItem = cart.find((item) => item.ProductId === productId);
-    if (!cartItem) {
-      console.error(`Cart item with ProductId ${productId} not found.`);
-      return;
-    }
+    window.addEventListener('storage', updateCart);
+    return () => window.removeEventListener('storage', updateCart);
+  }, []);
 
-    if (CustomerId) {
-      try {
-        const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/update`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              CustomerId: parseInt(CustomerId),
-              ProductId: cartItem.ProductId,
-              ProductVariationId:
-                productVariationId ?? cartItem.ProductVariationId,
-              Quantity: newQuantity,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to update quantity (ProductId: ${cartItem.ProductId})`
+  const handleVariationChange = (productId, newVariationId) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) => {
+        if (item.ProductId === productId) {
+          const newVariation = item.ProductVariations?.find(
+            (v) => v.ProductVariationId === newVariationId
           );
-        }
 
-        // ✅ Update the cart state in React
-        setCart((prevCart) =>
-          prevCart.map((item) =>
-            item.ProductId === productId
-              ? {
-                  ...item,
-                  Quantity: newQuantity,
-                  ProductVariationId:
-                    productVariationId ?? item.ProductVariationId,
-                  Price:
-                    cartItem.Variations.find(
-                      (v) => v.ProductVariationId === productVariationId
-                    )?.Price || item.Price,
-                }
-              : item
-          )
-        );
-      } catch (error) {
-        console.error('Error updating cart quantity:', error);
-      }
-    } else {
-      // ✅ Guest users: update localStorage
-      setCart((prevCart) => {
-        const updatedCart = prevCart.map((item) =>
-          item.ProductId === productId
-            ? {
-                ...item,
-                Quantity: newQuantity,
-                ProductVariationId:
-                  productVariationId ?? item.ProductVariationId,
-                Price:
-                  cartItem.Variations.find(
-                    (v) => v.ProductVariationId === productVariationId
-                  )?.Price || item.Price,
-              }
-            : item
-        );
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        return updatedCart;
+          return {
+            ...item,
+            ProductVariationId: newVariationId,
+            Price:
+              newVariation?.SalePrice > 0
+                ? newVariation.SalePrice
+                : newVariation?.Price || item.Price, // ✅ Update price correctly
+          };
+        }
+        return item;
       });
 
-      window.dispatchEvent(new Event('storage'));
-    }
+      // ✅ If guest user, update localStorage as well
+      if (!CustomerId) {
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event('storage')); // ✅ Ensure navbar updates across components
+      }
+
+      return updatedCart;
+    });
   };
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
@@ -477,43 +390,36 @@ function Navbar() {
                             </p>
                             <p className="text-xs font-semibold text-gray-800">
                               <select
-                                value={item.ProductVariationId || ''}
-                                onChange={(e) => {
-                                  const newVariationId = parseInt(
-                                    e.target.value
-                                  );
-                                  const newVariation = item.Variations?.find(
-                                    (v) =>
-                                      v.ProductVariationId === newVariationId
-                                  );
-
-                                  handleQuantityChange(
+                                value={
+                                  item.ProductVariationId ||
+                                  item.ProductVariations?.[0]
+                                    ?.ProductVariationId ||
+                                  ''
+                                }
+                                onChange={(e) =>
+                                  handleVariationChange(
                                     item.ProductId,
-                                    item.Quantity,
-                                    newVariationId,
-                                    newVariation?.Price
-                                  );
-                                }}
+                                    parseInt(e.target.value)
+                                  )
+                                }
                                 className="border rounded px-2 py-1 text-gray-700"
                               >
-                                {Array.isArray(item.Variations) &&
-                                item.Variations.length > 0 ? (
-                                  item.Variations.map((variation) =>
-                                    variation &&
-                                    variation.ProductVariationId ? (
-                                      <option
-                                        key={variation.ProductVariationId}
-                                        value={variation.ProductVariationId}
-                                      >
-                                        {variation.Ml
-                                          ? `${variation.Ml}ml`
-                                          : 'Unknown Size'}
-                                      </option>
-                                    ) : null
-                                  )
+                                {Array.isArray(item.ProductVariations) &&
+                                item.ProductVariations.length > 0 ? (
+                                  item.ProductVariations.map((variation) => (
+                                    <option
+                                      key={variation.ProductVariationId}
+                                      value={variation.ProductVariationId}
+                                    >
+                                      {variation.Ml}ml - $
+                                      {variation.SalePrice > 0
+                                        ? variation.SalePrice
+                                        : variation.Price}
+                                    </option>
+                                  ))
                                 ) : (
                                   <option disabled>
-                                    No Variations Available
+                                    No variations available
                                   </option>
                                 )}
                               </select>
@@ -525,9 +431,12 @@ function Navbar() {
                           <p className="text-sm font-bold text-gray-700">
                             $
                             {(
-                              (item?.Price || 0) * (item.Quantity || 1)
+                              (item?.SalePrice > 0
+                                ? item.SalePrice
+                                : item.Price || 0) * (item.Quantity || 1)
                             ).toFixed(2)}
                           </p>
+
                           {/* Remove Button */}
                           <button
                             onClick={() =>

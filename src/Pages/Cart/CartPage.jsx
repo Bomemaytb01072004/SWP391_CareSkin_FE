@@ -12,13 +12,14 @@ const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState(() => {
     return JSON.parse(localStorage.getItem('selectedItems')) || [];
   });
-  const shippingCost = 5.0; // $5 shipping
-  const taxRate = 0.1; // 10% tax
   useEffect(() => {
-    // Remove selected items that are no longer in the cart
     setSelectedItems((prevSelected) =>
       prevSelected.filter((id) => cart.some((item) => item.ProductId === id))
     );
+  }, [cart]);
+
+  useEffect(() => {
+    console.log('Cart Data:', cart);
   }, [cart]);
 
   useEffect(() => {
@@ -32,50 +33,36 @@ const CartPage = () => {
             }
           );
 
-          if (!response.ok) {
-            throw new Error(
-              `Error fetching cart from server: ${response.status}`
-            );
-          }
+          if (!response.ok)
+            throw new Error(`Error fetching cart: ${response.status}`);
 
           const cartData = await response.json();
 
-          // ✅ Directly use API response (no extra request needed)
-          setCart(cartData);
+          // Ensure that each item has a SalePrice properly set
+          const updatedCart = cartData.map((item) => ({
+            ...item,
+            ProductVariations: Array.isArray(item.ProductVariations)
+              ? item.ProductVariations
+              : [],
+            SalePrice:
+              item.ProductVariations?.find(
+                (v) => v.ProductVariationId === item.ProductVariationId
+              )?.SalePrice ?? item.Price, // If no sale price, use base price
+          }));
+
+          setCart(updatedCart);
         } catch (error) {
           console.error('Error fetching cart from server:', error);
+          setCart([]);
         }
       } else {
-        // ✅ Load cart from localStorage for guest users
         const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-
-        // ✅ Merge duplicates in guest cart
-        const mergedCart = storedCart.reduce((acc, item) => {
-          const existingItem = acc.find((i) => i.ProductId === item.ProductId);
-          if (existingItem) {
-            existingItem.Quantity += item.Quantity || 1;
-          } else {
-            acc.push({ ...item, Quantity: item.Quantity || 1 });
-          }
-          return acc;
-        }, []);
-
-        setCart(mergedCart);
+        setCart(storedCart);
       }
     };
 
     fetchCart();
   }, [CustomerId, token]);
-
-  useEffect(() => {
-    const updateCart = () => {
-      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-      setCart(storedCart);
-    };
-
-    window.addEventListener('storage', updateCart);
-    return () => window.removeEventListener('storage', updateCart);
-  }, []);
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId');
@@ -142,12 +129,22 @@ const CartPage = () => {
     });
   };
 
+  useEffect(() => {
+    const updateCart = () => {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
+    };
+
+    window.addEventListener('storage', updateCart);
+    return () => window.removeEventListener('storage', updateCart);
+  }, []);
+
   const handleQuantityChange = async (
     productId,
     newQuantity,
     productVariationId
   ) => {
-    if (newQuantity < 1) return; // Prevent invalid quantity
+    if (newQuantity < 1) return;
 
     const cartItem = cart.find((item) => item.ProductId === productId);
     if (!cartItem) {
@@ -175,34 +172,32 @@ const CartPage = () => {
           }
         );
 
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(
             `Failed to update quantity (ProductId: ${cartItem.ProductId})`
           );
-        }
 
-        // ✅ Update the cart state in React
-        setCart((prevCart) =>
-          prevCart.map((item) =>
-            item.ProductId === productId
-              ? {
-                  ...item,
-                  Quantity: newQuantity,
-                  ProductVariationId:
-                    productVariationId ?? item.ProductVariationId,
-                  Price:
-                    cartItem.Variations.find(
-                      (v) => v.ProductVariationId === productVariationId
-                    )?.Price || item.Price,
-                }
-              : item
-          )
+        // ✅ Ensure ProductVariations exists before calling `.find()`
+        const updatedCart = cart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                Quantity: newQuantity,
+                ProductVariationId:
+                  productVariationId ?? item.ProductVariationId,
+                Price:
+                  item.ProductVariations?.find(
+                    (v) => v.ProductVariationId === productVariationId
+                  )?.Price || item.Price,
+              }
+            : item
         );
+
+        setCart(updatedCart);
       } catch (error) {
         console.error('Error updating cart quantity:', error);
       }
     } else {
-      // ✅ Guest users: update localStorage
       setCart((prevCart) => {
         const updatedCart = prevCart.map((item) =>
           item.ProductId === productId
@@ -212,18 +207,49 @@ const CartPage = () => {
                 ProductVariationId:
                   productVariationId ?? item.ProductVariationId,
                 Price:
-                  cartItem.Variations.find(
+                  item.ProductVariations?.find(
                     (v) => v.ProductVariationId === productVariationId
                   )?.Price || item.Price,
               }
             : item
         );
+
         localStorage.setItem('cart', JSON.stringify(updatedCart));
         return updatedCart;
       });
 
       window.dispatchEvent(new Event('storage'));
     }
+  };
+
+  const handleVariationChange = (productId, newVariationId) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) => {
+        if (item.ProductId === productId) {
+          const newVariation = item.ProductVariations?.find(
+            (v) => v.ProductVariationId === newVariationId
+          );
+
+          return {
+            ...item,
+            ProductVariationId: newVariationId,
+            Price:
+              newVariation?.SalePrice > 0
+                ? newVariation.SalePrice
+                : newVariation?.Price || item.Price, // ✅ Update price correctly
+          };
+        }
+        return item;
+      });
+
+      // ✅ If guest user, update localStorage as well
+      if (!CustomerId) {
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event('storage')); // ✅ Ensure navbar updates across components
+      }
+
+      return updatedCart;
+    });
   };
 
   const handleCheckboxChange = (id) => {
@@ -323,20 +349,41 @@ const CartPage = () => {
   const selectedProducts = cart.filter((item) =>
     selectedItems.includes(item.ProductId)
   );
+
   const originalTotal = selectedProducts.reduce((total, item) => {
-    return total + (item.Price || 0) * (item.Quantity || 1);
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const basePrice = selectedVariation?.Price || item.Price || 0; // ✅ Use selected variation price
+    return total + basePrice * (item.Quantity || 1);
   }, 0);
 
   const discountTotal = selectedProducts.reduce((total, item) => {
-    const discount =
-      item.SalePrice && item.SalePrice < item.Price
-        ? (item.Price - item.SalePrice) * (item.Quantity || 1)
-        : 0;
-    return total + discount;
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const basePrice = selectedVariation?.Price || item.Price || 0;
+    const salePrice =
+      selectedVariation?.SalePrice && selectedVariation?.SalePrice > 0
+        ? selectedVariation.SalePrice
+        : basePrice; // If no sale price, use base price
+
+    return total + (basePrice - salePrice) * (item.Quantity || 1);
   }, 0);
 
   const totalOrder = selectedProducts.reduce((total, item) => {
-    return total + (item.SalePrice || item.Price || 0) * (item.Quantity || 1);
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const finalPrice =
+      selectedVariation?.SalePrice > 0
+        ? selectedVariation.SalePrice
+        : selectedVariation?.Price || item.Price || 0;
+
+    return total + finalPrice * (item.Quantity || 1);
   }, 0);
 
   return (
@@ -412,34 +459,32 @@ const CartPage = () => {
                       <select
                         value={
                           item.ProductVariationId ||
-                          item.ProductVariations?.[0]?.ProductVariationId
+                          item.ProductVariations?.[0]?.ProductVariationId ||
+                          ''
                         }
-                        onChange={(e) => {
-                          const newVariationId = parseInt(e.target.value);
-                          const newVariation = item.ProductVariations?.find(
-                            (v) => v.ProductVariationId === newVariationId
-                          );
-
-                          handleQuantityChange(
+                        onChange={(e) =>
+                          handleVariationChange(
                             item.ProductId,
-                            item.Quantity,
-                            newVariationId,
-                            newVariation?.SalePrice ?? newVariation?.Price // ✅ Use SalePrice if available
-                          );
-                        }}
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="border rounded px-2 py-1 text-gray-700"
                       >
-                        {item.ProductVariations?.map(
-                          (
-                            variation // ✅ Safe optional chaining
-                          ) => (
+                        {Array.isArray(item.ProductVariations) &&
+                        item.ProductVariations.length > 0 ? (
+                          item.ProductVariations.map((variation) => (
                             <option
                               key={variation.ProductVariationId}
                               value={variation.ProductVariationId}
                             >
-                              {variation.Ml}ml
+                              {variation.Ml}ml - $
+                              {variation.SalePrice > 0
+                                ? variation.SalePrice
+                                : variation.Price}
                             </option>
-                          )
+                          ))
+                        ) : (
+                          <option disabled>No variations available</option>
                         )}
                       </select>
                     </p>
@@ -483,10 +528,9 @@ const CartPage = () => {
                   <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-20">
                     $
                     {(
-                      ((item.SalePrice ?? item.Price) || 0) *
-                      (item.Quantity || 1)
-                    ) // ✅ Uses SalePrice if available
-                      .toFixed(2)}
+                      ((item.SalePrice > 0 ? item.SalePrice : item.Price) ||
+                        0) * (item.Quantity || 1)
+                    ).toFixed(2)}
                   </p>
 
                   {/* Remove Button */}

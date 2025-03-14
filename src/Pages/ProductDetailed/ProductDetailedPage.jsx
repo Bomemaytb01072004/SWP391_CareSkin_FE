@@ -218,7 +218,7 @@ function ProductDetailedPage() {
               <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
                 Main Ingredients:
               </p>
-              <ul className="list-disc pl-5 text-gray-700">
+              <ul className="list-disc text-left pl-5 text-gray-700">
                 {product.MainIngredients.map((ingredient, i) => (
                   <li key={i}>
                     {ingredient.IngredientName !== 'null'
