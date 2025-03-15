@@ -304,7 +304,7 @@ const LoginPage = () => {
                 }}
               /> 
               */}
-              
+
               <a href="#facebook-login">
                 <i
                   className="fa-brands fa-facebook"

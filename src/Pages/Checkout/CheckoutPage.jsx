@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { fetchAvailablePromotions } from '../../utils/api';
+import { fetchActivePromotions } from '../../utils/api';
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [promotions, setPromotions] = useState([]); // ✅ Stores available promotions
@@ -28,7 +28,7 @@ const CheckoutPage = () => {
       JSON.parse(localStorage.getItem('checkoutItems')) || [];
     setSelectedItems(storedSelectedItems);
     // ✅ Fetch available promotions from API
-    fetchAvailablePromotions()
+    fetchActivePromotions()
       .then(setPromotions) // ✅ Set the filtered promotions into state
       .catch((error) => console.error('❌ Error fetching promotions:', error));
   }, []);

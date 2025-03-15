@@ -15,9 +15,9 @@ const apiURLDeleteMainIngredient =
   'http://careskinbeauty.shop:4456/api/Product/main-ingredient';
 const apiURLDeleteMainDetailIngredient =
   'http://careskinbeauty.shop:4456/api/Product/detail-ingredient';
-const apiURLPromotions = 'http://careskinbeauty.shop:4456/api/Promotion';
-const apiURLPromotionsActive =
-  'http://careskinbeauty.shop:4456/api/Promotion/active';
+const apiURLPromotions =
+  'http://careskinbeauty.shop:4456/api/Promotion';
+
 
 /* ===============================
         CUSTOMERS API
@@ -466,13 +466,22 @@ export async function deleteProduct(id) {
     const response = await fetch(`${apiURLproducts}/${id}`, {
       method: 'DELETE',
     });
+
     if (!response.ok) throw new Error('Error deleting product');
-    return await response.json();
+
+    // Kiểm tra content-type để xác định cách đọc dữ liệu
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json(); // Nếu là JSON thì parse
+    } else {
+      return await response.text(); // Nếu là text thì đọc dưới dạng text
+    }
   } catch (error) {
     console.error('Error deleting product:', error);
     throw error;
   }
 }
+
 
 // Delete a product usage
 export async function deleteProductUsage(id) {
