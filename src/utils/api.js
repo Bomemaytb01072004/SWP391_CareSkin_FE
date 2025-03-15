@@ -6,8 +6,7 @@ const apiURLcategories =
   'http://careskinbeauty.shop:4456/api/Product/categories';
 const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
 const apiURLSkinTypeProduct = 'http://careskinbeauty.shop:4456/api/SkinType';
-const apiURLDeleteUsage =
-  'http://careskinbeauty.shop:4456/api/Product/usage';
+const apiURLDeleteUsage = 'http://careskinbeauty.shop:4456/api/Product/usage';
 const apiURLDeleteSkinType =
   'http://careskinbeauty.shop:4456/api/Product/skin-type';
 const apiURLDeleteVariation =
@@ -16,8 +15,7 @@ const apiURLDeleteMainIngredient =
   'http://careskinbeauty.shop:4456/api/Product/main-ingredient';
 const apiURLDeleteMainDetailIngredient =
   'http://careskinbeauty.shop:4456/api/Product/detail-ingredient';
-const apiURLPromotions =
-  'http://careskinbeauty.shop:4456/api/Promotion';
+const apiURLPromotions = 'http://careskinbeauty.shop:4456/api/Promotion';
 const apiURLPromotionsActive =
   'http://careskinbeauty.shop:4456/api/Promotion/active';
 
@@ -121,9 +119,8 @@ export async function fetchBrands() {
 // utils/api.js
 export async function createBrand(brandData) {
   try {
-
     const formData = new FormData();
-    
+
     formData.append('Name', brandData.Name);
 
     if (brandData.PictureFile instanceof File) {
@@ -134,7 +131,7 @@ export async function createBrand(brandData) {
 
     const response = await fetch(apiURLBrands, {
       method: 'POST',
-      body: formData, 
+      body: formData,
     });
     if (!response.ok) {
       throw new Error('Failed to create brand');
@@ -190,34 +187,49 @@ export async function createProduct(productData) {
 
     productData.ProductForSkinTypes.forEach((v, i) => {
       if (v.ProductForSkinTypeId) {
-        formData.append(`ProductForSkinTypes[${i}].ProductForSkinTypeId`, v.ProductForSkinTypeId);
+        formData.append(
+          `ProductForSkinTypes[${i}].ProductForSkinTypeId`,
+          v.ProductForSkinTypeId
+        );
       }
       formData.append(`ProductForSkinTypes[${i}].SkinTypeId`, v.SkinTypeId);
     });
 
     productData.Variations.forEach((v, i) => {
       if (v.ProductVariationId) {
-        formData.append(`Variations[${i}].ProductVariationId`, v.ProductVariationId);
+        formData.append(
+          `Variations[${i}].ProductVariationId`,
+          v.ProductVariationId
+        );
       }
       formData.append(`Variations[${i}].Ml`, v.Ml);
       formData.append(`Variations[${i}].Price`, v.Price);
     });
-    
+
     productData.MainIngredients.forEach((v, i) => {
       if (v.ProductMainIngredientId) {
-        formData.append(`MainIngredients[${i}].ProductMainIngredientId`, v.ProductMainIngredientId);
+        formData.append(
+          `MainIngredients[${i}].ProductMainIngredientId`,
+          v.ProductMainIngredientId
+        );
       }
       formData.append(`MainIngredients[${i}].IngredientName`, v.IngredientName);
       formData.append(`MainIngredients[${i}].Description`, v.Description);
     });
-    
+
     productData.DetailIngredients.forEach((v, i) => {
       if (v.ProductDetailIngredientId) {
-        formData.append(`DetailIngredients[${i}].ProductDetailIngredientId`, v.ProductDetailIngredientId);
+        formData.append(
+          `DetailIngredients[${i}].ProductDetailIngredientId`,
+          v.ProductDetailIngredientId
+        );
       }
-      formData.append(`DetailIngredients[${i}].IngredientName`, v.IngredientName);
+      formData.append(
+        `DetailIngredients[${i}].IngredientName`,
+        v.IngredientName
+      );
     });
-    
+
     productData.Usages.forEach((v, i) => {
       if (v.ProductUsageId) {
         formData.append(`Usages[${i}].ProductUsageId`, v.ProductUsageId);
@@ -255,14 +267,20 @@ export async function updateProduct(productId, updatedData) {
     }
 
     // Mảng ID ảnh cần xóa (AdditionalPicturesToDelete)
-    if (updatedData.AdditionalPicturesToDelete && updatedData.AdditionalPicturesToDelete.length > 0) {
+    if (
+      updatedData.AdditionalPicturesToDelete &&
+      updatedData.AdditionalPicturesToDelete.length > 0
+    ) {
       updatedData.AdditionalPicturesToDelete.forEach((pictureId) => {
         formData.append('AdditionalPicturesToDelete', pictureId);
       });
     }
 
     // Mảng file ảnh phụ mới (NewAdditionalPictures)
-    if (updatedData.AdditionalPicturesFile && updatedData.AdditionalPicturesFile.length > 0) {
+    if (
+      updatedData.AdditionalPicturesFile &&
+      updatedData.AdditionalPicturesFile.length > 0
+    ) {
       updatedData.AdditionalPicturesFile.forEach((file) => {
         if (file instanceof File && file.size > 0) {
           formData.append('NewAdditionalPictures', file);
@@ -271,24 +289,36 @@ export async function updateProduct(productId, updatedData) {
     }
 
     // Mảng ID các ProductForSkinTypes cần xóa
-    if (updatedData.ProductForSkinTypesToDelete && updatedData.ProductForSkinTypesToDelete.length > 0) {
+    if (
+      updatedData.ProductForSkinTypesToDelete &&
+      updatedData.ProductForSkinTypesToDelete.length > 0
+    ) {
       updatedData.ProductForSkinTypesToDelete.forEach((id) => {
         formData.append('ProductForSkinTypesToDelete', id);
       });
     }
 
     // Mảng ProductForSkinTypes
-    if (updatedData.ProductForSkinTypes && updatedData.ProductForSkinTypes.length > 0) {
+    if (
+      updatedData.ProductForSkinTypes &&
+      updatedData.ProductForSkinTypes.length > 0
+    ) {
       updatedData.ProductForSkinTypes.forEach((v, i) => {
         if (v.ProductForSkinTypeId) {
-          formData.append(`ProductForSkinTypes[${i}].ProductForSkinTypeId`, v.ProductForSkinTypeId);
+          formData.append(
+            `ProductForSkinTypes[${i}].ProductForSkinTypeId`,
+            v.ProductForSkinTypeId
+          );
         }
         formData.append(`ProductForSkinTypes[${i}].SkinTypeId`, v.SkinTypeId);
       });
     }
 
     // Mảng ID các Variations cần xóa
-    if (updatedData.VariationsToDelete && updatedData.VariationsToDelete.length > 0) {
+    if (
+      updatedData.VariationsToDelete &&
+      updatedData.VariationsToDelete.length > 0
+    ) {
       updatedData.VariationsToDelete.forEach((id) => {
         formData.append('VariationsToDelete', id);
       });
@@ -298,7 +328,10 @@ export async function updateProduct(productId, updatedData) {
     if (updatedData.Variations && updatedData.Variations.length > 0) {
       updatedData.Variations.forEach((v, i) => {
         if (v.ProductVariationId) {
-          formData.append(`Variations[${i}].ProductVariationId`, v.ProductVariationId);
+          formData.append(
+            `Variations[${i}].ProductVariationId`,
+            v.ProductVariationId
+          );
         }
         formData.append(`Variations[${i}].Ml`, v.Ml);
         formData.append(`Variations[${i}].Price`, v.Price);
@@ -306,7 +339,10 @@ export async function updateProduct(productId, updatedData) {
     }
 
     // Mảng ID các MainIngredients cần xóa
-    if (updatedData.MainIngredientsToDelete && updatedData.MainIngredientsToDelete.length > 0) {
+    if (
+      updatedData.MainIngredientsToDelete &&
+      updatedData.MainIngredientsToDelete.length > 0
+    ) {
       updatedData.MainIngredientsToDelete.forEach((id) => {
         formData.append('MainIngredientsToDelete', id);
       });
@@ -316,27 +352,45 @@ export async function updateProduct(productId, updatedData) {
     if (updatedData.MainIngredients && updatedData.MainIngredients.length > 0) {
       updatedData.MainIngredients.forEach((v, i) => {
         if (v.ProductMainIngredientId) {
-          formData.append(`MainIngredients[${i}].ProductMainIngredientId`, v.ProductMainIngredientId);
+          formData.append(
+            `MainIngredients[${i}].ProductMainIngredientId`,
+            v.ProductMainIngredientId
+          );
         }
-        formData.append(`MainIngredients[${i}].IngredientName`, v.IngredientName);
+        formData.append(
+          `MainIngredients[${i}].IngredientName`,
+          v.IngredientName
+        );
         formData.append(`MainIngredients[${i}].Description`, v.Description);
       });
     }
 
     // Mảng ID các DetailIngredients cần xóa
-    if (updatedData.DetailIngredientsToDelete && updatedData.DetailIngredientsToDelete.length > 0) {
+    if (
+      updatedData.DetailIngredientsToDelete &&
+      updatedData.DetailIngredientsToDelete.length > 0
+    ) {
       updatedData.DetailIngredientsToDelete.forEach((id) => {
         formData.append('DetailIngredientsToDelete', id);
       });
     }
 
     // Mảng DetailIngredients
-    if (updatedData.DetailIngredients && updatedData.DetailIngredients.length > 0) {
+    if (
+      updatedData.DetailIngredients &&
+      updatedData.DetailIngredients.length > 0
+    ) {
       updatedData.DetailIngredients.forEach((v, i) => {
         if (v.ProductDetailIngredientId) {
-          formData.append(`DetailIngredients[${i}].ProductDetailIngredientId`, v.ProductDetailIngredientId);
+          formData.append(
+            `DetailIngredients[${i}].ProductDetailIngredientId`,
+            v.ProductDetailIngredientId
+          );
         }
-        formData.append(`DetailIngredients[${i}].IngredientName`, v.IngredientName);
+        formData.append(
+          `DetailIngredients[${i}].IngredientName`,
+          v.IngredientName
+        );
       });
     }
 
@@ -361,7 +415,11 @@ export async function updateProduct(productId, updatedData) {
     // In ra dữ liệu gửi đi để kiểm tra
     console.log('FormData gửi đi:');
     for (let pair of formData.entries()) {
-      console.log(pair[0] + ': ' + (pair[1] instanceof File ? 'File: ' + pair[1].name : pair[1]));
+      console.log(
+        pair[0] +
+          ': ' +
+          (pair[1] instanceof File ? 'File: ' + pair[1].name : pair[1])
+      );
     }
 
     // Gửi request PUT
@@ -374,11 +432,11 @@ export async function updateProduct(productId, updatedData) {
       // Thử đọc lỗi từ server
       let errorMessage = 'Error updating product';
       let responseText = '';
-      
+
       try {
         responseText = await response.text();
         console.log('Response text:', responseText);
-        
+
         try {
           // Thử chuyển thành JSON nếu có thể
           const errorData = JSON.parse(responseText);
@@ -390,7 +448,7 @@ export async function updateProduct(productId, updatedData) {
       } catch (textError) {
         errorMessage = `Failed to read error response: ${textError.message}`;
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -441,7 +499,9 @@ export async function deleteProductSkinType(id) {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete product skin type');
+      throw new Error(
+        errorData.message || 'Failed to delete product skin type'
+      );
     }
     return true;
   } catch (error) {
@@ -458,7 +518,9 @@ export async function deleteProductVariation(id) {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete product variation');
+      throw new Error(
+        errorData.message || 'Failed to delete product variation'
+      );
     }
     return true;
   } catch (error) {
@@ -475,7 +537,9 @@ export async function deleteProductMainIngredient(id) {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete product main ingredient');
+      throw new Error(
+        errorData.message || 'Failed to delete product main ingredient'
+      );
     }
     return true;
   } catch (error) {
@@ -492,7 +556,9 @@ export async function deleteProductDetailIngredient(id) {
     });
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to delete product detail ingredient');
+      throw new Error(
+        errorData.message || 'Failed to delete product detail ingredient'
+      );
     }
     return true;
   } catch (error) {
@@ -598,6 +664,21 @@ export async function fetchActivePromotions() {
     throw error;
   }
 }
+// Fetch only promotions where PromotionType = 2
+export async function fetchAvailablePromotions() {
+  try {
+    const response = await fetch(apiURLPromotionsActive);
+    if (!response.ok) throw new Error('Error fetching promotions');
+
+    const promotions = await response.json();
+
+    // ✅ Filter promotions to only include PromotionType = 2
+    return promotions.filter((promo) => promo.PromotionType === 2);
+  } catch (error) {
+    console.error('Error fetching promotions:', error);
+    throw error;
+  }
+}
 
 // Fetch promotion by ID
 export async function fetchPromotionById(id) {
@@ -688,11 +769,14 @@ export async function getProductDiscounts() {
 // Update product discount status
 export async function updateProductDiscountStatus(statusData) {
   try {
-    const response = await fetch(`${apiURLPromotions}/product-discount-status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(statusData),
-    });
+    const response = await fetch(
+      `${apiURLPromotions}/product-discount-status`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(statusData),
+      }
+    );
     if (!response.ok) throw new Error('Error updating product discount status');
     return await response.json();
   } catch (error) {
