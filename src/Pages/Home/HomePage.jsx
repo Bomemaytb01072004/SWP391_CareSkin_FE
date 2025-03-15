@@ -4,6 +4,8 @@ import Footer from '../../components/Layout/Footer';
 import SloganCarousel from '../../components/HomePage/Carousel/SloganCarousel';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BestSellers from '../../components/HomePage/BestSellers';
+import NewArrivals from '../../components/HomePage/NewArrivals';
+
 import IconSlider from '../../components/HomePage/Carousel/IconSlider'; // Adjust the path if needed
 import { motion } from 'framer-motion';
 import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
@@ -146,6 +148,7 @@ function HomePage() {
           ))}
         </div>
       </motion.div>
+      <NewArrivals></NewArrivals>
       {/* Not Sure Where to Start Section */}
       <motion.div
         className="bg-emerald-100 py-12 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-12"

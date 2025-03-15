@@ -6,12 +6,10 @@ import Dropdown from '../../components/Dropdown/Dropdown';
 import ProductList from '../../components/CardProduct/ProductList';
 import Filters from '../../components/Filters/Filters';
 import Pagination from '../../components/Pagination/Pagination';
-import { fetchProducts } from '../../utils/api.js'
+import { fetchProducts } from '../../utils/api.js';
 import { useState, useEffect } from 'react';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
-
-
-
+import { useLocation } from 'react-router-dom';
 
 function ProductsPage() {
   const breadcrumbItems = [
@@ -20,7 +18,8 @@ function ProductsPage() {
 
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [sortOption, setSortOption] = useState("");
+  const location = useLocation();
+  const [sortOption, setSortOption] = useState('');
   const [filters, setFilters] = useState({
     category: [],
     priceRange: [],
@@ -44,7 +43,6 @@ function ProductsPage() {
   const endIndex = startIndex + itemsPerPage;
   const currentPageProducts = filteredProducts.slice(startIndex, endIndex);
 
-
   useEffect(() => {
     (async () => {
       try {
@@ -59,6 +57,12 @@ function ProductsPage() {
       }
     })();
   }, []);
+  useEffect(() => {
+    // Check if navigation state contains `fromNewArrivals`
+    if (location.state?.fromNewArrivals) {
+      setSortOption('Newest'); // Apply sorting ONLY when coming from New Arrivals
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!products) return;
@@ -67,13 +71,10 @@ function ProductsPage() {
 
     if (filters.category.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        const splitted = product.Category
-          .split(",")
-          .map((cat) => cat.trim());
+        const splitted = product.Category.split(',').map((cat) => cat.trim());
         return splitted.some((cat) => filters.category.includes(cat));
       });
     }
-
 
     // Lọc theo priceRange
     if (filters.priceRange.length > 0) {
@@ -91,13 +92,13 @@ function ProductsPage() {
 
         return filters.priceRange.some((range) => {
           switch (range) {
-            case "under_25":
+            case 'under_25':
               return priceToCompare < 25;
-            case "25_50":
+            case '25_50':
               return priceToCompare >= 25 && priceToCompare < 50;
-            case "50_100":
+            case '50_100':
               return priceToCompare >= 50 && priceToCompare < 100;
-            case "over_100":
+            case 'over_100':
               return priceToCompare >= 100;
             default:
               return true;
@@ -108,7 +109,10 @@ function ProductsPage() {
 
     if (filters.skinType.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        if (!Array.isArray(product.ProductForSkinTypes) || product.ProductForSkinTypes.length === 0) {
+        if (
+          !Array.isArray(product.ProductForSkinTypes) ||
+          product.ProductForSkinTypes.length === 0
+        ) {
           return false;
         }
         return product.ProductForSkinTypes.some((skinItem) =>
@@ -117,9 +121,8 @@ function ProductsPage() {
       });
     }
 
-
     switch (sortOption) {
-      case "Newest":
+      case 'Newest':
         newFiltered.sort((a, b) => {
           const aId = Number(a.ProductId) || 0; // Nếu NaN => 0
           const bId = Number(b.ProductId) || 0; // Nếu NaN => 0
@@ -127,31 +130,31 @@ function ProductsPage() {
         });
         break;
 
-
-
-
-
-      case "Price Low to High":
+      case 'Price Low to High':
         newFiltered.sort((a, b) => {
-          const aPrice = a.Variations && a.Variations.length > 0
-            ? Math.min(...a.Variations.map(v => v.Price))
-            : Infinity; // hoặc 0, tuỳ logic
-          const bPrice = b.Variations && b.Variations.length > 0
-            ? Math.min(...b.Variations.map(v => v.Price))
-            : Infinity;
+          const aPrice =
+            a.Variations && a.Variations.length > 0
+              ? Math.min(...a.Variations.map((v) => v.Price))
+              : Infinity; // hoặc 0, tuỳ logic
+          const bPrice =
+            b.Variations && b.Variations.length > 0
+              ? Math.min(...b.Variations.map((v) => v.Price))
+              : Infinity;
 
           return aPrice - bPrice;
         });
         break;
 
-      case "Price High to Low":
+      case 'Price High to Low':
         newFiltered.sort((a, b) => {
-          const aPrice = a.Variations && a.Variations.length > 0
-            ? Math.min(...a.Variations.map(v => v.Price))
-            : 0; // hoặc một giá trị mặc định phù hợp
-          const bPrice = b.Variations && b.Variations.length > 0
-            ? Math.min(...b.Variations.map(v => v.Price))
-            : 0;
+          const aPrice =
+            a.Variations && a.Variations.length > 0
+              ? Math.min(...a.Variations.map((v) => v.Price))
+              : 0; // hoặc một giá trị mặc định phù hợp
+          const bPrice =
+            b.Variations && b.Variations.length > 0
+              ? Math.min(...b.Variations.map((v) => v.Price))
+              : 0;
           return bPrice - aPrice;
         });
         break;
@@ -164,9 +167,7 @@ function ProductsPage() {
     setFilteredProducts(newFiltered);
     setTotalProduct(newFiltered.length);
     setCurrentPage(1); // Reset về trang 1 mỗi khi filter/sort thay đổi
-
   }, [filters, products, sortOption]);
-
 
   // 5. Hàm nhận updatedFilters từ Filters
   const handleFilterChange = (updatedFilters) => {
@@ -180,7 +181,6 @@ function ProductsPage() {
   if (loading) {
     return <LoadingPage />;
   }
-
 
   return (
     <>
@@ -203,9 +203,14 @@ function ProductsPage() {
 
           <div className={`col-12 col-md-8 col-lg-9`}>
             <div className={`d-flex align-items-center mb-3`}>
-              <div className={`fw-bold ${styles.totalProducts}`}>{totalProduct} products</div>
+              <div className={`fw-bold ${styles.totalProducts}`}>
+                {totalProduct} products
+              </div>
               <div className={styles.sortByFeature}>
-                <Dropdown onSortChange={handleSortChange} sortOption={sortOption} />
+                <Dropdown
+                  onSortChange={handleSortChange}
+                  sortOption={sortOption}
+                />
               </div>
             </div>
 

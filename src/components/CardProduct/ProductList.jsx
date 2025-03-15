@@ -68,8 +68,12 @@ function ProductList({ products }) {
         cart.push({
           ...product,
           Quantity: 1,
-          Price: firstVariation?.Price || 0,
+          Price:
+            firstVariation?.SalePrice > 0
+              ? firstVariation.SalePrice
+              : firstVariation?.Price || item.Price,
           ProductVariationId: firstVariation?.ProductVariationId || null,
+          ProductVariations: product.Variations,
         });
       }
       localStorage.setItem('cart', JSON.stringify(cart));

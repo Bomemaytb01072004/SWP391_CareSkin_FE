@@ -1,28 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './IconSlider.module.css';
 
 function IconSlider() {
-  const brandLogos = [
-    { src: '/src/assets/brands/loreal.png', alt: "L'Oréal" },
-    { src: '/src/assets/brands/estee-lauder.png', alt: 'Estée Lauder' },
-    { src: '/src/assets/brands/clinique.png', alt: 'Clinique' },
-    { src: '/src/assets/brands/the-ordinary.png', alt: 'The Ordinary' },
-    { src: '/src/assets/brands/fenty-beauty.png', alt: 'Fenty Beauty' },
-    { src: '/src/assets/brands/kiehls.png', alt: 'Kiehl’s' },
-    { src: '/src/assets/brands/laneige.png', alt: 'Laneige' },
-    { src: '/src/assets/brands/cerave.png', alt: 'CeraVe' },
-    { src: '/src/assets/brands/skinceuticals.png', alt: 'SkinCeuticals' },
-  ];
+  const [brands, setBrands] = useState([]);
 
-  // Nhân đôi danh sách logo để tạo hiệu ứng cuộn liên tục
-  const logos = [...brandLogos, ...brandLogos];
+  useEffect(() => {
+    fetch('http://careskinbeauty.shop:4456/api/Brand')
+      .then((response) => response.json())
+      .then((data) => {
+        setBrands(data);
+      })
+      .catch((error) => console.error('Error fetching brand logos:', error));
+  }, []);
+
+  // Duplicate the brand list for smooth infinite scrolling
+  const logos = [...brands, ...brands];
 
   return (
     <div className={styles.sliderContainer}>
       <div className={styles.sliderTrack}>
         {logos.map((brand, index) => (
           <div key={index} className={styles.slide}>
-            <img src={brand.src} alt={brand.alt} className={styles.logo} />
+            <img
+              src={brand.PictureUrl}
+              alt={brand.Name}
+              className={styles.logo}
+              onError={(e) =>
+                (e.target.src = '/src/assets/brands/placeholder.png')
+              } // Fallback image
+            />
           </div>
         ))}
       </div>

@@ -12,13 +12,14 @@ const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState(() => {
     return JSON.parse(localStorage.getItem('selectedItems')) || [];
   });
-  const shippingCost = 5.0; // $5 shipping
-  const taxRate = 0.1; // 10% tax
   useEffect(() => {
-    // Remove selected items that are no longer in the cart
     setSelectedItems((prevSelected) =>
       prevSelected.filter((id) => cart.some((item) => item.ProductId === id))
     );
+  }, [cart]);
+
+  useEffect(() => {
+    console.log('Cart Data:', cart);
   }, [cart]);
 
   useEffect(() => {
@@ -28,89 +29,40 @@ const CartPage = () => {
           const response = await fetch(
             `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
 
-          if (!response.ok) {
-            throw new Error(
-              `Error fetching cart from server: ${response.status}`
-            );
-          }
+          if (!response.ok)
+            throw new Error(`Error fetching cart: ${response.status}`);
 
           const cartData = await response.json();
 
-          // Enrich cart items with product details
-          const enrichedItems = await Promise.all(
-            cartData.map(async (item) => {
-              try {
-                const productRes = await fetch(
-                  `http://careskinbeauty.shop:4456/api/Product/${item.ProductId}`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }
-                );
+          // Ensure that each item has a SalePrice properly set
+          const updatedCart = cartData.map((item) => ({
+            ...item,
+            ProductVariations: Array.isArray(item.ProductVariations)
+              ? item.ProductVariations
+              : [],
+            SalePrice:
+              item.ProductVariations?.find(
+                (v) => v.ProductVariationId === item.ProductVariationId
+              )?.SalePrice ?? item.Price, // If no sale price, use base price
+          }));
 
-                if (!productRes.ok) {
-                  throw new Error(
-                    `Error fetching product ${item.ProductId}: ${productRes.status}`
-                  );
-                }
-
-                const productData = await productRes.json();
-
-                return {
-                  ...item,
-                  PictureUrl: productData.PictureUrl,
-                  Variations: productData.Variations,
-                };
-              } catch (error) {
-                console.error('Error enriching cart item:', error);
-                return item; // Return the item without modification in case of error
-              }
-            })
-          );
-
-          setCart(enrichedItems);
+          setCart(updatedCart);
         } catch (error) {
           console.error('Error fetching cart from server:', error);
+          setCart([]);
         }
       } else {
-        // Fallback to localStorage cart if user is not logged in
-        const storedCart = JSON.parse(localStorage.getItem('cart'));
-        if (storedCart && storedCart.length > 0) {
-          setCart(storedCart);
-        }
-
-        const mergedCart = storedCart.reduce((acc, item) => {
-          const existingItem = acc.find((i) => i.ProductId === item.ProductId);
-          if (existingItem) {
-            existingItem.quantity += item.quantity || 1;
-          } else {
-            acc.push({ ...item, quantity: item.quantity || 1 });
-          }
-          return acc;
-        }, []);
-
-        setCart(mergedCart);
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCart(storedCart);
       }
     };
 
     fetchCart();
   }, [CustomerId, token]);
-  useEffect(() => {
-    const updateCart = () => {
-      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-      setCart(storedCart);
-    };
-
-    window.addEventListener('storage', updateCart);
-    return () => window.removeEventListener('storage', updateCart);
-  }, []);
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId');
@@ -177,12 +129,22 @@ const CartPage = () => {
     });
   };
 
+  useEffect(() => {
+    const updateCart = () => {
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
+    };
+
+    window.addEventListener('storage', updateCart);
+    return () => window.removeEventListener('storage', updateCart);
+  }, []);
+
   const handleQuantityChange = async (
     productId,
     newQuantity,
     productVariationId
   ) => {
-    if (newQuantity < 1) return; // Prevent invalid quantity
+    if (newQuantity < 1) return;
 
     const cartItem = cart.find((item) => item.ProductId === productId);
     if (!cartItem) {
@@ -210,34 +172,32 @@ const CartPage = () => {
           }
         );
 
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(
             `Failed to update quantity (ProductId: ${cartItem.ProductId})`
           );
-        }
 
-        // ✅ Update the cart state in React
-        setCart((prevCart) =>
-          prevCart.map((item) =>
-            item.ProductId === productId
-              ? {
-                  ...item,
-                  Quantity: newQuantity,
-                  ProductVariationId:
-                    productVariationId ?? item.ProductVariationId,
-                  Price:
-                    cartItem.Variations.find(
-                      (v) => v.ProductVariationId === productVariationId
-                    )?.Price || item.Price,
-                }
-              : item
-          )
+        // ✅ Ensure ProductVariations exists before calling `.find()`
+        const updatedCart = cart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                Quantity: newQuantity,
+                ProductVariationId:
+                  productVariationId ?? item.ProductVariationId,
+                Price:
+                  item.ProductVariations?.find(
+                    (v) => v.ProductVariationId === productVariationId
+                  )?.Price || item.Price,
+              }
+            : item
         );
+
+        setCart(updatedCart);
       } catch (error) {
         console.error('Error updating cart quantity:', error);
       }
     } else {
-      // ✅ Guest users: update localStorage
       setCart((prevCart) => {
         const updatedCart = prevCart.map((item) =>
           item.ProductId === productId
@@ -247,18 +207,49 @@ const CartPage = () => {
                 ProductVariationId:
                   productVariationId ?? item.ProductVariationId,
                 Price:
-                  cartItem.Variations.find(
+                  item.ProductVariations?.find(
                     (v) => v.ProductVariationId === productVariationId
                   )?.Price || item.Price,
               }
             : item
         );
+
         localStorage.setItem('cart', JSON.stringify(updatedCart));
         return updatedCart;
       });
 
       window.dispatchEvent(new Event('storage'));
     }
+  };
+
+  const handleVariationChange = (productId, newVariationId) => {
+    setCart((prevCart) => {
+      const updatedCart = prevCart.map((item) => {
+        if (item.ProductId === productId) {
+          const newVariation = item.ProductVariations?.find(
+            (v) => v.ProductVariationId === newVariationId
+          );
+
+          return {
+            ...item,
+            ProductVariationId: newVariationId,
+            Price:
+              newVariation?.SalePrice > 0
+                ? newVariation.SalePrice
+                : newVariation?.Price || item.Price, // ✅ Update price correctly
+          };
+        }
+        return item;
+      });
+
+      // ✅ If guest user, update localStorage as well
+      if (!CustomerId) {
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        window.dispatchEvent(new Event('storage')); // ✅ Ensure navbar updates across components
+      }
+
+      return updatedCart;
+    });
   };
 
   const handleCheckboxChange = (id) => {
@@ -358,19 +349,42 @@ const CartPage = () => {
   const selectedProducts = cart.filter((item) =>
     selectedItems.includes(item.ProductId)
   );
-  const subtotal = selectedProducts.reduce((total, item) => {
-    const variationPrice =
-      item?.Variations?.find(
-        (v) => v.ProductVariationId === item.ProductVariationId
-      )?.Price ||
-      item?.Price ||
-      0;
 
-    return total + variationPrice * (item.Quantity || 1);
+  const originalTotal = selectedProducts.reduce((total, item) => {
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const basePrice = selectedVariation?.Price || item.Price || 0; // ✅ Use selected variation price
+    return total + basePrice * (item.Quantity || 1);
   }, 0);
 
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax + (subtotal > 0 ? shippingCost : 0);
+  const discountTotal = selectedProducts.reduce((total, item) => {
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const basePrice = selectedVariation?.Price || item.Price || 0;
+    const salePrice =
+      selectedVariation?.SalePrice && selectedVariation?.SalePrice > 0
+        ? selectedVariation.SalePrice
+        : basePrice; // If no sale price, use base price
+
+    return total + (basePrice - salePrice) * (item.Quantity || 1);
+  }, 0);
+
+  const totalOrder = selectedProducts.reduce((total, item) => {
+    const selectedVariation = item.ProductVariations?.find(
+      (v) => v.ProductVariationId === item.ProductVariationId
+    );
+
+    const finalPrice =
+      selectedVariation?.SalePrice > 0
+        ? selectedVariation.SalePrice
+        : selectedVariation?.Price || item.Price || 0;
+
+    return total + finalPrice * (item.Quantity || 1);
+  }, 0);
 
   return (
     <>
@@ -443,30 +457,35 @@ const CartPage = () => {
                     </h3>
                     <p className="text-gray-600 text-sm">
                       <select
-                        value={item.ProductVariationId}
-                        onChange={(e) => {
-                          const newVariationId = parseInt(e.target.value);
-                          const newVariation = item.Variations.find(
-                            (v) => v.ProductVariationId === newVariationId
-                          );
-
-                          handleQuantityChange(
+                        value={
+                          item.ProductVariationId ||
+                          item.ProductVariations?.[0]?.ProductVariationId ||
+                          ''
+                        }
+                        onChange={(e) =>
+                          handleVariationChange(
                             item.ProductId,
-                            item.Quantity,
-                            newVariationId,
-                            newVariation?.Price
-                          );
-                        }}
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="border rounded px-2 py-1 text-gray-700"
                       >
-                        {item.Variations.map((variation) => (
-                          <option
-                            key={variation.ProductVariationId}
-                            value={variation.ProductVariationId}
-                          >
-                            {variation.Ml}ml
-                          </option>
-                        ))}
+                        {Array.isArray(item.ProductVariations) &&
+                        item.ProductVariations.length > 0 ? (
+                          item.ProductVariations.map((variation) => (
+                            <option
+                              key={variation.ProductVariationId}
+                              value={variation.ProductVariationId}
+                            >
+                              {variation.Ml}ml - $
+                              {variation.SalePrice > 0
+                                ? variation.SalePrice
+                                : variation.Price}
+                            </option>
+                          ))
+                        ) : (
+                          <option disabled>No variations available</option>
+                        )}
                       </select>
                     </p>
                   </div>
@@ -505,9 +524,13 @@ const CartPage = () => {
                     </button>
                   </div>
 
-                  {/* Price */}
-                  <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-12">
-                    ${((item?.Price || 0) * (item.Quantity || 1)).toFixed(2)}
+                  {/* Price (Updated to Show SalePrice) */}
+                  <p className="text-gray-800 font-semibold text-sm text-right ml-10 w-20">
+                    $
+                    {(
+                      ((item.SalePrice > 0 ? item.SalePrice : item.Price) ||
+                        0) * (item.Quantity || 1)
+                    ).toFixed(2)}
                   </p>
 
                   {/* Remove Button */}
@@ -534,20 +557,16 @@ const CartPage = () => {
           <h3 className="text-xl font-semibold text-gray-800">Order Summary</h3>
           <div className="mt-3 space-y-4">
             <div className="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>Original Price</span>
+              <span>${originalTotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span>${subtotal > 0 ? shippingCost.toFixed(2) : '0.00'}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax (10%)</span>
-              <span>${tax.toFixed(2)}</span>
+            <div className="flex justify-between text-red-500 font-semibold">
+              <span>Discount</span>
+              <span>-${discountTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-800 font-semibold text-lg">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${totalOrder.toFixed(2)}</span>
             </div>
           </div>
 
