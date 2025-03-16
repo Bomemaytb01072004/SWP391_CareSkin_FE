@@ -7,6 +7,7 @@ import BestSellers from '../../components/HomePage/BestSellers';
 import NewArrivals from '../../components/HomePage/NewArrivals';
 import IconSlider from '../../components/HomePage/Carousel/IconSlider';
 import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
+import FacebookPosts from '../../components/HomePage/FacebookPosts';
 import { motion } from 'framer-motion';
 import {
   faDroplet,
@@ -551,7 +552,7 @@ function HomePage() {
 
       {/* Not Sure Where to Start Section */}
       <motion.div
-        className="bg-emerald-100 py-16 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-16"
+        className="bg-emerald-100 py-10 px-6 text-center rounded-xl shadow-md mx-auto max-w-6xl mt-16 mb-16"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
@@ -568,7 +569,7 @@ function HomePage() {
         <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
           <motion.a
             href="/skinquiz"
-            className="px-8 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-lg font-medium"
+            className="px-4 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-lg font-medium"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -576,7 +577,7 @@ function HomePage() {
           </motion.a>
           <motion.a
             href="/consultation"
-            className="px-8 py-4 bg-white border-2 border-emerald-600 text-emerald-600 rounded-full shadow-md hover:bg-emerald-50 transition text-lg font-medium"
+            className="px-4 py-4 bg-white border-2 border-emerald-600 text-emerald-600 rounded-full shadow-md hover:bg-emerald-50 transition text-lg font-medium"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -586,35 +587,8 @@ function HomePage() {
       </motion.div>
 
       {/* Instagram Feed */}
-      <motion.div
-        className="py-16 bg-white max-w-7xl mx-auto px-5"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <h2 className="text-3xl font-bold text-center mb-3">
-          Our Instagram
-        </h2>
-        <p className="text-gray-600 text-center mb-8">@yourskincarebrand</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((item) => (
-            <motion.a
-              key={item}
-              href="https://instagram.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block aspect-square overflow-hidden rounded-lg"
-              whileHover={{ scale: 1.05 }}
-            >
-              <img
-                src={`/api/placeholder/200/200`}
-                alt="Instagram post"
-                className="w-full h-full object-cover hover:scale-110 transition duration-300"
-              />
-            </motion.a>
-          ))}
-        </div>
-      </motion.div>
+
+      <FacebookPosts></FacebookPosts>
 
       {/* Newsletter */}
       <motion.div

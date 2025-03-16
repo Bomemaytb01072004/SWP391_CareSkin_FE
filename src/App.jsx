@@ -13,6 +13,7 @@ import OrderConfirmation from './Pages/Checkout/OrderConfirmation';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
 import BlogPage from './Pages/Blog/BlogPage';
+import AboutPage from './Pages/About/AboutPage';
 export default function App() {
   return (
     <Router>
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetailedPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/about" element={<AboutPage />} />
 
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
