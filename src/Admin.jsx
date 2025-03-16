@@ -9,7 +9,7 @@ import SalesPage from "./Pages/AdminPage/SalesPage";
 import OrdersPage from "./Pages/AdminPage/OrdersPage";
 import AnalyticsPage from "./Pages/AdminPage/AnalyticsPage";
 import SettingsPage from "./Pages/AdminPage/SettingsPage";
-// import PromotionPageAdmin from "./Pages/AdminPage/PromotionPage"
+import PromotionPageAdmin from "./Pages/AdminPage/PromotionPage"
 function Admin() {
 	return (
 		<div className='flex h-screen bg-gray-900 text-gray-100 overflow-hidden'>
@@ -27,7 +27,7 @@ function Admin() {
 				<Route path='sales' element={<SalesPage />} />
 				<Route path='orders' element={<OrdersPage />} />
 				<Route path='analytics' element={<AnalyticsPage />} />
-				{/* <Route path='promotions' element={<PromotionPageAdmin />} /> */}
+				<Route path='promotions' element={<PromotionPageAdmin />} />
 				<Route path='settings' element={<SettingsPage />} />
 			</Routes>
 		</div>

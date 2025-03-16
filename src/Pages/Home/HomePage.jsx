@@ -163,7 +163,7 @@ function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <motion.a
                 href="/skinquiz"
-                className="px-8 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-lg font-medium"
+                className="px-6 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-base font-medium"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -171,7 +171,7 @@ function HomePage() {
               </motion.a>
               <motion.a
                 href="/shop"
-                className="px-8 py-4 border-2 border-emerald-600 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition text-lg font-medium"
+                className="px-6 py-4 border-2 border-emerald-600 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -593,7 +593,7 @@ function HomePage() {
         transition={{ duration: 0.7 }}
       >
         <h2 className="text-3xl font-bold text-center mb-3">
-          Follow Us on Instagram
+          Our Instagram
         </h2>
         <p className="text-gray-600 text-center mb-8">@yourskincarebrand</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
