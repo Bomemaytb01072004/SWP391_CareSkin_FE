@@ -31,7 +31,10 @@ function ProductDetailedPage() {
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [quantity, setQuantity] = useState(1); // Default quantity set to 1
   const [openStates, setOpenStates] = useState([true, false, false, false]);
-
+  const [cart, setCart] = useState(() => {
+    const stored = localStorage.getItem('cart');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [compareList, setCompareList] = useState(() => {
     const stored = localStorage.getItem('compareList');
     return stored ? JSON.parse(stored) : [];
@@ -39,7 +42,7 @@ function ProductDetailedPage() {
 
   const breadcrumbItems = [
     { label: 'Products', link: '/products', active: false },
-    { label: `Product ${id}`, link: `/products/${name}`, active: true },
+    { label: `Product ${id}`, link: `/products/${id}`, active: true },
   ];
 
   useEffect(() => {
@@ -70,45 +73,95 @@ function ProductDetailedPage() {
       return newStates;
     });
   };
+
   const handleVariationChange = (variation) => {
     setSelectedVariation(variation);
   };
+
   const handleQuantityChange = (increment) => {
     setQuantity((prev) => Math.max(1, prev + increment));
   };
 
-  const addToCart = (product) => {
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-    const existingProduct = cart.find(
-      (item) => item.ProductId === product.ProductId
-    );
-
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    const itemToAdd = {
-      ...product,
-      ProductId: selectedVariation.ProductVariationId,
-      Price: selectedVariation.Price,
-      quantity,
-    };
-
-    const index = cart.findIndex(
-      (item) => item.ProductId === itemToAdd.ProductId
-    );
-    if (index !== -1) {
-      cart[index].quantity += quantity;
-    } else {
-      cart.push(itemToAdd);
+  const addToCart = async (product) => {
+    if (!selectedVariation) {
+      console.warn('No variation selected!');
+      return;
     }
 
-    localStorage.setItem('cart', JSON.stringify(cart));
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token = localStorage.getItem('token');
+    if (!CustomerId || !token) {
+      console.warn('No CustomerId found! Using localStorage for guest cart.');
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingProductIndex = cart.findIndex(
+        (item) =>
+          item.ProductId === product.ProductId &&
+          item.ProductVariationId === selectedVariation.ProductVariationId
+      );
+      if (existingProductIndex !== -1) {
+        cart[existingProductIndex].Quantity += quantity;
+      } else {
+        cart.push({
+          ...product,
+          Quantity: quantity,
+          Price:
+            selectedVariation.SalePrice > 0
+              ? selectedVariation.SalePrice
+              : selectedVariation.Price,
+          ProductVariationId: selectedVariation.ProductVariationId,
+          ProductVariations: product.Variations,
+        });
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('storage'));
+      setCart(cart);
+      return;
+    }
 
-    window.dispatchEvent(new Event('storage'));
+    try {
+      const newCartItem = {
+        CustomerId: parseInt(CustomerId),
+        ProductId: product.ProductId,
+        ProductVariationId: selectedVariation.ProductVariationId,
+        Quantity: quantity,
+      };
+      const response = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/add`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newCartItem),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Response Error:', errorData);
+        throw new Error(`Failed to add item to cart: ${response.status}`);
+      }
+      console.log('Cart successfully updated in API!');
+      const cartResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!cartResponse.ok) {
+        throw new Error(`Failed to fetch updated cart: ${cartResponse.status}`);
+      }
+      const updatedCart = await cartResponse.json();
+      if (!Array.isArray(updatedCart)) {
+        console.error('Fetched cart is not an array:', updatedCart);
+        return;
+      }
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      setCart(updatedCart);
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
+
   useEffect(() => {
     localStorage.setItem('compareList', JSON.stringify(compareList));
   }, [compareList]);
@@ -212,7 +265,13 @@ function ProductDetailedPage() {
             </div>
             <div className="text-2xl font-semibold text-gray-700 mt-3">
               $
-              {selectedVariation ? formatPrice(selectedVariation.Price) : 'N/A'}
+              {selectedVariation
+                ? formatPrice(
+                    selectedVariation.SalePrice > 0
+                      ? selectedVariation.SalePrice
+                      : selectedVariation.Price
+                  )
+                : 'N/A'}
             </div>
             <div className="mt-4">
               <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
@@ -239,7 +298,13 @@ function ProductDetailedPage() {
                   {product.Variations.map((variation) => (
                     <button
                       key={variation.ProductVariationId}
-                      className={`border px-4 py-2 text-sm font-medium rounded-md transition `}
+                      className={`border px-4 py-2 text-sm font-medium rounded-md transition ${
+                        selectedVariation &&
+                        selectedVariation.ProductVariationId ===
+                          variation.ProductVariationId
+                          ? 'bg-gray-200'
+                          : ''
+                      }`}
                       onClick={() => handleVariationChange(variation)}
                     >
                       {variation.Ml}ml

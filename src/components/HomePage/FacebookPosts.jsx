@@ -11,7 +11,7 @@ const FacebookPosts = () => {
       setIsLoading(true);
       try {
         const accessToken =
-          'EAAJU70izSNQBO4CRBjfZA8t3ZBeyNlRzqM9ZBsOPIrOhdIRfE4Ot4VJT4ALrkgMI1ITumTZCNtcQZBeM1gkf7ZBpZCtCPatqU5bxDz1a0FnNPai4X71mNvdL2IpZBAD3vZC5bUlfeoM9vx7TO9vZCNCT5borRUnZB1CfCdLQwQL7zrA6ttN1tWqvRxdZCpI6sPUp3wF9CLC9tgI2XkeZBUZCH6hiznMaCy';
+          'EAAJU70izSNQBO26MTyNjJyrWwCHWRXD6iBgsXjxS0mxcknc7iyGl4ZC9NOL7myXZAeFLQ6rFilKgMx9ZBA0VEC8dJUNVvbreVTF9udK4V1jIWQvoUhBvDYVD8wkrV7eNCNPjvVMKE0SblTIuFYCX1BDXo0zQhJvS37mx5Bl9XZBbpEcgr6Ukfc60t8uZBMQgbdCcpSglHsAMZCJTh5Jxmk1VBs';
         const pageId = '616836648173383';
         const response = await fetch(
           `https://graph.facebook.com/v15.0/${pageId}/posts?access_token=${accessToken}&fields=message,permalink_url,full_picture,created_time,attachments{media_type,subattachments},likes.summary(true),comments.summary(true)&limit=6`
@@ -201,3 +201,17 @@ const FacebookPosts = () => {
 };
 
 export default FacebookPosts;
+
+// oauth/access_token?
+// grant_type=fb_exchange_token&
+// client_id=656336647047380&
+// client_secret=73171c1116c7a6c894e90fe52170a713&
+// fb_exchange_token=EAAJU70izSNQBOzASwS8XbvbgdZCnnhmE4z4y88cK3yLBvXk8Ff5cHv6KuR1JhvsjcelVtcZCp4Mf7uQ6kG7WcuxVPIs6ypzc9UfrrvCZChK7vetZAzlEDicLitS5rQA2s3qmDgiWw9CdPGdZCpG93kQVFSeBe8E5pV215kJCsbzamFHlty3v9ZCPY8sOjzQk0VeiqZCW40P5Jn8PehDmuGALZB25
+
+// oauth/client_code?
+//     client_id={app-id}&
+//     client_secret={app-secret}&
+//     redirect_uri={app-redirect-uri}&
+//     access_token={long-lived-user-access-token}
+
+//     EAAJU70izSNQBO2bc54Ti3zsRSsUjpNTSyZB6AH1ThabZA5DzheGGy1rrpT98uJbUYjbYZAKJZCnxZCZAJ79A5fWuwTZAeDGNYn3CS2vLlqTWbeOuO7Vm6Lnz5yc9XXABnyfVNsxwKahyY5iCq2PpNuNPBJT9TcjJtbzPx3IbxgxuG5KsofHyRANtIC7

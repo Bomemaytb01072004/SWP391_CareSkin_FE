@@ -136,34 +136,88 @@ function Navbar() {
     return () => window.removeEventListener('storage', updateCart);
   }, []);
 
-  const handleVariationChange = (productId, newVariationId) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) => {
-        if (item.ProductId === productId) {
-          const newVariation = item.ProductVariations?.find(
-            (v) => v.ProductVariationId === newVariationId
-          );
+  const handleVariationChange = async (productId, newVariationId) => {
+    const cartItem = cart.find((item) => item.ProductId === productId);
+    if (!cartItem) {
+      console.error(`Cart item with ProductId ${productId} not found.`);
+      return;
+    }
 
-          return {
-            ...item,
-            ProductVariationId: newVariationId,
-            Price:
-              newVariation?.SalePrice > 0
-                ? newVariation.SalePrice
-                : newVariation?.Price || item.Price, // ✅ Update price correctly
-          };
+    const selectedVariation = cartItem.ProductVariations?.find(
+      (v) => v.ProductVariationId === newVariationId
+    );
+
+    if (CustomerId) {
+      try {
+        const payload = {
+          CustomerId: parseInt(CustomerId),
+          ProductId: cartItem.ProductId,
+          ProductVariationId: newVariationId,
+          Quantity: cartItem.Quantity,
+        };
+
+        console.log('Sending payload to API:', payload);
+
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/update`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to update variation (ProductId: ${cartItem.ProductId}). Response: ${response.status} - ${errorText}`
+          );
         }
-        return item;
+
+        const responseData = await response.json();
+        console.log('API response data:', responseData);
+
+        const updatedCart = cart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                ProductVariationId: newVariationId,
+                SalePrice:
+                  selectedVariation?.SalePrice > 0
+                    ? selectedVariation.SalePrice
+                    : selectedVariation?.Price || item.Price,
+              }
+            : item
+        );
+
+        setCart(updatedCart);
+      } catch (error) {
+        console.error('Error updating cart variation:', error);
+      }
+    } else {
+      setCart((prevCart) => {
+        const updatedCart = prevCart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                ProductVariationId: newVariationId,
+                SalePrice:
+                  selectedVariation?.SalePrice > 0
+                    ? selectedVariation.SalePrice
+                    : selectedVariation?.Price || item.Price,
+              }
+            : item
+        );
+
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
       });
 
-      // ✅ If guest user, update localStorage as well
-      if (!CustomerId) {
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        window.dispatchEvent(new Event('storage')); // ✅ Ensure navbar updates across components
-      }
-
-      return updatedCart;
-    });
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
