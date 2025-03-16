@@ -16,9 +16,7 @@ import {
 } from '../../utils/api';
 
 const PromotionsTable = ({ promotions }) => {
-  // -----------------------------------
-  // 1) State
-  // -----------------------------------
+
   const [localPromotions, setLocalPromotions] = useState([]);
   const [displayedPromotions, setDisplayedPromotions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,10 +26,8 @@ const PromotionsTable = ({ promotions }) => {
   const [filteredPromotions, setFilteredPromotions] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Edit promotion
   const [editPromotionState, setEditPromotion] = useState(null);
 
-  // Create promotion
   const [newPromotion, setNewPromotion] = useState({
     PromotionName: '',
     DiscountPercent: 0,
@@ -40,27 +36,21 @@ const PromotionsTable = ({ promotions }) => {
     PromotionType: 0,
   });
 
-  // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);      // create promotion
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProductDiscountModalOpen, setIsProductDiscountModalOpen] = useState(false);
 
-  // -----------------------------------
-  // 2) Effects
-  // -----------------------------------
-  // Fetch products for selection
+  
   useEffect(() => {
     fetchProducts()
       .then((data) => setProducts(data))
       .catch((err) => console.error('Error fetching products:', err));
   }, []);
 
-  // Map promotions to localPromotions
   useEffect(() => {
     setLocalPromotions(promotions);
   }, [promotions]);
 
-  // Handle search
   useEffect(() => {
     if (!localPromotions) return;
 
@@ -147,7 +137,6 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Get promotion type badge color
   const getPromotionTypeBadgeColor = (type) => {
     switch (parseInt(type)) {
       case 1: return 'bg-blue-900 text-blue-300';
@@ -156,14 +145,11 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Get promotion status
   const getPromotionStatus = (promotion) => {
-    // Check if promotion has an IsActive property
     if (promotion.hasOwnProperty('IsActive')) {
       return promotion.IsActive;
     }
     
-    // If no IsActive property, check dates
     const now = new Date();
     const startDate = new Date(promotion.StartDate);
     const endDate = new Date(promotion.EndDate);
@@ -171,7 +157,6 @@ const PromotionsTable = ({ promotions }) => {
     return startDate <= now && now <= endDate;
   };
 
-  // Get promotion status badge
   const getPromotionStatusBadge = (promotion) => {
     const isActive = getPromotionStatus(promotion);
     
@@ -184,15 +169,12 @@ const PromotionsTable = ({ promotions }) => {
     );
   };
 
-  // -----------------------------------
-  // 3) Handlers
-  // -----------------------------------
+
   const handlePageChange = (page) => {
     if (page < 1 || page > Math.ceil(filteredPromotions.length / productsPerPage)) return;
     setCurrentPage(page);
   };
 
-  // Delete promotion
   const handleDelete = async (promotionId) => {
     if (window.confirm('Are you sure you want to delete this promotion?')) {
       try {
@@ -206,12 +188,10 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Deactivate promotion
   const handleDeactivate = async (id) => {
     try {
       await deactivatePromotion(id);
       
-      // Update the local state to reflect the deactivation
       setLocalPromotions((prev) => 
         prev.map((p) => 
           p.PromotionId === id 
@@ -227,7 +207,6 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Open Edit modal
   const handleOpenEditModal = (promotion) => {
     setEditPromotion({
       ...promotion,
@@ -237,7 +216,6 @@ const PromotionsTable = ({ promotions }) => {
     setIsEditModalOpen(true);
   };
 
-  // Submit Edit
   const handleEdit = async () => {
     if (!editPromotionState) return;
     if (
@@ -256,11 +234,9 @@ const PromotionsTable = ({ promotions }) => {
     try {
       const updated = await updatePromotion(editPromotionState.PromotionId, editPromotionState);
 
-      // Update localPromotions
       setLocalPromotions((prev) => prev.map((p) => (p.PromotionId === updated.PromotionId ? updated : p)));
       toast.success('Promotion updated successfully!');
 
-      // Reset
       setIsEditModalOpen(false);
       setEditPromotion(null);
     } catch (error) {
@@ -269,7 +245,6 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Submit Create promotion
   const handleAddPromotion = async () => {
     if (!newPromotion.PromotionName || !newPromotion.StartDate || !newPromotion.EndDate || !newPromotion.PromotionType) {
       toast.error('Please fill in all required fields: Promotion Name, Start Date, End Date, and Promotion Type');
@@ -280,7 +255,6 @@ const PromotionsTable = ({ promotions }) => {
       setLocalPromotions((prev) => [created, ...prev]);
       setIsModalOpen(false);
 
-      // Reset form
       setNewPromotion({
         PromotionName: '',
         DiscountPercent: 0,
@@ -295,14 +269,10 @@ const PromotionsTable = ({ promotions }) => {
     }
   };
 
-  // Open Product Discount Modal
   const handleOpenProductDiscountModal = () => {
     setIsProductDiscountModalOpen(true);
   };
 
-  // -----------------------------------
-  // 4) Render
-  // -----------------------------------
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 3;
@@ -364,7 +334,6 @@ const PromotionsTable = ({ promotions }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      {/* --- Edit Modal --- */}
       {isEditModalOpen && editPromotionState && (
         <EditPromotionModal
           editPromotionState={editPromotionState}
@@ -375,11 +344,9 @@ const PromotionsTable = ({ promotions }) => {
         />
       )}
 
-      {/* --- Header (Search & Buttons) --- */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-100">Promotions</h2>
         <div className="flex gap-4">
-          {/* Search */}
           <div className="relative">
             <input
               type="text"
@@ -391,7 +358,6 @@ const PromotionsTable = ({ promotions }) => {
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           </div>
 
-          {/* Product Discount Button */}
           <button
             className="flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
             onClick={handleOpenProductDiscountModal}
@@ -400,7 +366,6 @@ const PromotionsTable = ({ promotions }) => {
             <span>Product Discounts</span>
           </button>
 
-          {/* Add Promotion */}
           <button
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             onClick={() => setIsModalOpen(true)}
@@ -411,7 +376,6 @@ const PromotionsTable = ({ promotions }) => {
         </div>
       </div>
 
-      {/* --- Modal Create Promotion --- */}
       {isModalOpen && (
         <CreatePromotionModal
           newPromotion={newPromotion}
@@ -422,7 +386,6 @@ const PromotionsTable = ({ promotions }) => {
         />
       )}
 
-      {/* --- Product Discount Modal --- */}
       {isProductDiscountModalOpen && (
         <ProductDiscountModal
           onClose={() => setIsProductDiscountModalOpen(false)}
@@ -431,7 +394,6 @@ const PromotionsTable = ({ promotions }) => {
         />
       )}
 
-      {/* --- Table Promotions --- */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
@@ -498,7 +460,6 @@ const PromotionsTable = ({ promotions }) => {
                   {getPromotionStatusBadge(promotion)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {/* Edit Button */}
                   <button
                     className="text-indigo-400 hover:text-indigo-300 mr-2"
                     onClick={() => handleOpenEditModal(promotion)}
@@ -507,7 +468,6 @@ const PromotionsTable = ({ promotions }) => {
                     <Edit size={18} />
                   </button>
                   
-                  {/* Deactivate Button */}
                   <button
                     className="text-yellow-400 hover:text-yellow-300 mr-2"
                     onClick={() => handleDeactivate(promotion.PromotionId)}
@@ -516,7 +476,6 @@ const PromotionsTable = ({ promotions }) => {
                     <Power size={18} />
                   </button>
                   
-                  {/* Delete Button */}
                   <button
                     className="text-red-400 hover:text-red-300"
                     onClick={() => handleDelete(promotion.PromotionId)}
@@ -531,7 +490,6 @@ const PromotionsTable = ({ promotions }) => {
         </table>
       </div>
 
-      {/* --- Pagination --- */}
       <div className="flex justify-center mt-4 space-x-2">
         <button
           onClick={() => handlePageChange(currentPage - 1)}

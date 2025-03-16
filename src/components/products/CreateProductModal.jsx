@@ -3,7 +3,6 @@ import { X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function CreateProductModal({
-    // State + hàm setState do cha (ProductsTable) truyền xuống
     newProduct,
     setNewProduct,
     brandList,
@@ -13,17 +12,14 @@ function CreateProductModal({
     setShowSuggestions,
     skinTypeList,
 
-    // Upload file + preview
     previewUrlNewUpload,
     setPreviewUrlNewUpload,
     previewUrlAdditionalImages,
 
-    // Handler xóa ảnh / thêm ảnh / submit ...
     handleRemoveAdditionalImage,
     handleAdditionalImagesChange,
     handleAddProduct,
 
-    // Hàm đóng modal
     onClose,
 }) {
     return (
@@ -44,13 +40,12 @@ function CreateProductModal({
                     </button>
                 </div>
 
-                {/* Thông tin cơ bản */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <input
                         type="text"
                         placeholder="ProductName"
                         className="p-2 border border-gray-300 text-gray-900 rounded-lg"
-                        value={newProduct.ProductName}
+                        value={newProduct.ProductName || ""}
                         autoFocus
                         onChange={(e) =>
                             setNewProduct({ ...newProduct, ProductName: e.target.value })
@@ -66,7 +61,6 @@ function CreateProductModal({
                         }
                     />
 
-                    {/* Brand - autocomplete */}
                     <div className="relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">
                             Brand
@@ -83,7 +77,7 @@ function CreateProductModal({
                             }}
                         />
                         {showSuggestions && brandNameInput && (
-                            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto z-10">
+                            <ul className="absolute left-0 right-0 text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto z-10">
                                 {brandList
                                     .filter((b) =>
                                         b.Name.toLowerCase().includes(brandNameInput.toLowerCase())
@@ -105,7 +99,6 @@ function CreateProductModal({
                         )}
                     </div>
 
-                    {/* File upload */}
                     <div className="relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">
                             Image
@@ -177,7 +170,6 @@ function CreateProductModal({
                         </div>
                     </div>
 
-                    {/* Additional images */}
                     <div className="mt-2 relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">
                             Additional images
@@ -202,7 +194,6 @@ function CreateProductModal({
                                                     className="w-full h-full object-cover"
                                                 />
                                             </Link>
-                                            {/* Nút xóa ảnh */}
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveAdditionalImage(index)}
@@ -239,7 +230,6 @@ function CreateProductModal({
                     </div>
                 </div>
 
-                {/* Description */}
                 <div className="mb-4">
                     <label className="block mb-1 text-gray-700 font-semibold">
                         Description
@@ -255,7 +245,6 @@ function CreateProductModal({
                     />
                 </div>
 
-                {/* ProductForSkinTypes */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">SkinTypes</h4>
@@ -347,7 +336,6 @@ function CreateProductModal({
                     ))}
                 </div>
 
-                {/* Variations */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Variations</h4>
@@ -415,7 +403,6 @@ function CreateProductModal({
                     ))}
                 </div>
 
-                {/* MainIngredients */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Main Ingredients</h4>
@@ -489,7 +476,6 @@ function CreateProductModal({
                     ))}
                 </div>
 
-                {/* DetailIngredients */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Detail Ingredients</h4>
@@ -543,7 +529,6 @@ function CreateProductModal({
                     ))}
                 </div>
 
-                {/* Usages */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Usages</h4>
@@ -611,7 +596,6 @@ function CreateProductModal({
                     ))}
                 </div>
 
-                {/* Buttons */}
                 <div className="flex justify-end gap-4">
                     <button
                         className="px-4 py-2 bg-gray-400 text-white rounded-lg"

@@ -10,7 +10,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch existing product discounts
   useEffect(() => {
     const fetchProductDiscounts = async () => {
       try {
@@ -28,7 +27,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
     fetchProductDiscounts();
   }, []);
 
-  // Handle adding a new product discount
   const handleAddProductDiscount = async () => {
     if (!selectedProduct || !selectedPromotion) {
       toast.error('Please select both a product and a promotion');
@@ -43,10 +41,8 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
 
       const result = await setProductDiscount(productDiscountData);
       
-      // Update the local state
       setProductDiscounts(prev => [...prev, result]);
       
-      // Reset form
       setSelectedProduct('');
       setSelectedPromotion('');
       setDiscountPercent(0);
@@ -58,7 +54,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
     }
   };
 
-  // Handle toggling discount status
   const handleToggleStatus = async (discountId, currentStatus) => {
     try {
       const statusData = {
@@ -68,7 +63,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
 
       await updateProductDiscountStatus(statusData);
       
-      // Update local state
       setProductDiscounts(prev => 
         prev.map(discount => 
           discount.ProductDiscountId === discountId 
@@ -95,12 +89,10 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
         </div>
 
         <div className="space-y-6">
-          {/* Add new product discount section */}
           <div className="bg-gray-700 p-4 rounded-lg">
             <h3 className="text-lg font-medium text-white mb-4">Add New Product Discount</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* Product Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Select Product <span className="text-red-500">*</span>
@@ -120,7 +112,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                 </select>
               </div>
 
-              {/* Promotion Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Select Promotion <span className="text-red-500">*</span>
@@ -133,7 +124,7 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                 >
                   <option value="">Select a promotion</option>
                   {promotions
-                    .filter(promo => promo.PromotionType === 1) // Only show Product Discount type promotions
+                    .filter(promo => promo.PromotionType === 1) 
                     .map((promotion) => (
                       <option key={promotion.PromotionId} value={promotion.PromotionId}>
                         {promotion.PromotionName} ({promotion.DiscountPercent}%)
@@ -143,7 +134,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
               </div>
             </div>
 
-            {/* Discount Percentage */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Discount Percentage (Optional)
@@ -162,7 +152,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
               </p>
             </div>
 
-            {/* Add Button */}
             <div className="flex justify-end">
               <button
                 onClick={handleAddProductDiscount}
@@ -173,7 +162,6 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
             </div>
           </div>
 
-          {/* Existing product discounts table */}
           <div>
             <h3 className="text-lg font-medium text-white mb-4">Existing Product Discounts</h3>
             

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Search, Trash2, PlusCircle } from 'lucide-react';
+import { Edit, Search, Trash2, PlusCircle, Power } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import CreateProductModal from './CreateProductModal';
@@ -18,44 +18,40 @@ import {
   deleteProductVariation,
   deleteProductMainIngredient,
   deleteProductDetailIngredient,
+  fetchActiveProducts,
+  fetchInactiveProducts
 } from '../../utils/api';
 
 import CategoryDistributionChart from '../../components/overview/CategoryDistributionChart';
 import SalesTrendChart from '../../components/products/SalesTrendChart';
 
-const ProductsTable = ({ products }) => {
-  // -----------------------------------
-  // 1) State
-  // -----------------------------------
+const ProductsTable = ({ products, refetchProducts }) => {
+
   const [localProducts, setLocalProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 8;
 
-  // Edit product
   const [editProductState, setEditProduct] = useState(null);
   const [previewUrlEdit, setPreviewUrlEdit] = useState(null);
   const [previewUrlAdditionalImagesEditState, setPreviewUrlAdditionalImagesEdit] = useState([]);
 
-  // Brand
   const [brandList, setBrandList] = useState([]);
   const [brandNameInput, setBrandNameInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Edit brand input
   const [brandNameInputEdit, setBrandNameInputEdit] = useState('');
   const [showBrandSuggestionsEdit, setShowBrandSuggestionsEdit] = useState(false);
 
-  // Create product
   const [newProduct, setNewProduct] = useState({
     ProductName: '',
     Description: '',
     Category: '',
     BrandId: '',
     PictureFile: '',
+    IsActive: '',
     AdditionalPictures: [],
     ProductForSkinTypes: [{ ProductForSkinTypeId: '', SkinTypeId: 0 }],
     Variations: [{ ProductVariationId: '', Ml: 0, Price: 0 }],
@@ -67,25 +63,19 @@ const ProductsTable = ({ products }) => {
   const [previewUrlNewUpload, setPreviewUrlNewUpload] = useState(null);
   const [previewUrlAdditionalImages, setPreviewUrlAdditionalImages] = useState([]);
 
-  // Create brand
   const [newBrand, setNewBrand] = useState({
     Name: '',
     PictureFile: '',
   });
   const [previewUrlNewUploadBrand, setPreviewUrlNewUploadBrand] = useState(null);
 
-  // Skin type list (nếu cần fetch)
   const [skinTypeList, setSkinTypeList] = useState([]);
 
-  // Modals
-  const [isModalOpen, setIsModalOpen] = useState(false);      // create product
+  const [isModalOpen, setIsModalOpen] = useState(false);      
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isModalBrand, setIsModalBrand] = useState(false);    // create brand
+  const [isModalBrand, setIsModalBrand] = useState(false);  
 
-  // -----------------------------------
-  // 2) Effects
-  // -----------------------------------
-  // Lấy brand list
+  
   useEffect(() => {
     fetchBrands()
       .then((data) => setBrandList(data))
@@ -93,17 +83,15 @@ const ProductsTable = ({ products }) => {
   }, []);
 
   useEffect(() => {
-      fetchSkinTypeProduct()
-        .then((data) => setSkinTypeList(data))
-        .catch((err) => console.error('Error fetching skin type:', err));
-    }, []);
+    fetchSkinTypeProduct()
+      .then((data) => setSkinTypeList(data))
+      .catch((err) => console.error('Error fetching skin type:', err));
+  }, []);
 
-  // Map products vào localProducts
   useEffect(() => {
     setLocalProducts(products);
   }, [products]);
 
-  // Lọc search
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     const filtered = localProducts.filter(
@@ -115,7 +103,6 @@ const ProductsTable = ({ products }) => {
     setCurrentPage(1);
   }, [searchTerm, localProducts]);
 
-  // Khi mở Edit modal, set previewUrlAdditionalImagesEdit
   useEffect(() => {
     if (!isEditModalOpen || !editProductState) return;
 
@@ -127,9 +114,7 @@ const ProductsTable = ({ products }) => {
     }
   }, [isEditModalOpen, editProductState]);
 
-  // -----------------------------------
-  // 3) Handlers
-  // -----------------------------------
+ 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
@@ -139,13 +124,17 @@ const ProductsTable = ({ products }) => {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const displayedProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
-  // Delete product
   const handleDelete = async (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await deleteProduct(productId);
         setLocalProducts((prev) => prev.filter((p) => p.ProductId !== productId));
         toast.success('Product deleted successfully!');
+
+        if (refetchProducts) {
+          refetchProducts();
+        }
+
       } catch (error) {
         console.error('Failed to delete product:', error);
         toast.error('Error deleting product!');
@@ -153,13 +142,47 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Open Edit modal
+  
+
+const getProductStatusBadge = (product) => {
+  const isActive = !!product.IsActive; 
+  return (
+    <span
+      className={`px-2 py-1 rounded-full text-xs ${
+        isActive ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300"
+      }`}
+    >
+      {isActive ? "Active" : "Inactive"}
+    </span>
+  );
+};
+
+ const handleDeactivate = async (id) => {
+    try {
+      await deactivateProduct(id);
+      
+      setLocalProducts((prev) => 
+        prev.map((p) => 
+          p.ProductId === id 
+            ? { ...p, IsActive: false } 
+            : p
+        )
+      );
+      
+      toast.success('Product deactivated successfully!');
+    } catch (error) {
+      console.error('Failed to deactivate product:', error);
+      toast.error(`Failed to deactivate product: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+
+
+
   const handleOpenEditModal = (product) => {
-    // Tìm brandId từ brandName
     const foundBrand = brandList.find((b) => b.Name === product.BrandName);
     const brandId = foundBrand ? foundBrand.BrandId : '';
 
-    // Khởi tạo state
     const initializedProduct = {
       ...product,
       BrandId: brandId,
@@ -169,7 +192,6 @@ const ProductsTable = ({ products }) => {
       DetailIngredients: product.DetailIngredients || [],
       Usages: product.Usages || [],
       ProductForSkinTypes: product.ProductForSkinTypes || [],
-      // Mảng ID xóa
       VariationsToDelete: [],
       ProductForSkinTypesToDelete: [],
       MainIngredientsToDelete: [],
@@ -181,7 +203,6 @@ const ProductsTable = ({ products }) => {
     setIsEditModalOpen(true);
   };
 
-  // Submit Edit
   const handleEdit = async () => {
     if (!editProductState) return;
     if (
@@ -203,6 +224,7 @@ const ProductsTable = ({ products }) => {
       Category: editProductState.Category,
       Description: editProductState.Description || '',
       PictureFile: editProductState.PictureFile,
+      IsActive: editProductState.IsActive,
       ProductForSkinTypes: editProductState.ProductForSkinTypes || [],
       Variations: editProductState.Variations || [],
       MainIngredients: editProductState.MainIngredients || [],
@@ -210,7 +232,7 @@ const ProductsTable = ({ products }) => {
       Usages: editProductState.Usages || [],
       AdditionalPicturesToDelete: editProductState.AdditionalPicturesToDelete || [],
       AdditionalPicturesFile: editProductState.AdditionalPicturesFile || [],
-      // ID cần xóa
+      
       ProductForSkinTypesToDelete: editProductState.ProductForSkinTypesToDelete || [],
       VariationsToDelete: editProductState.VariationsToDelete || [],
       MainIngredientsToDelete: editProductState.MainIngredientsToDelete || [],
@@ -221,22 +243,24 @@ const ProductsTable = ({ products }) => {
     try {
       const updated = await updateProduct(editProductState.ProductId, productToUpdate);
 
-      // Cập nhật localProducts
       setLocalProducts((prev) => prev.map((p) => (p.ProductId === updated.ProductId ? updated : p)));
-      toast.success('Cập nhật sản phẩm thành công!');
+      toast.success('Product update successful!');
 
-      // Reset
       setIsEditModalOpen(false);
       setEditProduct(null);
       setPreviewUrlEdit(null);
       setPreviewUrlAdditionalImagesEdit([]);
+
+      if (refetchProducts) {
+        refetchProducts();
+      }
+
     } catch (error) {
       console.error('Failed to update product:', error);
-      toast.error(`Cập nhật sản phẩm thất bại: ${error.message || 'Lỗi không xác định'}`);
+      toast.error(`Product update failed: ${error.message || 'Unknown error'}`);
     }
   };
 
-  // Xóa SkinType
   const handleRemoveEditSkinType = async (index) => {
     const skinType = editProductState.ProductForSkinTypes[index];
 
@@ -247,10 +271,10 @@ const ProductsTable = ({ products }) => {
           ...prev,
           ProductForSkinTypes: prev.ProductForSkinTypes.filter((_, i) => i !== index),
         }));
-        toast.success('Xóa SkinType thành công!');
+        toast.success('SkinType removed successfully!');
       } catch (error) {
         console.error(error);
-        toast.error(`Lỗi khi xóa SkinType: ${error.message}`);
+        toast.error(`Error while deleting Skin Type: ${error.message}`);
       }
     } else {
       setEditProduct(prev => ({
@@ -260,27 +284,23 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Xóa Variation
   const handleRemoveEditVariation = async (index) => {
     const variation = editProductState.Variations[index];
 
-    // Nếu Variation đã có ID => gọi API xóa
     if (variation && variation.ProductVariationId) {
       try {
         await deleteProductVariation(variation.ProductVariationId);
         console.log(`Successfully deleted Variation with ID: ${variation.ProductVariationId}`);
-        // Sau khi xóa API thành công => xóa trong state
         setEditProduct(prev => ({
           ...prev,
           Variations: prev.Variations.filter((_, i) => i !== index),
         }));
-        toast.success('Xóa biến thể thành công!');
+        toast.success('Variant deletion successful!');
       } catch (error) {
         console.error('Error deleting variation:', error);
-        toast.error(`Lỗi khi xóa biến thể: ${error.message}`);
+        toast.error(`Error while deleting variant: ${error.message}`);
       }
     } else {
-      // Nếu là Variation mới (chưa có ID) => chỉ xóa khỏi state
       setEditProduct(prev => ({
         ...prev,
         Variations: prev.Variations.filter((_, i) => i !== index),
@@ -288,7 +308,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Xóa MainIngredient
   const handleRemoveEditMainIngredient = async (index) => {
     const ingredient = editProductState.MainIngredients[index];
 
@@ -299,10 +318,10 @@ const ProductsTable = ({ products }) => {
           ...prev,
           MainIngredients: prev.MainIngredients.filter((_, i) => i !== index),
         }));
-        toast.success('Xóa thành phần chính thành công!');
+        toast.success('Main ingredient deleted successfully!');
       } catch (error) {
         console.error(error);
-        toast.error(`Lỗi khi xóa MainIngredient: ${error.message}`);
+        toast.error(`Error while deleting main ingredient: ${error.message}`);
       }
     } else {
       setEditProduct(prev => ({
@@ -312,7 +331,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Xóa DetailIngredient
   const handleRemoveEditDetailIngredient = async (index) => {
     const ingredient = editProductState.DetailIngredients[index];
 
@@ -323,10 +341,10 @@ const ProductsTable = ({ products }) => {
           ...prev,
           DetailIngredients: prev.DetailIngredients.filter((_, i) => i !== index),
         }));
-        toast.success('Xóa thành phần chi tiết thành công!');
+        toast.success('Delete detail ingredient successfully!');
       } catch (error) {
         console.error(error);
-        toast.error(`Lỗi khi xóa DetailIngredient: ${error.message}`);
+        toast.error(`Error when deleting detail ingredient: ${error.message}`);
       }
     } else {
       setEditProduct(prev => ({
@@ -336,7 +354,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Xóa Usage
   const handleRemoveEditUsage = async (index) => {
     const usage = editProductState.Usages[index];
 
@@ -347,10 +364,10 @@ const ProductsTable = ({ products }) => {
           ...prev,
           Usages: prev.Usages.filter((_, i) => i !== index),
         }));
-        toast.success('Xóa hướng dẫn sử dụng thành công!');
+        toast.success('Deleted usage successfully!');
       } catch (error) {
         console.error(error);
-        toast.error(`Lỗi khi xóa Usage: ${error.message}`);
+        toast.error(`Error when deleting usage: ${error.message}`);
       }
     } else {
       setEditProduct(prev => ({
@@ -360,7 +377,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Submit Create product
   const handleAddProduct = async () => {
     if (!newProduct.ProductName || !newProduct.Category || !newProduct.BrandId) {
       toast.error('Please fill in required fields: ProductName, Category, BrandId');
@@ -371,7 +387,6 @@ const ProductsTable = ({ products }) => {
       setLocalProducts((prev) => [created, ...prev]);
       setIsModalOpen(false);
 
-      // Reset form
       setNewProduct({
         ProductName: '',
         Description: '',
@@ -391,12 +406,16 @@ const ProductsTable = ({ products }) => {
       setPreviewUrlNewUpload(null);
       setPreviewUrlAdditionalImages([]);
       toast.success('New product added successfully!');
+
+      if (refetchProducts) {
+        refetchProducts();
+      }
+
     } catch (error) {
       toast.error('Failed to add product:', error);
     }
   };
 
-  // Submit Create brand
   const handleAddBrand = async () => {
     if (!newBrand.Name || !newBrand.PictureFile) {
       toast.error('Please fill in required fields: Name, Upload file image of Brand');
@@ -415,7 +434,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Handler remove images (khi tạo sản phẩm)
   const handleRemoveAdditionalImage = (index) => {
     setPreviewUrlAdditionalImages((prev) => prev.filter((_, i) => i !== index));
     setNewProduct((prev) => ({
@@ -424,7 +442,6 @@ const ProductsTable = ({ products }) => {
     }));
   };
 
-  // Upload ảnh (khi tạo)
   const handleAdditionalImagesChange = (e) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
@@ -437,7 +454,6 @@ const ProductsTable = ({ products }) => {
     setPreviewUrlAdditionalImages((prev) => [...prev, ...newPreviews]);
   };
 
-  // Remove ảnh cũ (khi edit)
   const handleRemoveExistingAdditionalImage = (index) => {
     setPreviewUrlAdditionalImagesEdit((prev) => prev.filter((_, i) => i !== index));
     const oldId = editProductState.ProductPictures?.[index]?.ProductPictureId;
@@ -453,7 +469,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // Upload ảnh mới (khi edit)
   const handleAdditionalImagesChangeEdit = (e) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
@@ -470,9 +485,6 @@ const ProductsTable = ({ products }) => {
     }
   };
 
-  // -----------------------------------
-  // 4) Render
-  // -----------------------------------
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 3;
@@ -553,6 +565,7 @@ const ProductsTable = ({ products }) => {
           handleEdit={handleEdit}
           onClose={() => setIsEditModalOpen(false)}
           skinTypeList={skinTypeList}
+          refetchProducts={refetchProducts}
 
           handleRemoveEditVariation={handleRemoveEditVariation}
           handleRemoveEditSkinType={handleRemoveEditSkinType}
@@ -564,11 +577,9 @@ const ProductsTable = ({ products }) => {
         />
       )}
 
-      {/* --- Header (Search & Buttons) --- */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-100">Products</h2>
         <div className="flex gap-4">
-          {/* Search */}
           <div className="relative">
             <input
               type="text"
@@ -580,7 +591,6 @@ const ProductsTable = ({ products }) => {
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           </div>
 
-          {/* Add Product */}
           <button
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             onClick={() => setIsModalOpen(true)}
@@ -589,7 +599,6 @@ const ProductsTable = ({ products }) => {
             Add Product
           </button>
 
-          {/* Add Brand */}
           <button
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
             onClick={() => setIsModalBrand(true)}
@@ -600,7 +609,6 @@ const ProductsTable = ({ products }) => {
         </div>
       </div>
 
-      {/* --- Modal Create Product --- */}
       {isModalOpen && (
         <CreateProductModal
           newProduct={newProduct}
@@ -618,10 +626,10 @@ const ProductsTable = ({ products }) => {
           handleAdditionalImagesChange={handleAdditionalImagesChange}
           handleAddProduct={handleAddProduct}
           onClose={() => setIsModalOpen(false)}
+          refetchProducts={refetchProducts}
         />
       )}
 
-      {/* --- Modal Create Brand --- */}
       {isModalBrand && (
         <CreateBrandModal
           newBrand={newBrand}
@@ -633,7 +641,6 @@ const ProductsTable = ({ products }) => {
         />
       )}
 
-      {/* --- Table Sản Phẩm --- */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-700">
           <thead>
@@ -649,6 +656,9 @@ const ProductsTable = ({ products }) => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                 Price (1st Variation)
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+                Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
                 Actions
@@ -690,6 +700,9 @@ const ProductsTable = ({ products }) => {
                       : 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    {getProductStatusBadge(product)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                     {/* Nút Edit */}
                     <button
                       className="text-indigo-400 hover:text-indigo-300 mr-2"
@@ -697,10 +710,18 @@ const ProductsTable = ({ products }) => {
                     >
                       <Edit size={18} />
                     </button>
+
+                    <button
+                      className="text-yellow-400 hover:text-yellow-300 mr-2"
+                      onClick={() => handleDeactivate(product.PromotionId)}
+                      title="Deactivate promotion"
+                    >
+                      <Power size={18} />
+                    </button>
                     {/* Nút Delete */}
                     <button
                       className="text-red-400 hover:text-red-300"
-                      onClick={() => handleDelete(product.ProductId)}
+                      onClick={() => handleDeactivate(product.ProductId)}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -712,7 +733,6 @@ const ProductsTable = ({ products }) => {
         </table>
       </div>
 
-      {/* --- Pagination --- */}
       <div className="flex justify-center mt-4 space-x-2">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
@@ -737,7 +757,6 @@ const ProductsTable = ({ products }) => {
         </button>
       </div>
 
-      {/* --- Charts minh họa --- */}
       <div className="mt-10 grid grid-col-1 lg:grid-cols-2 gap-8 z-0">
         <SalesTrendChart />
         <CategoryDistributionChart products={products} />
