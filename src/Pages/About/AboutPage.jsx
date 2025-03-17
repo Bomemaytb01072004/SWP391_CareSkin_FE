@@ -117,7 +117,7 @@ function AboutPage() {
 
       {/* Hero Section */}
       <motion.div
-        className="bg-emerald-50 py-20"
+        className="bg-gradient-to-br from-emerald-50 to-emerald-100 py-24"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -130,20 +130,28 @@ function AboutPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 relative">
                 Our Story
+                <span className="absolute -bottom-2 left-0 w-20 h-1 bg-emerald-500 rounded-full"></span>
               </h1>
               <p className="text-xl text-gray-600 mb-6">
                 Founded in 2018 by Dr. Emily Chen, our journey began with a
                 simple mission: to create effective, science-backed skincare
                 that's accessible to everyone.
               </p>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gray-600 mb-8">
                 We believe that skin health shouldn't be complicated or
                 exclusive. With transparent formulations and sustainable
                 practices, we're changing the skincare industry one product at a
                 time.
               </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-medium transition-colors shadow-md"
+              >
+                Discover Our Products
+              </motion.button>
             </motion.div>
             <motion.div
               className="md:w-1/2"
@@ -151,11 +159,14 @@ function AboutPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
-                alt="Our laboratory"
-                className="rounded-lg shadow-lg w-full h-auto object-cover"
-              />
+              <div className="relative">
+                <div className="absolute -top-4 -left-4 w-full h-full border-2 border-emerald-500 rounded-lg"></div>
+                <img
+                  src="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+                  alt="Our laboratory"
+                  className="rounded-lg shadow-lg w-full h-auto object-cover relative z-10"
+                />
+              </div>
             </motion.div>
           </div>
         </div>
@@ -221,30 +232,44 @@ function AboutPage() {
 
       {/* Our Values */}
       <motion.div
-        className="py-20 bg-gray-50"
+        className="py-24 bg-gradient-to-b from-gray-50 to-white"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7 }}
       >
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-10 text-center text-gray-800">
-            Our Core Values
-          </h2>
+          <div className="text-center mb-12">
+            <span className="text-emerald-600 font-semibold uppercase tracking-wider">
+              What drives us
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-gray-800">
+              Our Core Values
+            </h2>
+            <div className="w-24 h-1 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {coreValues.map((value, index) => (
               <motion.div
                 key={index}
-                className="bg-white p-6 rounded-xl shadow-sm"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="bg-white p-8 rounded-xl shadow-md border-t-4 border-emerald-500"
+                whileHover={{
+                  y: -8,
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
               >
-                <div className="bg-emerald-100 rounded-full w-16 h-16 flex items-center justify-center mb-4">
+                <div className="bg-emerald-100 rounded-full w-20 h-20 flex items-center justify-center mb-6 mx-auto">
                   <FontAwesomeIcon
                     icon={value.icon}
-                    className="text-emerald-600 text-2xl"
+                    className="text-emerald-600 text-3xl"
                   />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-                <p className="text-gray-600">{value.description}</p>
+                <h3 className="text-xl font-bold mb-3 text-center">
+                  {value.title}
+                </h3>
+                <p className="text-gray-600 text-center">{value.description}</p>
               </motion.div>
             ))}
           </div>
@@ -253,40 +278,47 @@ function AboutPage() {
 
       {/* Our Journey */}
       <motion.div
-        className="py-20 bg-white"
+        className="py-24 bg-white"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7 }}
       >
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-12 text-center text-gray-800">
-            Our Journey
-          </h2>
+          <div className="text-center mb-16">
+            <span className="text-emerald-600 font-semibold uppercase tracking-wider">
+              Our history
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-gray-800">
+              Our Journey
+            </h2>
+            <div className="w-24 h-1 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+          </div>
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-emerald-100"></div>
+            <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-emerald-300 to-emerald-600"></div>
 
             {/* Timeline events */}
             <div className="relative z-10">
               {companyTimeline.map((event, index) => (
                 <motion.div
                   key={index}
-                  className={`mb-12 flex items-center justify-between ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
+                  className={`mb-16 flex items-center justify-between ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
                 >
                   <div
-                    className={`w-5/12 ${index % 2 === 0 ? 'text-right' : 'text-left'}`}
+                    className={`w-5/12 ${index % 2 === 0 ? 'text-right pr-8' : 'text-left pl-8'}`}
                   >
-                    <h3 className="text-xl font-bold text-emerald-600">
+                    <h3 className="text-2xl font-bold text-emerald-600">
                       {event.title}
                     </h3>
-                    <p className="text-gray-600 mt-2">{event.description}</p>
+                    <p className="text-gray-600 mt-3">{event.description}</p>
                   </div>
                   <div className="z-20">
-                    <div className="bg-emerald-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
-                      <span className="font-bold">{event.year}</span>
+                    <div className="bg-gradient-to-r from-emerald-500 to-emerald-700 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg transform transition-all hover:scale-110 hover:shadow-xl">
+                      <span className="font-bold text-lg">{event.year}</span>
                     </div>
                   </div>
                   <div className="w-5/12"></div>
@@ -299,31 +331,44 @@ function AboutPage() {
 
       {/* Meet Our Team */}
       <motion.div
-        className="py-20 bg-emerald-50"
+        className="py-24 bg-emerald-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7 }}
       >
         <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-4 text-center text-gray-800">
-            Meet Our Team
-          </h2>
-          <p className="text-center text-gray-600 mb-12 max-w-3xl mx-auto">
-            The passionate experts behind our products, committed to
-            revolutionizing skincare through science and sustainability.
-          </p>
+          <div className="text-center mb-12">
+            <span className="text-emerald-600 font-semibold uppercase tracking-wider">
+              The experts
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-gray-800">
+              Meet Our Team
+            </h2>
+            <div className="w-24 h-1 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+            <p className="text-center text-gray-600 mt-6 max-w-3xl mx-auto">
+              The passionate experts behind our products, committed to
+              revolutionizing skincare through science and sustainability.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {teamMembers.map((member, index) => (
               <motion.div
                 key={index}
-                className="bg-white rounded-lg overflow-hidden shadow-sm"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="bg-white rounded-xl overflow-hidden shadow-md group"
+                whileHover={{
+                  y: -8,
+                  boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
               >
-                <div className="h-64 overflow-hidden">
+                <div className="h-72 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-emerald-900 opacity-0 group-hover:opacity-20 transition-opacity duration-300 z-10"></div>
                   <img
                     src={member.image || `/api/placeholder/300/300`}
                     alt={member.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
                 <div className="p-6">
@@ -332,6 +377,20 @@ function AboutPage() {
                     {member.role}
                   </p>
                   <p className="text-gray-600 text-sm">{member.bio}</p>
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center gap-4">
+                    <motion.button
+                      whileHover={{ y: -3 }}
+                      className="text-gray-400 hover:text-emerald-500"
+                    >
+                      <i className="fab fa-linkedin text-lg"></i>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ y: -3 }}
+                      className="text-gray-400 hover:text-emerald-500"
+                    >
+                      <i className="fab fa-twitter text-lg"></i>
+                    </motion.button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -398,6 +457,111 @@ function AboutPage() {
                 alt="Sustainability"
                 className="rounded-lg shadow-lg w-full h-auto object-cover"
               />
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Testimonials Section - Add this before Footer */}
+      <motion.div
+        className="py-24 bg-gradient-to-br from-emerald-50 to-emerald-100"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+      >
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <span className="text-emerald-600 font-semibold uppercase tracking-wider">
+              What people are saying
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-gray-800">
+              Testimonials
+            </h2>
+            <div className="w-24 h-1 bg-emerald-500 mx-auto mt-4 rounded-full"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              className="bg-white p-8 rounded-xl shadow-md"
+              whileHover={{ y: -5 }}
+            >
+              <div className="flex items-center mb-4">
+                <div className="text-emerald-500">★★★★★</div>
+              </div>
+              <p className="text-gray-600 italic mb-6">
+                "I've struggled with sensitive skin my entire life. CareSkin's
+                products are the first that have consistently worked without
+                causing irritation."
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img
+                    src="https://randomuser.me/api/portraits/women/44.jpg"
+                    alt="Customer"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Maria J.</h4>
+                  <p className="text-sm text-gray-500">Customer since 2020</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-white p-8 rounded-xl shadow-md"
+              whileHover={{ y: -5 }}
+            >
+              <div className="flex items-center mb-4">
+                <div className="text-emerald-500">★★★★★</div>
+              </div>
+              <p className="text-gray-600 italic mb-6">
+                "Not only are the products amazing, but I love supporting a
+                company with such strong environmental values. The recyclable
+                packaging is a game-changer."
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img
+                    src="https://randomuser.me/api/portraits/men/32.jpg"
+                    alt="Customer"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Alex T.</h4>
+                  <p className="text-sm text-gray-500">Customer since 2021</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-white p-8 rounded-xl shadow-md"
+              whileHover={{ y: -5 }}
+            >
+              <div className="flex items-center mb-4">
+                <div className="text-emerald-500">★★★★★</div>
+              </div>
+              <p className="text-gray-600 italic mb-6">
+                "As a dermatologist, I'm extremely selective about the products
+                I recommend. CareSkin consistently meets my high standards for
+                efficacy and ingredient transparency."
+              </p>
+              <div className="flex items-center">
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <img
+                    src="https://randomuser.me/api/portraits/women/68.jpg"
+                    alt="Customer"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="font-semibold">Dr. Priya S.</h4>
+                  <p className="text-sm text-gray-500">
+                    Board-Certified Dermatologist
+                  </p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
