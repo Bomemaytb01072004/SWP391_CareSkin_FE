@@ -1,25 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Image, Heart, MessageCircle } from 'lucide-react';
+import { Calendar, Image, MessageCircle } from 'lucide-react';
 
 const FacebookPosts = () => {
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
       setIsLoading(true);
+      setError(null);
       try {
+        // This is where the error is happening - we need to change the field aliases
+        // Note: You should move this token to an environment variable or backend
         const accessToken =
           'EAAJU70izSNQBOz06caEGVVVTldNDZBhEGXS5x0X8B4ScX7rvuPZAN4pjGvdq6bifjZAE1Rg9o0aqH1bKOBzBesjfVRQbBgZAELS6q6Iq2n5ERVebsDmnwTojU6L0lxvQunBnPe5cKDbSir4LWGQ2tpuk929LbHoZBEdTJrxbeaqKHTY2p5Me8dZA8TZAAqdGozV';
         const pageId = '616836648173383';
+
+        // Changed field aliases to avoid naming conflicts with Graph API
         const response = await fetch(
-          `https://graph.facebook.com/v15.0/${pageId}/posts?access_token=${accessToken}&fields=message,permalink_url,full_picture,created_time,attachments{media_type,subattachments},likes.summary(true),comments.summary(true)&limit=6`
+          `https://graph.facebook.com/v15.0/${pageId}/posts?access_token=${accessToken}&fields=message,permalink_url,full_picture,created_time,attachments{media_type,subattachments},reactions.summary(total_count),comments.summary(true),reactions.type(LIKE).summary(total_count).limit(0).as(like_reactions),reactions.type(LOVE).summary(total_count).limit(0).as(love_reactions),reactions.type(HAHA).summary(total_count).limit(0).as(haha_reactions),reactions.type(WOW).summary(total_count).limit(0).as(wow_reactions),reactions.type(SAD).summary(total_count).limit(0).as(sad_reactions)&limit=6`
         );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error?.message || 'Failed to fetch posts');
+        }
+
         const data = await response.json();
-        setPosts(data.data);
+
+        if (data && data.data) {
+          setPosts(data.data);
+        } else {
+          console.warn('Unexpected API response format:', data);
+          setPosts([]);
+        }
       } catch (error) {
         console.error('Error fetching Facebook posts:', error);
+        setError(error.message || 'Failed to load Facebook posts');
+        setPosts([]);
       } finally {
         setIsLoading(false);
       }
@@ -103,6 +123,27 @@ const FacebookPosts = () => {
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-700"></div>
         </div>
+      ) : error ? (
+        <div className="text-center py-12 px-4">
+          <div className="bg-red-50 p-6 rounded-lg max-w-md mx-auto">
+            <p className="text-red-600 mb-2">⚠️ {error}</p>
+            <p className="text-gray-600 text-sm">
+              This could be due to an expired API token or network issue.
+            </p>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p className="text-xs text-left font-mono text-gray-700 whitespace-pre-wrap break-all">
+                {/* Show a helpful message about token expiration */}
+                Try refreshing your Facebook access token using the Graph API
+                Explorer. Facebook tokens typically expire after 60 days. Your
+                token may have expired.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No posts available at the moment.</p>
+        </div>
       ) : (
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
@@ -163,11 +204,80 @@ const FacebookPosts = () => {
                       <Calendar size={14} className="mr-1" />
                       <span>{formatDate(post.created_time)}</span>
                     </div>
+
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center">
-                        <Heart size={14} className="mr-1" />
-                        <span>{post.likes?.summary?.total_count || 0}</span>
+                      {/* Updated Reactions with dropdown to use new field names */}
+                      <div className="group relative">
+                        <div className="flex items-center cursor-pointer">
+                          <div className="flex -space-x-1 mr-1.5">
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center border border-white shadow-sm">
+                              <span className="text-[10px]">👍</span>
+                            </div>
+                            {post.love_reactions?.summary?.total_count > 0 && (
+                              <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center border border-white shadow-sm">
+                                <span className="text-[10px]">❤️</span>
+                              </div>
+                            )}
+                            {(post.haha_reactions?.summary?.total_count > 0 ||
+                              post.wow_reactions?.summary?.total_count > 0) && (
+                              <div className="w-5 h-5 rounded-full bg-yellow-100 flex items-center justify-center border border-white shadow-sm">
+                                <span className="text-[10px]">
+                                  {post.haha_reactions?.summary?.total_count >
+                                  post.wow_reactions?.summary?.total_count
+                                    ? '😄'
+                                    : '😮'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <span>
+                            {post.reactions?.summary?.total_count || 0}
+                          </span>
+                        </div>
+
+                        {/* Updated Tooltip to use new field names */}
+                        <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block bg-white shadow-lg rounded-lg p-2 text-xs w-28 z-10 border border-gray-100">
+                          <div className="absolute -bottom-2 left-4 w-4 h-4 bg-white transform rotate-45 border-r border-b border-gray-100"></div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="flex items-center">
+                              <span className="mr-1">👍</span>Like
+                            </span>
+                            <span className="font-medium">
+                              {post.like_reactions?.summary?.total_count || 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="flex items-center">
+                              <span className="mr-1">❤️</span>Love
+                            </span>
+                            <span className="font-medium">
+                              {post.love_reactions?.summary?.total_count || 0}
+                            </span>
+                          </div>
+                          {post.haha_reactions?.summary?.total_count > 0 && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="flex items-center">
+                                <span className="mr-1">😄</span>Haha
+                              </span>
+                              <span className="font-medium">
+                                {post.haha_reactions?.summary?.total_count || 0}
+                              </span>
+                            </div>
+                          )}
+                          {post.wow_reactions?.summary?.total_count > 0 && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="flex items-center">
+                                <span className="mr-1">😮</span>Wow
+                              </span>
+                              <span className="font-medium">
+                                {post.wow_reactions?.summary?.total_count || 0}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Comments */}
                       <div className="flex items-center">
                         <MessageCircle size={14} className="mr-1" />
                         <span>{post.comments?.summary?.total_count || 0}</span>

@@ -2,13 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import quizBg from '../../assets/SkinQuiz/skincare.jpg';
 
 const SkinQuizPage = () => {
   const navigate = useNavigate();
-  const [stage, setStage] = useState('start'); // 'start', 'quiz', 'result'
+  const [stage, setStage] = useState('start');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [quizId, setQuizId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [userQuizAttemptId, setUserQuizAttemptId] = useState(null);
+  const [apiQuestions, setApiQuestions] = useState([]);
+  const [isQuestionsLoading, setIsQuestionsLoading] = useState(false);
+  const [answerHistory, setAnswerHistory] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiResultData, setApiResultData] = useState(null);
 
   useEffect(() => {
     // Check if the quiz has already been completed
@@ -17,49 +29,279 @@ const SkinQuizPage = () => {
       navigate('/skinroutine'); // Redirect to routine page if results exist
     }
   }, [navigate]);
+  // Add this near other useEffect hooks
+  useEffect(() => {
+    // Debug whenever answerHistory changes
+    console.log('Current answer history:', answerHistory);
+  }, [answerHistory]);
+  // Add near your other useEffect hooks
+  useEffect(() => {
+    // Log whenever the userQuizAttemptId changes
+    console.log('userQuizAttemptId updated:', userQuizAttemptId);
+  }, [userQuizAttemptId]);
 
-  const questions = [
-    {
-      id: 1,
-      text: "Let's start with your skin type",
-      description:
-        'The more accurate your answers, the more personalized your recommendations will be.',
-      options: ['Normal', 'Dry', 'Oily', 'Combination', 'Sensitive'],
-    },
-    {
-      id: 2,
-      text: 'What are your main skin concerns?',
-      description:
-        'Select the most relevant concerns to tailor your skincare routine.',
-      options: ['Acne', 'Wrinkles', 'Redness', 'Hyperpigmentation', 'Dryness'],
-    },
-  ];
+  // Add this after your state declarations to debug
+  useEffect(() => {
+    if (stage === 'result') {
+      console.log('===== QUIZ RESULTS DEBUG =====');
+      console.log('API Result Data:', apiResultData);
+      console.log('All answers:', answers);
+      console.log(
+        'First question answer:',
+        apiQuestions.length > 0 ? answers[apiQuestions[0].id] : null
+      );
+      console.log(
+        'Second question answer:',
+        apiQuestions.length > 1 ? answers[apiQuestions[1].id] : null
+      );
+    }
+  }, [stage, apiResultData, answers, apiQuestions]);
+
+  const handleStartQuiz = async () => {
+    setIsLoading(true);
+    const customerId = localStorage.getItem('CustomerId');
+    const token = localStorage.getItem('token');
+
+    if (!customerId) {
+      // Guest user - just start quiz without any API calls
+      setQuizId(2); // Default quiz ID for guests
+      await fetchQuizQuestions(2); // Fetch default questions for guests
+      setStage('quiz');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Check if user has done the quiz before
+      const checkResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/UserQuizAttempt/customer/${customerId}?includeHistories=false`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check quiz history');
+      }
+
+      const historyData = await checkResponse.json();
+      let selectedQuizId;
+
+      // Determine which quiz to assign
+      if (!historyData || historyData.length === 0) {
+        // User hasn't done the quiz before
+        selectedQuizId = 2;
+      } else {
+        // User has done the quiz before - randomly assign 4 or 5
+        selectedQuizId = Math.random() < 0.5 ? 4 : 5;
+      }
+
+      setQuizId(selectedQuizId);
+
+      // Create a new quiz attempt
+      const createResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/UserQuizAttempt`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            CustomerId: parseInt(customerId),
+            QuizId: selectedQuizId,
+          }),
+        }
+      );
+
+      if (!createResponse.ok) {
+        throw new Error('Failed to create quiz attempt');
+      }
+
+      // Store the attempt ID from the response
+      const attemptData = await createResponse.json();
+      console.log('Quiz attempt created:', attemptData); // Check the response structure
+
+      // Handle different possible API response formats
+      if (attemptData.userQuizAttemptId) {
+        setUserQuizAttemptId(attemptData.userQuizAttemptId);
+      } else if (attemptData.id) {
+        setUserQuizAttemptId(attemptData.id);
+      } else {
+        console.error(
+          'Could not find userQuizAttemptId in response',
+          attemptData
+        );
+        // Try to extract from the object if it's nested
+        const extractedId = Object.values(attemptData).find(
+          (val) =>
+            typeof val === 'number' ||
+            (typeof val === 'string' && !isNaN(parseInt(val)))
+        );
+        if (extractedId) {
+          setUserQuizAttemptId(extractedId);
+        }
+      }
+
+      // Add debug to verify ID is set
+      console.log('Set userQuizAttemptId to:', userQuizAttemptId);
+
+      // Fetch questions for this quiz
+      await fetchQuizQuestions(selectedQuizId);
+
+      // Move to quiz stage
+      setStage('quiz');
+      setHasStarted(true);
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      toast.error('Failed to start the quiz. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchQuizQuestions = async (quizId) => {
+    setIsQuestionsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const response = await fetch(
+        `http://careskinbeauty.shop:4456/api/Quiz/${quizId}`,
+        { headers }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch quiz questions: ${response.status}`);
+      }
+
+      const quizData = await response.json();
+      console.log('Quiz API Response:', quizData); // Debug log to see structure
+
+      // Extract questions based on the actual API response structure
+      let questions = [];
+
+      if (quizData && quizData.Questions && Array.isArray(quizData.Questions)) {
+        questions = quizData.Questions;
+      } else if (
+        quizData &&
+        quizData.questions &&
+        Array.isArray(quizData.questions)
+      ) {
+        questions = quizData.questions;
+      } else if (Array.isArray(quizData)) {
+        questions = quizData;
+      } else {
+        throw new Error('Could not find questions in API response');
+      }
+
+      // Map API response to our expected format with proper field names
+      const formattedQuestions = questions.map((q) => ({
+        id:
+          q.QuestionsId ||
+          q.questionId ||
+          Math.random().toString(36).substring(7),
+        text: q.QuestionText || q.text || 'Question text unavailable',
+        description: q.Description || q.description || '',
+        // Handle options which are called "Answers" in the API
+        options: Array.isArray(q.Answers)
+          ? q.Answers.map((opt) => ({
+              id:
+                opt.AnswerId ||
+                opt.optionId ||
+                Math.random().toString(36).substring(7),
+              text: opt.AnswersText || opt.text || 'Option text unavailable',
+            }))
+          : Array.isArray(q.options)
+            ? q.options.map((opt) => ({
+                id:
+                  opt.optionId ||
+                  opt.id ||
+                  Math.random().toString(36).substring(7),
+                text: opt.text || 'Option text unavailable',
+              }))
+            : [], // Empty options array if none found
+      }));
+
+      if (formattedQuestions.length === 0) {
+        throw new Error('No valid questions found in quiz data');
+      }
+
+      setApiQuestions(formattedQuestions);
+      setCurrentQuestion(0); // Reset to first question
+
+      console.log('Formatted questions:', formattedQuestions);
+    } catch (error) {
+      console.error('Error fetching quiz questions:', error);
+      toast.error(`Failed to load questions: ${error.message}`);
+
+      // Fallback to predefined questions in case of API failure
+      setApiQuestions(questions);
+    } finally {
+      setIsQuestionsLoading(false);
+    }
+  };
 
   const skinCharacteristicsMapping = {
+    'Dry Skin': [
+      { text: 'Feels tight, especially after cleansing', positive: false },
+      { text: 'May have visible flaking or rough patches', positive: false },
+      { text: 'Fine lines appear more pronounced', positive: false },
+      { text: 'Needs rich, hydrating products', positive: true },
+      { text: 'Benefits from cream-based cleansers', positive: true },
+      { text: 'Should avoid harsh, drying ingredients', positive: true },
+    ],
+    'Sensitive Skin': [
+      {
+        text: 'Reacts easily to products and environmental factors',
+        positive: false,
+      },
+      { text: 'May experience redness, stinging or burning', positive: false },
+      { text: 'Skin barrier may be compromised', positive: false },
+      { text: 'Benefits from fragrance-free products', positive: true },
+      {
+        text: 'Should use gentle, minimal-ingredient formulas',
+        positive: true,
+      },
+      { text: 'Patch testing new products is essential', positive: true },
+    ],
+    'Combination Skin': [
+      { text: 'Oily T-zone with normal to dry cheeks', positive: false },
+      { text: 'Enlarged pores in the center of face', positive: false },
+      { text: 'Different areas require different care', positive: false },
+      { text: 'Benefits from balanced, lightweight hydration', positive: true },
+      {
+        text: 'May need targeted treatments for different zones',
+        positive: true,
+      },
+      { text: 'Gentle exfoliation helps balance skin', positive: true },
+    ],
+    'Oily Skin': [
+      { text: 'Shiny appearance, especially in T-zone', positive: false },
+      { text: 'Enlarged, visible pores', positive: false },
+      { text: 'Prone to blackheads and acne', positive: false },
+      {
+        text: 'Benefits from oil-free, non-comedogenic products',
+        positive: true,
+      },
+      {
+        text: 'Regular gentle exfoliation helps prevent clogged pores',
+        positive: true,
+      },
+      {
+        text: 'Still requires proper hydration, not stripping',
+        positive: true,
+      },
+    ],
     Normal: [
-      { text: 'Balanced hydration levels', positive: true },
-      { text: 'Few to no breakouts', positive: true },
-      { text: 'Tolerant to most products', positive: true },
-    ],
-    Dry: [
-      { text: 'Feels tight, especially after washing', positive: false },
-      { text: 'May have flaky or rough patches', positive: false },
-      { text: 'Prone to fine lines and irritation', positive: false },
-    ],
-    Oily: [
-      { text: 'Excess shine, especially in the T-zone', positive: false },
-      { text: 'Prone to clogged pores and acne', positive: false },
-      { text: 'May need frequent cleansing', positive: false },
-    ],
-    Combination: [
-      { text: 'Oily T-zone, dry cheeks', positive: false },
-      { text: 'May experience breakouts and dry areas', positive: false },
-      { text: 'Needs targeted care for different areas', positive: false },
-    ],
-    Sensitive: [
-      { text: 'Easily irritated by products or weather', positive: false },
-      { text: 'May have redness or allergic reactions', positive: false },
-      { text: 'Requires gentle, soothing ingredients', positive: false },
+      { text: 'Well-balanced oil production', positive: true },
+      { text: 'Smooth texture with refined pores', positive: true },
+      { text: 'Few to no imperfections', positive: true },
+      { text: 'Good circulation gives a healthy glow', positive: true },
+      { text: 'Focus on maintenance and prevention', positive: true },
+      { text: 'Consistent routine helps preserve balance', positive: true },
     ],
     Concerns: {
       Acne: [
@@ -98,34 +340,176 @@ const SkinQuizPage = () => {
       ],
     },
   };
-  const handleAnswer = (answer) => {
+  const handleAnswer = (questionId, answerId, answerText) => {
+    // Update answers state for UI display
     setAnswers((prev) => ({
       ...prev,
-      [questions[currentQuestion].id]: answer,
+      [questionId]: answerText,
     }));
+
+    // Update answer history for API submission - ensure IDs are numbers
+    setAnswerHistory((prev) => {
+      const filtered = prev.filter(
+        (a) => a.QuestionId !== parseInt(questionId)
+      );
+      return [
+        ...filtered,
+        {
+          QuestionId: parseInt(questionId), // Already using the correct capitalization
+          AnswerId: parseInt(answerId), // Already using the correct capitalization
+        },
+      ];
+    });
   };
 
+  // In the nextQuestion function, add:
   const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
+    // Validate that current question has an answer
+    const currentQuestionId = apiQuestions[currentQuestion]?.id;
+    const hasAnswer = answers[currentQuestionId];
+
+    if (!hasAnswer) {
+      toast.info('Please select an answer before continuing.');
+      return;
+    }
+
+    if (currentQuestion < apiQuestions.length - 1) {
+      const customerId = localStorage.getItem('CustomerId');
+      if (customerId && !userQuizAttemptId) {
+        console.warn('Warning: No userQuizAttemptId found for logged in user');
+        toast.warning(
+          'There may be an issue with saving your quiz results. You can continue, but your history may not be saved.'
+        );
+      }
       setCurrentQuestion(currentQuestion + 1);
     } else {
+      console.log('Final answer history for submission:', answerHistory);
       setStage('result');
     }
   };
+
   const previousQuestion = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
   };
 
-  const submitQuiz = () => {
-    const result = {
-      skinType: answers[1], // Store selected skin type
-      concerns: answers[2] ? [answers[2]] : [], // Store concerns as an array
-    };
+  const submitQuiz = async () => {
+    setIsSubmitting(true);
 
-    localStorage.setItem('skincareResult', JSON.stringify(result)); // Store in localStorage
-    navigate('/skinroutine'); // Redirect to Routine Page
+    try {
+      // For guest users or if userQuizAttemptId is missing, just store results locally
+      if (!userQuizAttemptId) {
+        console.log(
+          'Guest user or missing attempt ID - saving results locally only'
+        );
+
+        // Default result data for guests
+        const skinType =
+          apiQuestions.length > 0 ? answers[apiQuestions[0]?.id] : 'Normal';
+        const skinConcern =
+          apiQuestions.length > 1 ? answers[apiQuestions[1]?.id] : null;
+
+        const result = {
+          skinType: skinType || 'Normal',
+          concerns: skinConcern ? [skinConcern] : [],
+          quizId: quizId,
+          timestamp: new Date().toISOString(),
+        };
+
+        localStorage.setItem('skincareResult', JSON.stringify(result));
+        navigate('/skinroutine');
+        return;
+      }
+
+      // For registered users, submit to API
+      const token = localStorage.getItem('token');
+      const customerId = localStorage.getItem('CustomerId');
+
+      // Debug logging
+      console.log('Submitting answers to API:', answerHistory);
+      console.log('UserQuizAttemptId:', userQuizAttemptId);
+
+      // 1. Submit answers to history endpoint
+      const historyResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/History/attempt/${userQuizAttemptId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(answerHistory),
+        }
+      );
+
+      if (!historyResponse.ok) {
+        throw new Error(
+          `Failed to submit quiz answers: ${historyResponse.status}`
+        );
+      }
+
+      console.log('Quiz answers submitted successfully!');
+
+      // 2. Get final results from Results API
+      console.log('Fetching final skin type results...');
+      const resultResponse = await fetch(
+        `http://careskinbeauty.shop:4456/api/Result`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            CustomerId: parseInt(customerId),
+            QuizId: quizId,
+            UserQuizAttemptId: userQuizAttemptId,
+          }),
+        }
+      );
+
+      if (!resultResponse.ok) {
+        throw new Error(
+          `Failed to get skin type results: ${resultResponse.status}`
+        );
+      }
+      const resultData = await resultResponse.json();
+      console.log('Result API response:', resultData);
+      setApiResultData(resultData);
+      const finalResult = {
+        skinType: resultData.SkinType?.TypeName || 'Normal',
+        skinTypeDescription: resultData.SkinType?.Description || '',
+        totalScore: resultData.TotalScore,
+        totalQuestions: resultData.TotalQuestions,
+        lastQuizTime: resultData.LastQuizTime,
+        concerns: apiQuestions.length > 1 ? [answers[apiQuestions[1]?.id]] : [],
+        quizId: quizId,
+        resultId: resultData.ResultId,
+        timestamp: new Date().toISOString(),
+      };
+
+      localStorage.setItem('skincareResult', JSON.stringify(finalResult));
+      setStage('result');
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      toast.error('Failed to submit your quiz. Please try again.');
+
+      // Still save local results as fallback if API fails
+      const fallbackResult = {
+        skinType:
+          apiQuestions.length > 0 ? answers[apiQuestions[0]?.id] : 'Normal',
+        concerns: apiQuestions.length > 1 ? [answers[apiQuestions[1]?.id]] : [],
+        quizId: quizId,
+        timestamp: new Date().toISOString(),
+        isApiError: true,
+      };
+
+      localStorage.setItem('skincareResult', JSON.stringify(fallbackResult));
+      setStage('result');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -133,10 +517,15 @@ const SkinQuizPage = () => {
       <Navbar />
       <div className="flex flex-col items-center justify-center min-h-screen bg-white  mt-10">
         {stage === 'start' && (
-          <div
+          <motion.div
+            key="start-stage"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
             className="relative w-full h-screen flex items-center justify-center text-white bg-cover bg-center"
             style={{
-              backgroundImage: "url('/src/assets/SkinQuiz/skincare.jpg')",
+              backgroundImage: `url(${quizBg})`,
             }}
           >
             {/* Enhanced Overlay with Gradient */}
@@ -225,35 +614,68 @@ const SkinQuizPage = () => {
                 transition={{ delay: 0.8, duration: 0.6 }}
               >
                 <motion.button
-                  className="px-6 py-4 text-xs md:text-base lg:text-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-full shadow-xl hover:shadow-emerald-500/20 hover:from-emerald-600 hover:to-emerald-800 transition-all"
-                  onClick={() => setStage('quiz')}
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
-                  }}
-                  whileTap={{ scale: 0.98 }}
+                  className={`px-6 py-4 text-xs md:text-base lg:text-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-full shadow-xl hover:shadow-emerald-500/20 hover:from-emerald-600 hover:to-emerald-800 transition-all relative ${isLoading ? 'opacity-90 cursor-not-allowed' : ''}`}
+                  onClick={handleStartQuiz}
+                  whileHover={
+                    isLoading
+                      ? {}
+                      : {
+                          scale: 1.05,
+                          boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
+                        }
+                  }
+                  whileTap={isLoading ? {} : { scale: 0.98 }}
+                  disabled={isLoading}
                 >
                   <span className="flex items-center gap-2">
-                    Start Your Skin Journey
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 12h14"></path>
-                      <path d="M12 5l7 7-7 7"></path>
-                    </svg>
+                    {isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Starting...
+                      </>
+                    ) : (
+                      <>
+                        Start Your Skin Journey
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 12h14"></path>
+                          <path d="M12 5l7 7-7 7"></path>
+                        </svg>
+                      </>
+                    )}
                   </span>
                 </motion.button>
               </motion.div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {stage === 'quiz' && (
@@ -267,10 +689,12 @@ const SkinQuizPage = () => {
             <div className="mb-8">
               <div className="flex justify-between items-center mb-2">
                 <p className="text-xs sm:text-sm font-medium text-emerald-600">
-                  Question {currentQuestion + 1} of {questions.length}
+                  Question {currentQuestion + 1} of {apiQuestions.length}
                 </p>
                 <p className="text-xs sm:text-sm font-medium text-gray-500">
-                  {Math.round(((currentQuestion + 1) / questions.length) * 100)}
+                  {Math.round(
+                    ((currentQuestion + 1) / apiQuestions.length) * 100
+                  )}
                   % Complete
                 </p>
               </div>
@@ -279,7 +703,7 @@ const SkinQuizPage = () => {
                   className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600"
                   initial={{ width: 0 }}
                   animate={{
-                    width: `${((currentQuestion + 1) / questions.length) * 100}%`,
+                    width: `${((currentQuestion + 1) / apiQuestions.length) * 100}%`,
                   }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 ></motion.div>
@@ -297,76 +721,95 @@ const SkinQuizPage = () => {
               </span>
             </motion.div>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-3"
-            >
-              {questions[currentQuestion].text}
-            </motion.h2>
+            {isQuestionsLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+              </div>
+            ) : (
+              <>
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-3"
+                >
+                  {apiQuestions[currentQuestion]?.text || 'Loading...'}
+                </motion.h2>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="text-sm sm:text-base text-gray-600 mb-8"
-            >
-              {questions[currentQuestion].description}
-            </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  className="text-sm sm:text-base text-gray-600 mb-8"
+                >
+                  {apiQuestions[currentQuestion]?.description || ''}
+                </motion.p>
 
-            {/* Options with improved styling */}
-            <motion.div
-              className="grid grid-cols-1 gap-4"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: { staggerChildren: 0.1 },
-                },
-              }}
-            >
-              {questions[currentQuestion].options.map((option, index) => (
-                <motion.button
-                  key={option}
-                  className={`w-full py-4 px-6 rounded-xl text-left transition duration-200 flex items-center group ${
-                    answers[questions[currentQuestion].id] === option
-                      ? 'bg-emerald-50 border-2 border-emerald-500 shadow-md'
-                      : 'border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
-                  }`}
-                  onClick={() => handleAnswer(option)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                {/* Options */}
+                <motion.div
+                  className="grid grid-cols-1 gap-4"
+                  initial="hidden"
+                  animate="visible"
                   variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: { staggerChildren: 0.1 },
+                    },
                   }}
                 >
-                  <span
-                    className={`w-6 h-6 mr-4 rounded-full flex items-center justify-center text-sm ${
-                      answers[questions[currentQuestion].id] === option
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-gray-100 text-gray-400 group-hover:bg-emerald-100 group-hover:text-emerald-500'
-                    }`}
-                  >
-                    {index + 1}
-                  </span>
-                  <div>
-                    <span
-                      className={`font-medium ${
-                        answers[questions[currentQuestion].id] === option
-                          ? 'text-emerald-700'
-                          : 'text-gray-700'
-                      }`}
-                    >
-                      {option}
-                    </span>
-                  </div>
-                </motion.button>
-              ))}
-            </motion.div>
+                  {apiQuestions[currentQuestion]?.options.map(
+                    (option, index) => (
+                      <motion.button
+                        key={option.id}
+                        className={`w-full py-4 px-6 rounded-xl text-left transition duration-200 flex items-center group ${
+                          answers[apiQuestions[currentQuestion]?.id] ===
+                          option.text
+                            ? 'bg-emerald-50 border-2 border-emerald-500 shadow-md'
+                            : 'border-2 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/50'
+                        }`}
+                        onClick={() =>
+                          handleAnswer(
+                            apiQuestions[currentQuestion].id,
+                            option.id,
+                            option.text
+                          )
+                        }
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          visible: { opacity: 1, y: 0 },
+                        }}
+                      >
+                        <span
+                          className={`w-6 h-6 mr-4 rounded-full flex items-center justify-center text-sm ${
+                            answers[apiQuestions[currentQuestion]?.id] ===
+                            option.text
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-gray-100 text-gray-400 group-hover:bg-emerald-100 group-hover:text-emerald-500'
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                        <div>
+                          <span
+                            className={`font-medium ${
+                              answers[apiQuestions[currentQuestion]?.id] ===
+                              option.text
+                                ? 'text-emerald-700'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            {option.text}
+                          </span>
+                        </div>
+                      </motion.button>
+                    )
+                  )}
+                </motion.div>
+              </>
+            )}
 
             {/* Navigation Buttons */}
             <div className="mt-10 flex justify-between items-center">
@@ -401,36 +844,74 @@ const SkinQuizPage = () => {
               {/* Next/Continue Button */}
               <motion.button
                 className={`py-3 px-8 font-semibold rounded-full shadow-md transition flex items-center gap-2 ${
-                  answers[questions[currentQuestion].id]
+                  answers[apiQuestions[currentQuestion]?.id]
                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
-                onClick={nextQuestion}
-                disabled={!answers[questions[currentQuestion].id]}
+                onClick={
+                  currentQuestion === apiQuestions.length - 1
+                    ? submitQuiz
+                    : nextQuestion
+                }
+                disabled={
+                  !answers[apiQuestions[currentQuestion]?.id] || isSubmitting
+                }
                 whileHover={
-                  answers[questions[currentQuestion].id] ? { scale: 1.05 } : {}
+                  answers[apiQuestions[currentQuestion]?.id] && !isSubmitting
+                    ? { scale: 1.05 }
+                    : {}
                 }
                 whileTap={
-                  answers[questions[currentQuestion].id] ? { scale: 0.95 } : {}
+                  answers[apiQuestions[currentQuestion]?.id] && !isSubmitting
+                    ? { scale: 0.95 }
+                    : {}
                 }
               >
-                {currentQuestion === questions.length - 1
-                  ? 'Finish'
-                  : 'Continue'}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5l7 7-7 7"></path>
-                </svg>
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : currentQuestion === apiQuestions.length - 1 ? (
+                  'Finish Quiz'
+                ) : (
+                  'Continue'
+                )}
+                {!isSubmitting && (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                  </svg>
+                )}
               </motion.button>
             </div>
           </motion.div>
@@ -442,7 +923,7 @@ const SkinQuizPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.7 }}
-            className="max-w-7xl w-full mx-auto my-16 px-4"
+            className="max-w-7xl w-full mx-auto my-14 px-4"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -450,10 +931,32 @@ const SkinQuizPage = () => {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="bg-white border border-gray-100 mt-6 rounded-3xl shadow-xl overflow-hidden"
             >
-              {/* Header Section */}
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-700 py-10 px-8 text-center text-white relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.2),transparent)]"></div>
+              {/* Enhanced Header Section with Background Pattern */}
+              <div className="bg-gradient-to-r from-emerald-500 to-emerald-700 py-12 px-8 text-center text-white relative overflow-hidden">
+                <div className="absolute inset-0 opacity-20">
+                  <svg
+                    width="100%"
+                    height="100%"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      <pattern
+                        id="smallGrid"
+                        width="20"
+                        height="20"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <path
+                          d="M 20 0 L 0 0 0 20"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="0.5"
+                        />
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#smallGrid)" />
+                  </svg>
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.3),transparent)]"></div>
                 </div>
 
                 <motion.div
@@ -461,17 +964,23 @@ const SkinQuizPage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.6 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold mb-2">
+                  <h2 className="text-3xl md:text-4xl font-bold mb-3">
                     Your Personalized Skin Analysis
                   </h2>
+                  <div className="flex justify-center items-center gap-2 mb-4">
+                    <span className="h-1 w-12 bg-emerald-200 rounded-full"></span>
+                    <span className="h-1 w-24 bg-white rounded-full"></span>
+                    <span className="h-1 w-12 bg-emerald-200 rounded-full"></span>
+                  </div>
                   <p className="text-emerald-100 max-w-2xl mx-auto">
                     Based on your responses, we've created a customized profile
-                    to help you understand your skin better.
+                    to help you understand your skin better and build the
+                    perfect routine.
                   </p>
                 </motion.div>
               </div>
 
-              {/* Content Section */}
+              {/* Content Section with Enhanced Cards */}
               <div className="p-6 md:p-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   {/* Left Column: Skin Type & Concerns */}
@@ -481,7 +990,7 @@ const SkinQuizPage = () => {
                     transition={{ delay: 0.4, duration: 0.6 }}
                     className="space-y-10"
                   >
-                    {/* Skin Type Card */}
+                    {/* Enhanced Skin Type Card */}
                     <div className="bg-emerald-50 rounded-2xl p-8 border border-emerald-100 shadow-sm">
                       <div className="flex items-center mb-6">
                         <div className="bg-emerald-200 p-3 rounded-full mr-4">
@@ -503,28 +1012,70 @@ const SkinQuizPage = () => {
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                           </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          Your Skin Type
-                        </h3>
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800">
+                            Your Skin Type
+                          </h3>
+                          <p className="text-gray-500 text-sm">
+                            The foundation of your skincare routine
+                          </p>
+                        </div>
                       </div>
                       <div className="bg-white rounded-xl p-6 shadow-sm border border-emerald-100">
-                        <div className="flex items-center">
-                          <span className="text-2xl font-bold text-emerald-600">
-                            {answers[1]}
+                        <div className="flex items-center mb-4">
+                          <span className="text-3xl font-bold text-emerald-600">
+                            {apiResultData?.SkinType?.TypeName ||
+                              answers[1] ||
+                              'Normal'}
                           </span>
-                          <span className="ml-2 bg-emerald-600 text-white text-xs py-1 px-2 rounded-full">
+                          <span className="ml-2 bg-emerald-600 text-white text-xs py-1 px-3 rounded-full">
                             Primary Type
                           </span>
                         </div>
+
                         <p className="text-gray-600 mt-4 text-sm">
-                          Your skin is classified as {answers[1]}. This means
-                          your skincare routine should focus on products that
-                          address the specific needs of this skin type.
+                          {apiResultData?.SkinType?.Description ||
+                            `Your skin is classified as ${apiResultData?.SkinType?.TypeName || answers[1] || 'Normal'}. 
+                    This means your skincare routine should focus on products that
+                    address the specific needs of this skin type.`}
                         </p>
+                        {apiResultData && (
+                          <div className="mt-5 p-4 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                            <p className="text-xs text-emerald-700 font-medium">
+                              <span className="flex items-center gap-2 mb-1">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <span>Analysis Overview</span>
+                              </span>
+                              Based on your {apiResultData.TotalQuestions}{' '}
+                              answers, your skin score is{' '}
+                              <span className="font-bold">
+                                {apiResultData.TotalScore}
+                              </span>
+                              .
+                              <span className="block mt-1">
+                                This analysis helps us create a customized
+                                routine for your{' '}
+                                {apiResultData.SkinType?.TypeName || 'unique'}{' '}
+                                type.
+                              </span>
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Concerns Card */}
+                    {/* Primary Concerns Card */}
                     <div className="bg-red-50 rounded-2xl p-8 border border-red-100 shadow-sm">
                       <div className="flex items-center mb-6">
                         <div className="bg-red-100 p-3 rounded-full mr-4">
@@ -543,36 +1094,239 @@ const SkinQuizPage = () => {
                             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                           </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          Primary Concerns
-                        </h3>
-                      </div>
-                      {answers[2] && (
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-red-100">
-                          <div className="flex items-center">
-                            <span className="text-2xl font-bold text-red-500">
-                              {answers[2]}
-                            </span>
-                          </div>
-                          <p className="text-gray-600 mt-4 text-sm">
-                            We'll focus your skincare routine on addressing{' '}
-                            {answers[2]} while also supporting your overall skin
-                            health.
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-800">
+                            Primary Concerns
+                          </h3>
+                          <p className="text-gray-500 text-sm">
+                            Key issues to address in your routine
                           </p>
                         </div>
-                      )}
+                      </div>
+                      <div className="bg-white rounded-xl p-6 shadow-sm border border-red-100">
+                        <div className="flex items-center">
+                          <span className="text-2xl font-bold text-red-500">
+                            {(() => {
+                              // Get skin type and determine primary concern
+                              const skinType =
+                                apiResultData?.SkinType?.TypeName ||
+                                'Normal Skin';
+                              if (skinType.toLowerCase().includes('dry'))
+                                return 'Dryness & Dehydration';
+                              if (skinType.toLowerCase().includes('sensitive'))
+                                return 'Sensitivity & Irritation';
+                              if (skinType.toLowerCase().includes('oily'))
+                                return 'Excess Oil & Breakouts';
+                              if (
+                                skinType.toLowerCase().includes('combination')
+                              )
+                                return 'Balancing Different Zones';
+                              return 'Maintenance & Prevention';
+                            })()}
+                          </span>
+                        </div>
+
+                        {/* Concern Progress Bars */}
+                        <div className="mt-5 space-y-3">
+                          {(() => {
+                            // Get primary concerns based on skin type
+                            const skinType =
+                              apiResultData?.SkinType?.TypeName || 'Normal';
+                            const concerns = [];
+
+                            if (skinType.toLowerCase().includes('dry')) {
+                              concerns.push({ name: 'Dryness', level: 80 });
+                              concerns.push({ name: 'Fine Lines', level: 65 });
+                              concerns.push({ name: 'Flakiness', level: 70 });
+                            } else if (
+                              skinType.toLowerCase().includes('sensitive')
+                            ) {
+                              concerns.push({ name: 'Irritation', level: 75 });
+                              concerns.push({ name: 'Redness', level: 70 });
+                              concerns.push({
+                                name: 'Reaction to Products',
+                                level: 80,
+                              });
+                            } else if (
+                              skinType.toLowerCase().includes('oily')
+                            ) {
+                              concerns.push({ name: 'Excess Oil', level: 85 });
+                              concerns.push({ name: 'Acne', level: 70 });
+                              concerns.push({ name: 'Large Pores', level: 75 });
+                            } else if (
+                              skinType.toLowerCase().includes('combination')
+                            ) {
+                              concerns.push({
+                                name: 'T-Zone Oiliness',
+                                level: 75,
+                              });
+                              concerns.push({ name: 'Dry Cheeks', level: 65 });
+                              concerns.push({
+                                name: 'Uneven Texture',
+                                level: 60,
+                              });
+                            } else {
+                              concerns.push({
+                                name: 'Environmental Protection',
+                                level: 60,
+                              });
+                              concerns.push({
+                                name: 'Aging Prevention',
+                                level: 65,
+                              });
+                              concerns.push({ name: 'Maintenance', level: 70 });
+                            }
+
+                            return concerns.map((concern, index) => (
+                              <div key={`concern-${index}`}>
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-xs font-medium text-gray-700">
+                                    {concern.name}
+                                  </span>
+                                  <span className="text-xs font-medium text-gray-500">
+                                    {concern.level}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <motion.div
+                                    className="h-2 rounded-full bg-gradient-to-r from-red-400 to-red-600"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${concern.level}%` }}
+                                    transition={{
+                                      delay: 0.5 + index * 0.2,
+                                      duration: 0.8,
+                                    }}
+                                  ></motion.div>
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+
+                        <p className="text-gray-600 mt-5 text-sm">
+                          {(() => {
+                            const skinType =
+                              apiResultData?.SkinType?.TypeName || 'Normal';
+                            if (skinType.toLowerCase().includes('dry'))
+                              return 'Your dry skin needs products that restore moisture and strengthen your skin barrier. Focus on rich moisturizers, gentle cleansing, and ingredients like hyaluronic acid and ceramides.';
+                            if (skinType.toLowerCase().includes('sensitive'))
+                              return 'Your sensitive skin requires gentle, soothing products that minimize irritation. Look for fragrance-free formulas with calming ingredients like aloe, oat extract, and avoid potential irritants.';
+                            if (skinType.toLowerCase().includes('oily'))
+                              return 'Your oily skin needs oil control without over-drying. Focus on non-comedogenic products, gentle exfoliation, and lightweight hydration to maintain balance without clogging pores.';
+                            if (skinType.toLowerCase().includes('combination'))
+                              return 'Your combination skin needs a balanced approach - controlling oil in the T-zone while providing hydration to drier areas. Multi-masking and targeted treatments will help address different zones.';
+                            return "Your balanced skin is in good condition! Focus on maintenance with consistent cleansing, hydration, and protection to preserve your skin's natural balance and prevent future concerns.";
+                          })()}
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
 
-                  {/* Right Column: Skin Characteristics */}
+                  {/* Right Column: Skin Characteristics & Routine Blueprint */}
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
+                    className="mb-1"
                   >
-                    <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm h-full">
+                    <div className="space-y-10 ">
+                      {/* Skin Characteristics Card */}
+                      <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm">
+                        <div className="flex items-center mb-6">
+                          <div className="bg-gray-200 p-3 rounded-full mr-4">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-gray-700"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-800">
+                              Skin Characteristics
+                            </h3>
+                            <p className="text-gray-500 text-sm">
+                              Understanding your skin's unique traits
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                          <h4 className="font-semibold text-gray-700 mb-4 pb-2 border-b flex items-center">
+                            <svg
+                              className="w-5 h-5 mr-2 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                              ></path>
+                            </svg>
+                            Key Traits & Recommendations
+                          </h4>
+                          <ul className="space-y-4">
+                            {/* Skin Type Characteristics */}
+                            {(() => {
+                              // Get the skin type directly from API result
+                              const skinType =
+                                apiResultData?.SkinType?.TypeName ||
+                                (apiQuestions.length > 0
+                                  ? answers[apiQuestions[0]?.id]
+                                  : null) ||
+                                'Normal Skin';
+
+                              // Get traits for this skin type
+                              const skinTypeTraits =
+                                skinCharacteristicsMapping[skinType] ||
+                                skinCharacteristicsMapping['Normal Skin'];
+
+                              return skinTypeTraits.map((char, index) => (
+                                <motion.li
+                                  key={`skin-${index}`}
+                                  className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.6 + index * 0.1 }}
+                                >
+                                  <span className="text-lg mt-0.5">
+                                    {char.positive ? (
+                                      <span className="text-emerald-500">
+                                        ✓
+                                      </span>
+                                    ) : (
+                                      <span className="text-amber-500">⚠️</span>
+                                    )}
+                                  </span>
+                                  <span className="text-gray-700">
+                                    {char.text}
+                                  </span>
+                                </motion.li>
+                              ));
+                            })()}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 rounded-2xl p-4 border border-blue-100 mt-4 shadow-sm">
                       <div className="flex items-center mb-6">
-                        <div className="bg-gray-200 p-3 rounded-full mr-4">
+                        <div className="bg-blue-200 p-2 rounded-full mr-4">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -583,72 +1337,49 @@ const SkinQuizPage = () => {
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="text-gray-700"
+                            className="text-blue-700"
                           >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path>
                           </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          Skin Characteristics
-                        </h3>
+                        <div>
+                          <h3 className="text-2xl font-bold text-blue-800">
+                            Verified by Dermatologists
+                          </h3>
+                          <p className="text-blue-500 text-sm">
+                            Our program is reviewed and approved by certified
+                            dermatologists.
+                          </p>
+                        </div>
                       </div>
 
-                      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                        <h4 className="font-semibold text-gray-700 mb-4 pb-2 border-b">
-                          Key Traits & Recommendations
+                      <div className="bg-white rounded-xl p-4 mt-1 shadow-sm border border-blue-200">
+                        <h4 className="font-semibold text-blue-700 mb-4 pb-2 border-b flex items-center">
+                          <svg
+                            className="w-5 h-5 mr-2 text-blue-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 8V12H16M12 8L8 12L12 16M12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8Z"
+                            ></path>
+                          </svg>
+                          Testimonials from Experts
                         </h4>
-                        <ul className="space-y-4">
-                          {skinCharacteristicsMapping[answers[1]]?.map(
-                            (char, index) => (
-                              <motion.li
-                                key={`skin-${index}`}
-                                className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.6 + index * 0.1 }}
-                              >
-                                <span className="text-lg mt-0.5">
-                                  {char.positive ? (
-                                    <span className="text-emerald-500">✓</span>
-                                  ) : (
-                                    <span className="text-amber-500">⚠️</span>
-                                  )}
-                                </span>
-                                <span className="text-gray-700">
-                                  {char.text}
-                                </span>
-                              </motion.li>
-                            )
-                          )}
-
-                          {answers[2] &&
-                            skinCharacteristicsMapping.Concerns[
-                              answers[2]
-                            ]?.map((char, index) => (
-                              <motion.li
-                                key={`concern-${index}`}
-                                className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.9 + index * 0.1 }}
-                              >
-                                <span className="text-lg mt-0.5">
-                                  {char.positive ? (
-                                    <span className="text-emerald-500">✓</span>
-                                  ) : (
-                                    <span className="text-amber-500">⚠️</span>
-                                  )}
-                                </span>
-                                <span className="text-gray-700">
-                                  {char.text}
-                                </span>
-                              </motion.li>
-                            ))}
-                        </ul>
+                        <p className="text-blue-700">
+                          <strong>Dr. Jane Doe, MD</strong>
+                          <br />
+                          <em>
+                            "I have reviewed this program and can confirm that
+                            the skin care advice provided is in line with
+                            current dermatological standards."
+                          </em>
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -669,10 +1400,9 @@ const SkinQuizPage = () => {
                     skin profile. Discover the perfect products and steps to
                     achieve your best skin!
                   </p>
-
                   <motion.button
                     className="py-4 px-8 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-full shadow-lg hover:shadow-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all"
-                    onClick={submitQuiz}
+                    onClick={() => navigate('/skinroutine')}
                     whileHover={{
                       scale: 1.05,
                       boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)',
