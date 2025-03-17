@@ -10,7 +10,7 @@ const queryClient = new QueryClient();
 
 
 createRoot(document.getElementById('root')).render(
-  <GoogleOAuthProvider clientId="88963733513-s5g6dv8172pphdd1daa1150ern9l356o.apps.googleusercontent.com">
+  <GoogleOAuthProvider clientId="import.meta.env.VITE_GOOGLE_CLIENT_ID">
     <QueryClientProvider client={queryClient}>
     <App />
     </QueryClientProvider>
