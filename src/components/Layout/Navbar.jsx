@@ -11,8 +11,6 @@ import {
   faBars,
   faTimes,
   faTrash,
-  faChevronRight,
-  faSearch,
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
@@ -412,14 +410,6 @@ function Navbar() {
           {/* Right Side Icons - Enhanced */}
           <div className="lg:flex md:flex space-x-5 items-center">
             <div className="lg:flex md:flex hidden space-x-6 items-center">
-              {/* Search Icon - New */}
-              <button className="text-gray-700 hover:text-emerald-600 transition-colors">
-                <FontAwesomeIcon
-                  icon={faSearch}
-                  className="text-xl hover:scale-110 transition-transform"
-                />
-              </button>
-
               {/* Profile Icon */}
               <button onClick={handleProfileClick} className="relative group">
                 <FontAwesomeIcon
