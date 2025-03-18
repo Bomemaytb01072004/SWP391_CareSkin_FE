@@ -16,6 +16,101 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const SkinRoutinePage = () => {
   const navigate = useNavigate();
+  // Update the getSkinTypeTips function to use includes() instead of strict equality
+  const getSkinTypeTips = (skinType) => {
+    // Default tips if skin type is not recognized
+    let dailyHabits = [
+      'Stay hydrated by drinking plenty of water throughout the day',
+      'Always remove makeup before bed',
+      'Apply SPF daily, even when indoors',
+    ];
+
+    let thingsToAvoid = [
+      'Harsh soaps that strip natural oils',
+      'Over-exfoliating which can damage your skin barrier',
+      'Products with artificial fragrances that may cause irritation',
+    ];
+
+    // Ensure skinType is a valid string
+    if (typeof skinType === 'string' && skinType.trim().length > 0) {
+      const skinTypeLower = skinType.trim().toLowerCase();
+
+      // Use includes() instead of === for more flexible matching
+      if (skinTypeLower.includes('dry')) {
+        dailyHabits = [
+          'Use a humidifier to add moisture to the air',
+          'Apply moisturizer to damp skin right after bathing',
+          'Choose cream-based cleansers and avoid products with alcohol',
+          'Drink plenty of water to hydrate from within',
+        ];
+        thingsToAvoid = [
+          'Hot water when washing your face or showering',
+          'Harsh, soap-based cleansers that strip natural oils',
+          'Alcohol-based toners and products',
+          'Prolonged exposure to dry, cold weather without protection',
+        ];
+      } else if (skinTypeLower.includes('oily')) {
+        dailyHabits = [
+          'Wash your face twice daily with a gentle foaming cleanser',
+          'Use oil-free, non-comedogenic products',
+          'Apply a lightweight, oil-free moisturizer daily',
+          'Use blotting papers to remove excess oil during the day',
+        ];
+        thingsToAvoid = [
+          'Over-washing your face (can stimulate more oil production)',
+          'Heavy, oil-based products that may clog pores',
+          'Touching your face throughout the day',
+          "Skipping moisturizer (it's still essential!)",
+        ];
+      } else if (skinTypeLower.includes('combination')) {
+        dailyHabits = [
+          'Use different products for different areas of your face',
+          'Focus hydrating products on dry areas and oil-control on T-zone',
+          'Consider multi-masking for targeted treatment',
+          "Balance your skincare with ingredients that won't over-dry or over-moisturize",
+        ];
+        thingsToAvoid = [
+          "One-size-fits-all products that don't address both concerns",
+          'Very harsh products that might overly dry the already dry areas',
+          'Very rich products that might make oily areas worse',
+          'Inconsistent skincare routines',
+        ];
+      } else if (skinTypeLower.includes('sensitive')) {
+        dailyHabits = [
+          'Patch test new products before applying to your entire face',
+          'Use fragrance-free, hypoallergenic skincare products',
+          'Apply soothing ingredients like aloe vera or chamomile',
+          'Wear broad-spectrum sunscreen to prevent irritation from UV rays',
+        ];
+        thingsToAvoid = [
+          'Products containing fragrances, alcohol, and harsh chemicals',
+          'Physical exfoliants that may be too abrasive',
+          'Extremely hot water when washing your face',
+          'Trying too many new products at once',
+        ];
+      } else if (skinTypeLower.includes('normal')) {
+        dailyHabits = [
+          'Maintain your balanced skin with consistent skincare',
+          'Focus on protection and prevention with antioxidants',
+          'Use sunscreen daily to prevent premature aging',
+          'Stay hydrated and maintain a healthy diet',
+        ];
+        thingsToAvoid = [
+          "Harsh products that might disrupt your skin's natural balance",
+          'Neglecting your skincare routine just because your skin seems resilient',
+          'Forgetting to adjust your skincare with seasonal changes',
+          'Using potentially irritating ingredients unnecessarily',
+        ];
+      }
+
+      // Add debugging to see what skinType is coming in
+      console.log(
+        `Skin type received: "${skinType}", processed as: "${skinTypeLower}"`
+      );
+    }
+
+    return { dailyHabits, thingsToAvoid };
+  };
   const [routineData, setRoutineData] = useState(null);
   const [skinTypeInfo, setSkinTypeInfo] = useState(null);
   const [addedToCart, setAddedToCart] = useState([]);
@@ -236,6 +331,29 @@ const SkinRoutinePage = () => {
     return '✨'; // Default emoji
   };
 
+  // Update getStepEmoji function to display actual product images
+  const getRandomProduct = (step) => {
+    // If there are real products available, pick one randomly
+    if (
+      step.RoutineProducts &&
+      step.RoutineProducts.length > 0 &&
+      step.RoutineProducts[0].Product
+    ) {
+      const validProducts = step.RoutineProducts.filter(
+        (rp) => rp.Product && rp.Product.PictureUrl
+      );
+
+      if (validProducts.length > 0) {
+        // Pick a random product from valid ones
+        const randomIndex = Math.floor(Math.random() * validProducts.length);
+        return validProducts[randomIndex].Product;
+      }
+    }
+
+    // Return null if no valid products are available
+    return null;
+  };
+
   return (
     <>
       <Navbar />
@@ -357,66 +475,113 @@ const SkinRoutinePage = () => {
                   </div>
                 </div>
               </motion.div>
+              {/* Morning Routine Steps - Enhanced UI */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {morningRoutine.RoutineStepDTOs.map((step, stepIndex) => {
+                  const randomProduct = getRandomProduct(step);
 
-              {/* Morning Routine Steps */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {morningRoutine.RoutineStepDTOs.map((step, stepIndex) => (
-                  <motion.div
-                    key={`morning-step-${step.RoutineStepId || stepIndex}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + stepIndex * 0.1, duration: 0.5 }}
-                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-gray-100"
-                  >
-                    <div className="relative bg-yellow-50 h-32 flex items-center justify-center">
-                      <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-yellow-500 text-white flex items-center justify-center font-bold shadow-md">
-                        {step.StepOrder || stepIndex + 1}
-                      </div>
-                      <div className="text-4xl">
-                        {getStepEmoji(step.StepName)}
-                      </div>
-                    </div>
+                  return (
+                    <motion.div
+                      key={`morning-step-${step.RoutineStepId || stepIndex}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        delay: 0.4 + stepIndex * 0.1,
+                        duration: 0.5,
+                      }}
+                      className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-gray-100 flex flex-col h-full group"
+                    >
+                      <div className="relative">
+                        <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-yellow-500 text-white flex items-center justify-center font-bold shadow-md z-10">
+                          {step.StepOrder || stepIndex + 1}
+                        </div>
 
-                    <div className="p-5">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                        {step.StepName}
-                      </h4>
-                      <p className="text-gray-600 mb-4">
-                        {step.Description ||
-                          'Essential step in your skincare routine'}
-                      </p>
-
-                      {step.RoutineProducts.length > 0 &&
-                        step.RoutineProducts[0].Product && (
-                          <div className="mt-4 pt-4 border-t border-gray-100">
-                            <p className="text-sm text-gray-500 mb-2">
-                              Recommended products:
-                            </p>
-                            {step.RoutineProducts.map(
-                              (routineProduct, productIndex) => {
-                                const product = routineProduct.Product;
-                                return (
-                                  <div
-                                    key={`product-${product.ProductId || productIndex}`}
-                                    className="flex justify-between items-center mt-2"
-                                  >
-                                    <span className="font-medium">
-                                      {product.ProductName}
-                                    </span>
-                                    {product.Price && (
-                                      <span className="text-emerald-700 font-bold">
-                                        ${product.Price.toFixed(2)}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              }
-                            )}
+                        {/* Enhanced image container */}
+                        {randomProduct && randomProduct.PictureUrl ? (
+                          <div className="overflow-hidden">
+                            <img
+                              src={randomProduct.PictureUrl}
+                              alt={randomProduct.ProductName}
+                              className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </div>
+                        ) : (
+                          <div className="bg-yellow-50 h-60 flex items-center justify-center">
+                            <div className="text-5xl">
+                              {getStepEmoji(step.StepName)}
+                            </div>
                           </div>
                         )}
-                    </div>
-                  </motion.div>
-                ))}
+                      </div>
+
+                      <div className="p-5 flex-grow flex flex-col">
+                        <h4 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">
+                          {randomProduct.ProductName}
+                        </h4>
+                        <p className="text-gray-600 mb-4 flex-grow line-clamp-3">
+                          {step.Description ||
+                            'Essential step in your skincare routine'}
+                        </p>
+
+                        {randomProduct ? (
+                          <div className="mt-auto pt-4 border-t border-gray-100">
+                            <div className="flex justify-between items-center mb-3">
+                              <h5 className="font-medium text-sm text-gray-800 line-clamp-1 mr-2">
+                                {step.StepName}
+                              </h5>
+
+                              {/* Display price based on available data structure */}
+                              {randomProduct.Variations &&
+                              randomProduct.Variations.length > 0 ? (
+                                <span className="text-emerald-700 font-bold whitespace-nowrap">
+                                  $
+                                  {randomProduct.Variations[0].Price.toFixed(2)}
+                                </span>
+                              ) : randomProduct.Price ? (
+                                <span className="text-emerald-700 font-bold whitespace-nowrap">
+                                  ${randomProduct.Price.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500 text-sm whitespace-nowrap">
+                                  Price unavailable
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Add to Cart Button - Enhanced */}
+                            <button
+                              onClick={() => addToCart(randomProduct)}
+                              className={`mt-1 w-full py-2.5 rounded-lg transition-all flex items-center justify-center ${
+                                addedToCart.includes(randomProduct.ProductName)
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                              } transform hover:translate-y-[-2px] duration-200`}
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  addedToCart.includes(
+                                    randomProduct.ProductName
+                                  )
+                                    ? faCheck
+                                    : faCartPlus
+                                }
+                                className="mr-2"
+                              />
+                              {addedToCart.includes(randomProduct.ProductName)
+                                ? 'Added!'
+                                : 'Add to Cart'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-auto pt-4 border-t border-gray-100 text-center text-gray-500 text-sm">
+                            No products available for this step
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -448,71 +613,113 @@ const SkinRoutinePage = () => {
                 </div>
               </motion.div>
 
-              {/* Evening Routine Steps - Updated to match morning routine structure */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {eveningRoutine.RoutineStepDTOs.map((step, stepIndex) => (
-                  <motion.div
-                    key={`evening-step-${step.RoutineStepId || stepIndex}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + stepIndex * 0.1, duration: 0.5 }}
-                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all border border-gray-100"
-                  >
-                    <div className="relative bg-indigo-50 h-32 flex items-center justify-center">
-                      <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md">
-                        {step.StepOrder || stepIndex + 1}
-                      </div>
-                      <div className="text-4xl">
-                        {getStepEmoji(step.StepName)}
-                      </div>
-                    </div>
+              {/* Evening Routine Steps - Enhanced UI */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {eveningRoutine.RoutineStepDTOs.map((step, stepIndex) => {
+                  const randomProduct = getRandomProduct(step);
 
-                    <div className="p-5">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                        {step.StepName}
-                      </h4>
-                      <p className="text-gray-600 mb-4">
-                        {step.Description ||
-                          'Essential step in your evening skincare routine'}
-                      </p>
+                  return (
+                    <motion.div
+                      key={`evening-step-${step.RoutineStepId || stepIndex}`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        delay: 0.7 + stepIndex * 0.1,
+                        duration: 0.5,
+                      }}
+                      className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all border border-gray-100 flex flex-col h-full group"
+                    >
+                      <div className="relative">
+                        <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md z-10">
+                          {step.StepOrder || stepIndex + 1}
+                        </div>
 
-                      {step.RoutineProducts.length > 0 &&
-                        step.RoutineProducts[0].Product && (
-                          <div className="mt-4 pt-4 border-t border-gray-100">
-                            <p className="text-sm text-gray-500 mb-2">
-                              Recommended products:
-                            </p>
-                            {step.RoutineProducts.map(
-                              (routineProduct, productIndex) => {
-                                const product = routineProduct.Product;
-                                return (
-                                  <div
-                                    key={`evening-product-${product.ProductId || productIndex}`}
-                                    className="flex justify-between items-center mt-2"
-                                  >
-                                    <span className="font-medium">
-                                      {product.ProductName}
-                                    </span>
-                                    {product.Variations &&
-                                    product.Variations.length > 0 ? (
-                                      <span className="text-indigo-700 font-bold">
-                                        $
-                                        {product.Variations[0].Price.toFixed(2)}
-                                      </span>
-                                    ) : (
-                                      <span className="text-indigo-700 font-bold">
-                                        N/A
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              }
-                            )}
+                        {/* Enhanced image container */}
+                        {randomProduct && randomProduct.PictureUrl ? (
+                          <div className="overflow-hidden">
+                            <img
+                              src={randomProduct.PictureUrl}
+                              alt={randomProduct.ProductName}
+                              className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </div>
+                        ) : (
+                          <div className="bg-indigo-50 h-60 flex items-center justify-center">
+                            <div className="text-5xl">
+                              {getStepEmoji(step.StepName)}
+                            </div>
                           </div>
                         )}
-                    </div>
-                  </motion.div>
-                ))}
+                      </div>
+
+                      <div className="p-5 flex-grow flex flex-col">
+                        <h4 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">
+                          {randomProduct.ProductName}
+                        </h4>
+                        <p className="text-gray-600 mb-4 flex-grow line-clamp-3">
+                          {step.Description ||
+                            'Essential step in your evening skincare routine'}
+                        </p>
+
+                        {randomProduct ? (
+                          <div className="mt-auto pt-4 border-t border-gray-100">
+                            <div className="flex justify-between items-center mb-3">
+                              <h5 className="font-medium text-sm text-gray-800 line-clamp-1 mr-2">
+                                {step.StepName}
+                              </h5>
+
+                              {/* Display price based on available data structure */}
+                              {randomProduct.Variations &&
+                              randomProduct.Variations.length > 0 ? (
+                                <span className="text-indigo-700 font-bold whitespace-nowrap">
+                                  $
+                                  {randomProduct.Variations[0].Price.toFixed(2)}
+                                </span>
+                              ) : randomProduct.Price ? (
+                                <span className="text-indigo-700 font-bold whitespace-nowrap">
+                                  ${randomProduct.Price.toFixed(2)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500 text-sm whitespace-nowrap">
+                                  Price unavailable
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Add to Cart Button - Enhanced */}
+                            <button
+                              onClick={() => addToCart(randomProduct)}
+                              className={`mt-1 w-full py-2.5 rounded-lg transition-all flex items-center justify-center ${
+                                addedToCart.includes(randomProduct.ProductName)
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                              } transform hover:translate-y-[-2px] duration-200`}
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  addedToCart.includes(
+                                    randomProduct.ProductName
+                                  )
+                                    ? faCheck
+                                    : faCartPlus
+                                }
+                                className="mr-2"
+                              />
+                              {addedToCart.includes(randomProduct.ProductName)
+                                ? 'Added!'
+                                : 'Add to Cart'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-auto pt-4 border-t border-gray-100 text-center text-gray-500 text-sm">
+                            No products available for this step
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -587,7 +794,7 @@ const SkinRoutinePage = () => {
             </div>
           )}
 
-        {/* Tips Section */}
+        {/* Tips Section with better debugging */}
         <div className="w-full py-12 bg-gradient-to-b from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <motion.div
@@ -602,61 +809,56 @@ const SkinRoutinePage = () => {
                   {skinTypeInfo?.SkinTypeName || 'Your'} Skin
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-yellow-50 rounded-xl p-5 border border-yellow-100">
-                    <h4 className="font-semibold text-yellow-800 mb-2">
-                      Daily Habits
-                    </h4>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-yellow-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Stay hydrated by drinking plenty of water throughout
-                          the day
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-yellow-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Always remove makeup before bed
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-yellow-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Apply SPF daily, even when indoors
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
+                {/* Ensure SkinTypeName is formatted properly with debugging */}
+                {(() => {
+                  const skinType = skinTypeInfo?.SkinTypeName || '';
+                  console.log('Tips section - skin type:', skinType);
 
-                  <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
-                    <h4 className="font-semibold text-emerald-800 mb-2">
-                      Things to Avoid
-                    </h4>
-                    <ul className="space-y-2">
-                      <li className="flex items-start">
-                        <span className="text-emerald-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Harsh soaps that strip natural oils
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-emerald-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Over-exfoliating which can damage your skin barrier
-                        </span>
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-emerald-500 mr-2">•</span>
-                        <span className="text-gray-700 text-sm">
-                          Products with artificial fragrances that may cause
-                          irritation
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
+                  const { dailyHabits, thingsToAvoid } =
+                    getSkinTypeTips(skinType);
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-yellow-50 rounded-xl p-5 border border-yellow-100">
+                        <h4 className="font-semibold text-yellow-800 mb-2">
+                          Daily Habits
+                        </h4>
+                        <ul className="space-y-2">
+                          {dailyHabits.map((habit, index) => (
+                            <li
+                              key={`habit-${index}`}
+                              className="flex items-start"
+                            >
+                              <span className="text-yellow-500 mr-2">•</span>
+                              <span className="text-gray-700 text-sm">
+                                {habit}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                        <h4 className="font-semibold text-emerald-800 mb-2">
+                          Things to Avoid
+                        </h4>
+                        <ul className="space-y-2">
+                          {thingsToAvoid.map((item, index) => (
+                            <li
+                              key={`avoid-${index}`}
+                              className="flex items-start"
+                            >
+                              <span className="text-emerald-500 mr-2">•</span>
+                              <span className="text-gray-700 text-sm">
+                                {item}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </div>

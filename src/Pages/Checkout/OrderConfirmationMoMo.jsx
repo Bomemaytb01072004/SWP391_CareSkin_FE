@@ -83,37 +83,37 @@ const OrderConfirmationMoMo = () => {
     );
   }
 
-//   if (!isValidRequest) {
-//     return (
-//       <>
-//         <Navbar />
-//         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4">
-//           <div className="w-full max-w-4xl mx-auto px-6 py-14 bg-white shadow-xl rounded-2xl border border-red-100">
-//             <div className="flex flex-col items-center">
-//               <FontAwesomeIcon
-//                 icon={faLock}
-//                 className="text-6xl text-red-500"
-//               />
-//               <h2 className="text-3xl font-bold text-red-800 mt-6 mb-2">
-//                 Invalid Payment Request
-//               </h2>
-//               <p className="text-gray-600 mt-3 max-w-lg text-center">
-//                 We've detected an invalid payment request. This has been logged
-//                 for security purposes.
-//               </p>
-//               <Link
-//                 to="/"
-//                 className="px-8 py-4 bg-gray-700 text-white font-semibold rounded-lg mt-6"
-//               >
-//                 Back to Home
-//               </Link>
-//             </div>
-//           </div>
-//         </div>
-//         <Footer />
-//       </>
-//     );
-//   }
+  //   if (!isValidRequest) {
+  //     return (
+  //       <>
+  //         <Navbar />
+  //         <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4">
+  //           <div className="w-full max-w-4xl mx-auto px-6 py-14 bg-white shadow-xl rounded-2xl border border-red-100">
+  //             <div className="flex flex-col items-center">
+  //               <FontAwesomeIcon
+  //                 icon={faLock}
+  //                 className="text-6xl text-red-500"
+  //               />
+  //               <h2 className="text-3xl font-bold text-red-800 mt-6 mb-2">
+  //                 Invalid Payment Request
+  //               </h2>
+  //               <p className="text-gray-600 mt-3 max-w-lg text-center">
+  //                 We've detected an invalid payment request. This has been logged
+  //                 for security purposes.
+  //               </p>
+  //               <Link
+  //                 to="/"
+  //                 className="px-8 py-4 bg-gray-700 text-white font-semibold rounded-lg mt-6"
+  //               >
+  //                 Back to Home
+  //               </Link>
+  //             </div>
+  //           </div>
+  //         </div>
+  //         <Footer />
+  //       </>
+  //     );
+  //   }
 
   return (
     <>
