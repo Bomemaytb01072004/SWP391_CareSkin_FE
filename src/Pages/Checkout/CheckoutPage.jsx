@@ -82,7 +82,9 @@ const CheckoutPage = () => {
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Full name is required'),
-      email: Yup.string().email('Invalid email format'),
+      email: Yup.string()
+        .required('Email is required')
+        .email('Invalid email format'),
       phone: Yup.string()
         .matches(/^\d{10,15}$/, 'Phone number must be 10-15 digits')
         .required('Phone number is required'),
@@ -93,8 +95,10 @@ const CheckoutPage = () => {
     onSubmit: (values) => {
       if (values.paymentMethod === 'cod') {
         handleCODCheckout(values);
-      } else {
+      } else if (values.paymentMethod === 'vnpay') {
         handleOnlinePayment(values);
+      } else if (values.paymentMethod === 'momo') {
+        handleMoMoPayment(values);
       }
     },
   });
@@ -122,9 +126,10 @@ const CheckoutPage = () => {
       CustomerId,
       OrderStatusId: 1, // Assuming 1 = "Pending"
       PromotionId, // Apply selected promotion or default to 1
-      Name: values.name, // FIX: Use Formik values
-      Phone: values.phone, // FIX: Use Formik values
-      Address: values.address, // FIX: Use Formik values
+      Name: values.name,
+      Phone: values.phone,
+      Email: values.email, // Include email in the payload
+      Address: values.address,
       SelectedCartItemIds: selectedCartItemIds,
     };
 
@@ -194,6 +199,7 @@ const CheckoutPage = () => {
       PromotionId,
       Name: values.name,
       Phone: values.phone,
+      Email: values.email, // Include email in the payload
       Address: values.address,
       SelectedCartItemIds: selectedCartItemIds,
     };
@@ -258,6 +264,93 @@ const CheckoutPage = () => {
       } else {
         console.error('❌ Invalid payment response:', paymentData);
         alert('Failed to generate VNPay payment URL.');
+      }
+    } catch (error) {
+      console.error('❌ Payment API Error:', error);
+      alert('An error occurred while processing the order.');
+    }
+  };
+
+  const handleMoMoPayment = async (values) => {
+    const CustomerId = localStorage.getItem('CustomerId')
+      ? parseInt(localStorage.getItem('CustomerId'))
+      : null;
+
+    const selectedCartItemIds = selectedItems
+      .map((item) => item.CartId)
+      .filter((id) => id !== null && id !== undefined);
+
+    if (selectedCartItemIds.length === 0) {
+      alert('No valid items selected for checkout.');
+      return;
+    }
+
+    const PromotionId = values.promotionId ? parseInt(values.promotionId) : 1;
+
+    const orderPayload = {
+      CustomerId,
+      OrderStatusId: 1, // Assuming 1 = "Pending"
+      PromotionId,
+      Name: values.name,
+      Phone: values.phone,
+      Email: values.email,
+      Address: values.address,
+      SelectedCartItemIds: selectedCartItemIds,
+    };
+
+    try {
+      // Step 1: Place Order and fetch OrderId
+      const orderResponse = await fetch(
+        'http://careskinbeauty.shop:4456/api/Order',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
+
+      if (!orderResponse.ok) {
+        const errorMessage = await orderResponse.text();
+        console.error('⚠️ Order Response:', errorMessage);
+        alert(`Failed to place order: ${errorMessage}`);
+        return;
+      }
+
+      const orderData = await orderResponse.json();
+      const OrderId = orderData.OrderId;
+
+      console.log('✅ Order Placed Successfully:', orderData);
+
+      // Step 2: Get MoMo Payment URL using the fetched OrderId
+      const paymentPayload = {
+        OrderId,
+        Amount: Math.round(totalOrder * 24000), // Convert to VND smallest unit and ensure it's an integer
+      };
+
+      console.log('🔹 Sending MoMo Payment Payload:', paymentPayload);
+
+      const paymentResponse = await fetch(
+        'http://careskinbeauty.shop:4456/api/momo/create-payment',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(paymentPayload),
+        }
+      );
+
+      const paymentData = await paymentResponse.json();
+
+      if (paymentResponse.ok && paymentData.payUrl) {
+        console.log('✅ Redirecting to MoMo:', paymentData.payUrl);
+        window.location.href = paymentData.payUrl; // Redirect user to MoMo
+      } else {
+        console.error('❌ Invalid payment response:', paymentData);
+        alert(paymentData.message || 'Failed to generate MoMo payment URL.');
       }
     } catch (error) {
       console.error('❌ Payment API Error:', error);
@@ -355,10 +448,7 @@ const CheckoutPage = () => {
                 {/* Email Field */}
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-2">
-                    Email{' '}
-                    <span className="text-gray-500 font-normal">
-                      (optional)
-                    </span>
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -401,9 +491,9 @@ const CheckoutPage = () => {
                   <textarea
                     name="address"
                     {...formik.getFieldProps('address')}
-                    className="w-full border border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-emerald-300 focus:border-emerald-500 outline-none transition-all"
                     placeholder="Enter your full shipping address"
-                    rows="3"
+                    rows="2"
                   ></textarea>
                   {formik.touched.address && formik.errors.address && (
                     <p className="text-red-500 text-sm mt-1">
@@ -492,6 +582,29 @@ const CheckoutPage = () => {
                         <div className="font-medium text-gray-800">VNPay</div>
                         <div className="text-xs text-gray-500">
                           Bank transfer
+                        </div>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`border rounded-lg p-4 flex items-center cursor-pointer ${
+                        formik.values.paymentMethod === 'momo'
+                          ? 'border-emerald-500 bg-emerald-50'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="momo"
+                        checked={formik.values.paymentMethod === 'momo'}
+                        onChange={formik.handleChange}
+                        className="form-radio h-5 w-5 text-emerald-600"
+                      />
+                      <div className="ml-3">
+                        <div className="font-medium text-gray-800">MoMo</div>
+                        <div className="text-xs text-gray-500">
+                          Pay via MoMo wallet
                         </div>
                       </div>
                     </label>
