@@ -20,17 +20,5 @@ textarea {
   display: none;  /* Chrome, Safari and Opera */
 }
 
-.my-facebook-btn {
-  background-color: #4267B2; /* Xanh Facebook */
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  /* Tuỳ chỉnh thêm */
-}
-
-.my-facebook-btn:hover {
-  background-color: #365899;
-}
 
 

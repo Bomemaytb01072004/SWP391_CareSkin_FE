@@ -74,7 +74,6 @@ const Sidebar = () => {
 										onClick={() => setIsProductsOpen(!isProductsOpen)}
 										className='flex items-center justify-between p-4 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2 cursor-pointer'
 									>
-										{/* Bên trái: icon và tên mục */}
 										<div className='flex items-center'>
 											<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 											<AnimatePresence>

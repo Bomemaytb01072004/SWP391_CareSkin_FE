@@ -13,7 +13,7 @@ function EditProductModal({
     previewUrlEdit,
     setPreviewUrlEdit,
     previewUrlAdditionalImagesEditState,
-    setPreviewUrlAdditionalImagesEdit,
+    setPreviewUrlAdditionalImagesEditState,
     handleRemoveExistingAdditionalImage,
     handleAdditionalImagesChangeEdit,
     handleEdit,
@@ -29,6 +29,21 @@ function EditProductModal({
 }) {
     if (!editProductState) return null;
 
+    // const handleAdditionalImagesChangeEdit = (e) => {
+    //     if (!e.target.files) return;
+    //     const files = Array.from(e.target.files);
+    
+    //     const newPreviews = files.map((file) => URL.createObjectURL(file));
+    //     setPreviewUrlAdditionalImagesEditState((prev) => [...prev, ...newPreviews]);
+    
+    //     const validFiles = files.filter((file) => file.size > 0);
+    //     if (validFiles.length > 0) {
+    //       setEditProduct((prev) => ({
+    //         ...prev,
+    //         AdditionalPicturesFile: [...(prev.AdditionalPicturesFile || []), ...validFiles],
+    //       }));
+    //     }
+    //   };
     
 
     return (
@@ -189,18 +204,13 @@ function EditProductModal({
                                             key={index}
                                             className="relative w-40 h-40 border border-gray-300 rounded overflow-hidden"
                                         >
-                                            <Link
-                                                to={url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-block w-40 h-40"
-                                            >
+                                            <div className="inline-block w-40 h-40">
                                                 <img
                                                     src={url}
                                                     alt={`Additional ${index}`}
                                                     className="w-full h-full object-cover"
                                                 />
-                                            </Link>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveExistingAdditionalImage(index)}

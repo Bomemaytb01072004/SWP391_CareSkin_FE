@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 
 import CreateProductModal from './CreateProductModal';
 import EditProductModal from './EditProductModal';
-import CreateBrandModal from './CreateBrandModal';
 
 import {
   createProduct,
@@ -36,7 +35,7 @@ const ProductsTable = ({ products, refetchProducts }) => {
 
   const [editProductState, setEditProduct] = useState(null);
   const [previewUrlEdit, setPreviewUrlEdit] = useState(null);
-  const [previewUrlAdditionalImagesEditState, setPreviewUrlAdditionalImagesEdit] = useState([]);
+  const [previewUrlAdditionalImagesEditState, setPreviewUrlAdditionalImagesEditState] = useState([]);
 
   const [brandList, setBrandList] = useState([]);
   const [brandNameInput, setBrandNameInput] = useState('');
@@ -106,11 +105,19 @@ const ProductsTable = ({ products, refetchProducts }) => {
   useEffect(() => {
     if (!isEditModalOpen || !editProductState) return;
 
+    // Clear previous previews when opening the modal
+    setPreviewUrlAdditionalImagesEditState([]);
+    
+    // Add existing images from database
     if (editProductState.ProductPictures?.length > 0) {
       const existingUrls = editProductState.ProductPictures.map((p) => p.PictureUrl);
-      setPreviewUrlAdditionalImagesEdit(existingUrls);
-    } else {
-      setPreviewUrlAdditionalImagesEdit([]);
+      setPreviewUrlAdditionalImagesEditState(existingUrls);
+    }
+    
+    // Add newly added images that haven't been saved yet
+    if (editProductState.AdditionalPicturesFile?.length > 0) {
+      const newPreviews = editProductState.AdditionalPicturesFile.map(file => URL.createObjectURL(file));
+      setPreviewUrlAdditionalImagesEditState(prev => [...prev, ...newPreviews]);
     }
   }, [isEditModalOpen, editProductState]);
 
@@ -249,7 +256,7 @@ const getProductStatusBadge = (product) => {
       setIsEditModalOpen(false);
       setEditProduct(null);
       setPreviewUrlEdit(null);
-      setPreviewUrlAdditionalImagesEdit([]);
+      setPreviewUrlAdditionalImagesEditState([]);
 
       if (refetchProducts) {
         refetchProducts();
@@ -453,19 +460,35 @@ const getProductStatusBadge = (product) => {
     const newPreviews = files.map((f) => URL.createObjectURL(f));
     setPreviewUrlAdditionalImages((prev) => [...prev, ...newPreviews]);
   };
+  
 
   const handleRemoveExistingAdditionalImage = (index) => {
-    setPreviewUrlAdditionalImagesEdit((prev) => prev.filter((_, i) => i !== index));
-    const oldId = editProductState.ProductPictures?.[index]?.ProductPictureId;
-    if (oldId) {
-      setEditProduct((prev) => {
-        const updatedDelete = [...(prev.AdditionalPicturesToDelete || []), oldId];
-        return {
-          ...prev,
-          ProductPictures: prev.ProductPictures.filter((_, i) => i !== index),
-          AdditionalPicturesToDelete: updatedDelete,
-        };
-      });
+    // Remove the preview URL from state
+    setPreviewUrlAdditionalImagesEditState((prev) => prev.filter((_, i) => i !== index));
+    
+    // Determine if this is an existing image from the database or a newly added one
+    const existingProductPicturesCount = editProductState.ProductPictures?.length || 0;
+    
+    if (index < existingProductPicturesCount) {
+      // This is an existing image from the database
+      const oldId = editProductState.ProductPictures[index]?.ProductPictureId;
+      if (oldId) {
+        setEditProduct((prev) => {
+          const updatedDelete = [...(prev.AdditionalPicturesToDelete || []), oldId];
+          return {
+            ...prev,
+            ProductPictures: prev.ProductPictures.filter((_, i) => i !== index),
+            AdditionalPicturesToDelete: updatedDelete,
+          };
+        });
+      }
+    } else {
+      // This is a newly added image
+      const newImageIndex = index - existingProductPicturesCount;
+      setEditProduct((prev) => ({
+        ...prev,
+        AdditionalPicturesFile: (prev.AdditionalPicturesFile || []).filter((_, i) => i !== newImageIndex),
+      }));
     }
   };
 
@@ -474,7 +497,7 @@ const getProductStatusBadge = (product) => {
     const files = Array.from(e.target.files);
 
     const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setPreviewUrlAdditionalImagesEdit((prev) => [...prev, ...newPreviews]);
+    setPreviewUrlAdditionalImagesEditState((prev) => [...prev, ...newPreviews]);
 
     const validFiles = files.filter((file) => file.size > 0);
     if (validFiles.length > 0) {
@@ -559,7 +582,7 @@ const getProductStatusBadge = (product) => {
           previewUrlEdit={previewUrlEdit}
           setPreviewUrlEdit={setPreviewUrlEdit}
           previewUrlAdditionalImagesEditState={previewUrlAdditionalImagesEditState}
-          setPreviewUrlAdditionalImagesEdit={setPreviewUrlAdditionalImagesEdit}
+          setPreviewUrlAdditionalImagesEditState={setPreviewUrlAdditionalImagesEditState}
           handleRemoveExistingAdditionalImage={handleRemoveExistingAdditionalImage}
           handleAdditionalImagesChangeEdit={handleAdditionalImagesChangeEdit}
           handleEdit={handleEdit}
@@ -627,17 +650,6 @@ const getProductStatusBadge = (product) => {
           handleAddProduct={handleAddProduct}
           onClose={() => setIsModalOpen(false)}
           refetchProducts={refetchProducts}
-        />
-      )}
-
-      {isModalBrand && (
-        <CreateBrandModal
-          newBrand={newBrand}
-          setNewBrand={setNewBrand}
-          previewUrlNewUploadBrand={previewUrlNewUploadBrand}
-          setPreviewUrlNewUploadBrand={setPreviewUrlNewUploadBrand}
-          handleAddBrand={handleAddBrand}
-          onClose={() => setIsModalBrand(false)}
         />
       )}
 
@@ -721,7 +733,7 @@ const getProductStatusBadge = (product) => {
                     {/* Nút Delete */}
                     <button
                       className="text-red-400 hover:text-red-300"
-                      onClick={() => handleDeactivate(product.ProductId)}
+                      onClick={() => handleDelete(product.ProductId)}
                     >
                       <Trash2 size={18} />
                     </button>

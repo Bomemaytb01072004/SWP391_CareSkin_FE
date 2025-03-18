@@ -7,11 +7,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import FacebookLogin from "react-facebook-login";
+import FacebookLogin from "react-facebook-login-lite";
 import axios from 'axios';
 import { Formik, useFormik } from 'formik';
 import * as Yup from 'yup'
 import { useAuth } from '../../context/AuthContext';
+import styles from './LoginPage.module.css';
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
@@ -37,7 +38,7 @@ const LoginPage = () => {
       });
 
       console.log('Backend Response:', res.data);
-      toast.success('Đăng nhập thành công!', { autoClose: 2000 });
+      toast.success('Login successful!', { autoClose: 2000 });
 
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data));
@@ -45,7 +46,16 @@ const LoginPage = () => {
       setTimeout(() => navigate('/'), 2000);
     } catch (error) {
       console.error('Error sending token to BE:', error);
-      toast.error('Login failed!');
+      if (error.response && error.response.data) {
+        // If server responds with a specific error message
+        toast.error(`Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`);
+      } else if (error.request) {
+        // If request was made but no response was received
+        toast.error('Login failed: No response from server');
+      } else {
+        // Something happened in setting up the request
+        toast.error(`Login failed: ${error.message}`);
+      }
     }
   };
 
@@ -72,7 +82,16 @@ const LoginPage = () => {
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
       console.error("Error sending token to BE", error);
-      toast.error("Facebook login failed!");
+      if (error.response && error.response.data) {
+        // If server responds with a specific error message
+        toast.error(`Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`);
+      } else if (error.request) {
+        // If request was made but no response was received
+        toast.error('Login failed: No response from server');
+      } else {
+        // Something happened in setting up the request
+        toast.error(`Login failed: ${error.message}`);
+      }
     }
   };
 
@@ -114,12 +133,12 @@ const LoginPage = () => {
           }
         );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
-        }
-
         const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(data.message || data.error || 'Login failed');
+          return;
+        }
 
         if (!data.token) {
           toast.error(data.message || data.error || 'Invalid username or password.');
@@ -134,7 +153,6 @@ const LoginPage = () => {
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const decodedPayload = JSON.parse(window.atob(base64));
 
-        // Sử dụng hàm login từ AuthContext để lưu token và thông tin người dùng
         login(decodedPayload, token);
 
         toast.success('Login successful', { autoClose: 2000 });
@@ -147,7 +165,11 @@ const LoginPage = () => {
         }, 2000);
       } catch (error) {
         console.error('Login Error:', error);
-        toast.error(error.message || 'An error occurred while logging in.');
+        if (error.name === 'SyntaxError') {
+          toast.error('Invalid username or password.');
+        } else {
+          toast.error(error.message || 'Login failed. Please try again.');
+        }
       }
     },
   });
@@ -237,449 +259,310 @@ const LoginPage = () => {
     }
   };
 
+  // For mobile view
+  const [mobileView, setMobileView] = useState(window.innerWidth <= 768);
+
+  // Update mobileView on window resize
+  React.useEffect(() => {
+    const handleResize = () => {
+      setMobileView(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <>
         <ToastContainer position="top-right" autoClose={3000} />
         <button
           onClick={() => navigate('/')}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            padding: '10px 20px',
-            backgroundColor: '#059669',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.1)',
-          }}
+          className={styles.homeButton}
         >
           ← Homepage
         </button>
 
-
         <div
-          className="h-screen flex items-center justify-center bg-cover bg-center p-4"
+          className={styles.container}
           style={{ backgroundImage: `url(${bgImage})` }}
         >
-          <div className="relative w-full max-w-4xl h-[600px] bg-white shadow-lg rounded-lg flex flex-col md:flex-row overflow-hidden">
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: rightPanelActive ? '0' : '50%',
-                width: '50%',
-                height: '100%',
-                backgroundImage: `url(${rightPanelActive ? image2 : image1})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                transition: 'all 0.6s ease-in-out',
-                zIndex: 1,
-              }}
-            >
-              {!rightPanelActive && (
-                <button
-                  onClick={() => setRightPanelActive(true)}
-                  style={{
-                    position: 'absolute',
-                    bottom: '85px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    padding: '12px 40px',
-                    backgroundColor: 'white',
-                    color: '#059669',
-                    border: 'none',
-                    borderRadius: '20px',
-                    cursor: 'pointer',
-                    boxShadow: '0px 5px 10px rgba(0, 0, 0, 0.1)',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  Sign Up
-                </button>
-              )}
-
-              {rightPanelActive && (
-                <button
-                  onClick={() => setRightPanelActive(false)}
-                  style={{
-                    position: 'absolute',
-                    bottom: '85px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    padding: '12px 40px',
-                    backgroundColor: 'white',
-                    color: '#059669',
-                    border: 'none',
-                    borderRadius: '20px',
-                    cursor: 'pointer',
-                    boxShadow: '0px 5px 10px rgba(0, 0, 0, 0.1)',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  Sign In
-                </button>
-              )}
-            </div>
-
-            {/* Form Đăng Nhập */}
-            <form
-              onSubmit={formikLogin.handleSubmit}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: rightPanelActive ? '-50%' : '0',
-                width: '50%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '20px',
-                textAlign: 'center',
-                backgroundColor: 'white',
-                transition: 'all 0.6s ease-in-out',
-                zIndex: 2,
-              }}
-            >
-              <h1
+          <div className={styles.formContainer}>
+            {!mobileView && (
+              <div
+                className={styles.imagePanel}
                 style={{
-                  marginBottom: '80px',
-                  color: 'rgba(0, 0, 0, 1)',
-                  fontSize: '1.375rem',
-                  fontWeight: 'bold',
+                  backgroundImage: `url(${rightPanelActive ? image2 : image1})`,
+                  left: rightPanelActive ? '0' : '50%',
                 }}
               >
-                Sign In
-              </h1>
-              <div style={{ marginBottom: '20px' }}>
-                <GoogleLogin
-                  onSuccess={handleGoogleLoginSuccess}
-                  onError={handleGoogleLoginFailure}
-                />
+                {!rightPanelActive && (
+                  <button
+                    onClick={() => setRightPanelActive(true)}
+                    className={styles.switchButton}
+                  >
+                    Sign Up
+                  </button>
+                )}
+
+                {rightPanelActive && (
+                  <button
+                    onClick={() => setRightPanelActive(false)}
+                    className={styles.switchButton}
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form
+              onSubmit={formikLogin.handleSubmit}
+              className={`${styles.formBase} ${mobileView && rightPanelActive ? styles.inactive : ''}`}
+              style={{
+                left: rightPanelActive ? '-50%' : '0',
+                ...(mobileView && { position: 'relative', left: '0' })
+              }}
+            >
+              <h1 className={styles.formTitle}>Sign In</h1>
+              
+              <div className={styles.socialButtonsContainer}>
+                <div className="google-button-container">
+                  <GoogleLogin
+                    onSuccess={handleGoogleLoginSuccess}
+                    onError={handleGoogleLoginFailure}
+                  />
+                </div>
 
                 <FacebookLogin
                   appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                  cssClass="my-facebook-btn"
-                  icon="fa-facebook"
-                  textButton="&nbsp;&nbsp;Login by Facebook"
-                  callback={(response) => {
-                    if (response.authResponse) {
-                      handleFacebookLoginSuccess(response);
-                    } else {
-                      handleFacebookLoginFailure();
-                    }
+                  onSuccess={(response) => {
+                      console.log("Facebook Response:", response);
+                      if (response.authResponse) {
+                          handleFacebookLoginSuccess(response);
+                      } else {
+                          handleFacebookLoginFailure();
+                      }
                   }}
-                />
-
+              />
               </div>
-              <span
-                style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
-              >
+              
+              <span className={styles.divider}>
                 or use your account
               </span>
+              
               <input
                 type="text"
                 name="username"
                 placeholder="Username"
                 autoComplete="username"
                 required
-                style={{
-                  width: '80%',
-                  padding: '10px',
-                  marginBottom: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '5px',
-                }}
+                className={styles.formField}
                 value={formikLogin.values.username}
                 onChange={formikLogin.handleChange}
                 onBlur={formikLogin.handleBlur}
               />
+              
               {formikLogin.touched.username && formikLogin.errors.username && (
-                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                <div className={styles.errorMessage}>
                   {formikLogin.errors.username}
                 </div>
               )}
 
-              <div style={{ position: 'relative', width: '80%' }}>
+              <div className={styles.passwordContainer}>
                 <input
                   type={loginPassword}
                   name="password"
                   placeholder="Password"
                   autoComplete="current-password"
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                  }}
+                  className={styles.formField}
+                  style={{ width: '100%', marginBottom: 0 }}
                   value={formikLogin.values.password}
                   onChange={formikLogin.handleChange}
                   onBlur={formikLogin.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
+                  className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
                   onClick={toggleLoginPassword}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: '10px',
-                    transform: 'translateY(-50%)',
-                    cursor: 'pointer',
-                  }}
                 ></i>
               </div>
+              
               {formikLogin.touched.password && formikLogin.errors.password && (
-                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                <div className={styles.errorMessage}>
                   {formikLogin.errors.password}
                 </div>
               )}
+              
               <a
                 href="#forgot-password"
-                style={{ margin: '15px 0', fontSize: '12px', color: '#059669' }}
+                className={styles.forgotPassword}
               >
                 Forgot your password?
               </a>
+              
               <button
-                onClick={() => {
-                  setRightPanelActive(false);
-
-                  const CustomerId = localStorage.getItem('CustomerId');
-                  const Token = localStorage.getItem('Token');
-
-                  if (CustomerId && Token) {
-                    console.log(
-                      'User is logged in. Clearing cart and checkout...'
-                    );
-
-                    localStorage.removeItem('cart');
-                    localStorage.removeItem('checkoutItems');
-
-                    setCart([]);
-
-                    window.dispatchEvent(new Event('storage'));
-
-                    console.log('Cart and checkout items have been cleared.');
-                  }
-                }}
                 type="submit"
-                style={{
-                  padding: '12px 40px',
-                  marginTop: '20px',
-                  backgroundColor: '#059669',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                }}
+                className={styles.primaryButton}
               >
                 Sign In
               </button>
+
+              {mobileView && (
+                <button
+                  type="button"
+                  onClick={() => setRightPanelActive(true)}
+                  className={styles.switchButton}
+                  style={{ position: 'relative', transform: 'none', left: 'auto' }}
+                >
+                  Sign Up
+                </button>
+              )}
             </form>
 
-            {/* Form Đăng Ký */}
+            {/* Register Form */}
             <form
               onSubmit={formikRegister.handleSubmit}
+              className={`${styles.formBase} ${mobileView && !rightPanelActive ? styles.inactive : ''}`}
               style={{
-                position: 'absolute',
-                top: 0,
                 left: rightPanelActive ? '50%' : '100%',
-                width: '50%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '20px',
-                textAlign: 'center',
-                backgroundColor: 'white',
-                transition: 'all 0.6s ease-in-out',
-                zIndex: 2,
+                ...(mobileView && { position: 'relative', left: rightPanelActive ? '0' : '100%' })
               }}
             >
-              <h1
-                style={{
-                  marginBottom: '20px',
-                  color: 'rgba(0, 0, 0, 1)',
-                  fontSize: '1.375rem',
-                  fontWeight: 'bold',
-                }}
-              >
+              <h1 className={styles.formTitle}>
                 Create Account
               </h1>
-              <div
-                style={{
-                  marginBottom: '20px',
-                  display: 'flex',
-                  gap: '10px',
-                }}
-              >
-                <GoogleLogin
-                  onSuccess={handleGoogleLoginSuccess}
-                  onError={handleGoogleLoginFailure}
-                />
-
-
+              
+              <div className={styles.socialButtonsContainer}>
+                <div className="google-button-container">
+                  <GoogleLogin
+                    onSuccess={handleGoogleLoginSuccess}
+                    onError={handleGoogleLoginFailure}
+                  />
+                </div>
 
                 <FacebookLogin
                   appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                  cssClass="my-facebook-btn"
-                  icon="fa-facebook"
-                  textButton="&nbsp;&nbsp;Login by Facebook"
-                  callback={(response) => {
-                    if (response.authResponse) {
-                      handleFacebookLoginSuccess(response);
-                    } else {
-                      handleFacebookLoginFailure();
-                    }
+                  onSuccess={(response) => {
+                      console.log("Facebook Response:", response);
+                      if (response.authResponse) {
+                          handleFacebookLoginSuccess(response);
+                      } else {
+                          handleFacebookLoginFailure();
+                      }
                   }}
-                />
-
+              />
               </div>
-              <span
-                style={{ fontSize: '14px', marginBottom: '20px', color: '#666' }}
-              >
+              
+              <span className={styles.divider}>
                 or use your email for registration
               </span>
+              
               <input
                 type="text"
                 name="userName"
                 placeholder="Username"
                 autoComplete="username"
                 required
-                style={{
-                  width: '80%',
-                  padding: '10px',
-                  marginBottom: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '5px',
-                }}
+                className={styles.formField}
                 value={formikRegister.values.userName}
                 onChange={formikRegister.handleChange}
                 onBlur={formikRegister.handleBlur}
               />
+              
               {formikRegister.touched.userName && formikRegister.errors.userName && (
-                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
-                  {formikRegister.errors.email}
+                <div className={styles.errorMessage}>
+                  {formikRegister.errors.userName}
                 </div>
               )}
+              
               <input
                 type="email"
                 name="email"
                 placeholder="Email"
                 autoComplete="email"
                 required
-                style={{
-                  width: '80%',
-                  padding: '10px',
-                  marginBottom: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '5px',
-                }}
+                className={styles.formField}
                 value={formikRegister.values.email}
                 onChange={formikRegister.handleChange}
                 onBlur={formikRegister.handleBlur}
               />
 
               {formikRegister.touched.email && formikRegister.errors.email && (
-                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                <div className={styles.errorMessage}>
                   {formikRegister.errors.email}
                 </div>
               )}
 
-              <div
-                style={{
-                  position: 'relative',
-                  width: '80%',
-                  marginBottom: '10px',
-                }}
-              >
+              <div className={styles.passwordContainer}>
                 <input
                   type={registerPassword}
                   name="password"
                   placeholder="Password"
                   autoComplete="new-password"
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                  }}
+                  className={styles.formField}
+                  style={{ width: '100%', marginBottom: 0 }}
                   value={formikRegister.values.password}
                   onChange={formikRegister.handleChange}
                   onBlur={formikRegister.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
+                  className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
                   onClick={toggleRegisterPassword}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: '10px',
-                    transform: 'translateY(-50%)',
-                    cursor: 'pointer',
-                  }}
-
                 ></i>
               </div>
+              
               {formikRegister.touched.password && formikRegister.errors.password && (
-                <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                <div className={styles.errorMessage}>
                   {formikRegister.errors.password}
                 </div>
               )}
-              <div style={{ position: 'relative', width: '80%' }}>
+              
+              <div className={styles.passwordContainer}>
                 <input
                   type={confirmPassword}
                   name="confirmPassword"
                   placeholder="Confirm Password"
                   autoComplete="new-password"
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                  }}
+                  className={styles.formField}
+                  style={{ width: '100%', marginBottom: 0 }}
                   value={formikRegister.values.confirmPassword}
                   onChange={formikRegister.handleChange}
                   onBlur={formikRegister.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash"} toggle-password`}
+                  className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
                   onClick={toggleConfirmPassword}
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    right: '10px',
-                    transform: 'translateY(-50%)',
-                    cursor: 'pointer',
-                  }}
                 ></i>
               </div>
+              
               {formikRegister.touched.confirmPassword &&
                 formikRegister.errors.confirmPassword && (
-                  <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px', textAlign: 'left', width: '80%' }}>
+                  <div className={styles.errorMessage}>
                     {formikRegister.errors.confirmPassword}
                   </div>
                 )}
+              
               <button
                 type="submit"
-                style={{
-                  padding: '12px 40px',
-                  marginTop: '20px',
-                  backgroundColor: '#059669',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                }}
+                className={styles.primaryButton}
               >
                 Sign Up
               </button>
+
+              {mobileView && (
+                <button
+                  type="button"
+                  onClick={() => setRightPanelActive(false)}
+                  className={styles.switchButton}
+                  style={{ position: 'relative', transform: 'none', left: 'auto' }}
+                >
+                  Sign In
+                </button>
+              )}
             </form>
           </div>
         </div>

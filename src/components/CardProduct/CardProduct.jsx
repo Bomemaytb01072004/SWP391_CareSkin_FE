@@ -59,7 +59,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                {product.rating || '0.0'}
+                {product.AverageRating.toFixed(2) || '0.0'}
                 <Star size={16} className="fill-yellow-500" />
               </span>
             </div>
