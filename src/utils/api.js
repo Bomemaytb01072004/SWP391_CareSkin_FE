@@ -1,26 +1,21 @@
 
 // api.js
-const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
-const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
-const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
-const apiURLcategories =
-  'http://careskinbeauty.shop:4456/api/Product/categories';
-const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
-const apiURLSkinTypeProduct = 'http://careskinbeauty.shop:4456/api/SkinType';
-const apiURLDeleteUsage = 'http://careskinbeauty.shop:4456/api/Product/usage';
-const apiURLDeleteSkinType =
-  'http://careskinbeauty.shop:4456/api/Product/skin-type';
-const apiURLDeleteVariation =
-  'http://careskinbeauty.shop:4456/api/Product/variation';
-const apiURLDeleteMainIngredient =
-  'http://careskinbeauty.shop:4456/api/Product/main-ingredient';
-const apiURLDeleteMainDetailIngredient =
-  'http://careskinbeauty.shop:4456/api/Product/detail-ingredient';
-const apiURLPromotions =
-  'http://careskinbeauty.shop:4456/api/Promotion';
-const apiURLBlogs = 'http://careskinbeauty.shop:4456/api/BlogNews';
-const apiURLQuizzes = 'http://careskinbeauty.shop:4456/api/Quiz';
-const apiURLSkinTypes = 'http://careskinbeauty.shop:4456/api/SkinType';
+const apiBaseURL = 'http://careskinbeauty.shop:4456';
+const apiURLcustomers = `${apiBaseURL}/api/Customer`;
+const apiURLproducts = `${apiBaseURL}/api/Product`;
+const apiURLorders = `${apiBaseURL}/api/Order/history`;
+const apiURLcategories = `${apiBaseURL}/api/Product/categories`;
+const apiURLBrands = `${apiBaseURL}/api/Brand`;
+const apiURLSkinTypeProduct = `${apiBaseURL}/api/SkinType`;
+const apiURLDeleteUsage = `${apiBaseURL}/api/Product/usage`;
+const apiURLDeleteSkinType = `${apiBaseURL}/api/Product/skin-type`;
+const apiURLDeleteVariation = `${apiBaseURL}/api/Product/variation`;
+const apiURLDeleteMainIngredient = `${apiBaseURL}/api/Product/main-ingredient`;
+const apiURLDeleteMainDetailIngredient = `${apiBaseURL}/api/Product/detail-ingredient`;
+const apiURLPromotions = `${apiBaseURL}/api/Promotion`;
+const apiURLBlogs = `${apiBaseURL}/api/BlogNews`;
+const apiURLQuizzes = `${apiBaseURL}/api/Quiz`;
+const apiURLSkinTypes = `${apiBaseURL}/api/SkinType`;
 
 /* ===============================
         CUSTOMERS API
@@ -104,6 +99,40 @@ export async function fetchCategories() {
   }
 }
 
+// Fetch categories from active products only
+export async function fetchCategoriesFromActiveProducts() {
+  try {
+    // First fetch all products
+    const response = await fetch(apiURLproducts);
+    if (!response.ok) throw new Error('Error fetching products');
+    
+    const products = await response.json();
+    
+    // Filter for active products only
+    const activeProducts = products.filter(product => product.IsActive);
+    
+    // Extract categories from active products
+    const categoriesFromActive = activeProducts.map(product => product.Category);
+    
+    return categoriesFromActive;
+  } catch (error) {
+    console.error('Error fetching categories from active products', error);
+    throw error;
+  }
+}
+
+// Fetch only active products (optimized version for ProductsPage)
+export async function fetchActiveProductsWithDetails() {
+  try {
+    const response = await fetch(`${apiURLproducts}?isActive=true`);
+    if (!response.ok) throw new Error('Error fetching active products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching active products:', error);
+    throw error;
+  }
+}
+
 /* ===============================
         BRAND API
 ================================== */
@@ -142,6 +171,45 @@ export async function createBrand(brandData) {
     return await response.json();
   } catch (error) {
     console.error('Error creating brand:', error);
+    throw error;
+  }
+}
+
+export async function updateBrand(id, brandData) {
+  try {
+    const formData = new FormData();
+
+    formData.append('Name', brandData.Name);
+    // Không gửi IsActive vì API không hỗ trợ
+
+    if (brandData.PictureFile instanceof File) {
+      formData.append('PictureFile', brandData.PictureFile);
+    }
+
+    const response = await fetch(`${apiURLBrands}/${id}`, {
+      method: 'PUT',
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Error updating brand');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating brand:', error);
+    throw error;
+  }
+}
+
+export async function deleteBrand(id) {
+  try {
+    const response = await fetch(`${apiURLBrands}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete brand');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error deleting brand:', error);
     throw error;
   }
 }
@@ -1155,13 +1223,6 @@ export async function deleteSkinType(id) {
   }
 }
 
-/* ===============================
-        ANALYTICS API
-        (Replaced with static data)
-================================== */
-
-// Functions have been moved to their respective components with static data
-
 export default {
   fetchCustomers,
   fetchCustomerById,
@@ -1217,4 +1278,6 @@ export default {
   createSkinType,
   updateSkinType,
   deleteSkinType,
+  fetchCategoriesFromActiveProducts,
+  fetchActiveProductsWithDetails,
 };

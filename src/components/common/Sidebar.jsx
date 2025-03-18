@@ -1,4 +1,4 @@
-import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, TicketPercent, Tag, ChevronDown, ChevronUp ,Package, ScrollText, FileText, Smile } from "lucide-react";
+import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, TicketPercent, Tag, ChevronDown, ChevronUp ,Package, ScrollText, FileText, Smile, ThumbsUp, Droplets } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -13,28 +13,40 @@ const SIDEBAR_ITEMS = [
 	{
 		name: "Products",
 		icon: Package,
-		color: "#F59E0B",
+		color: "#F59E0B", // Orange
 		children: [
 		  {
 			name: "All Products",
 			icon: ShoppingBag,
-			color: "#FACC15",
+			color: "#FACC15", // Bright Yellow
 			href: "/admin/products",
 		  },
 		  {
 			name: "Brands",
 			icon: Tag,
-			color: "#EAB308",
+			color: "#A3E635", // Lime Green
 			href: "/admin/brands",
 		  },
 		  {
 			name: "Skin Types",
 			icon: Smile,
-			color: "#09ed37",
+			color: "#10B981", // Green
 			href: "/admin/skintypes",
 		  },
+		  {
+			name: "Rating",
+			icon: ThumbsUp,
+			color: "#FFD700", // Gold
+			href: "/admin/ratings",
+		  },
+		  {
+			name: "Routine",
+			icon: Droplets,
+			color: "#60A5FA", // Light Blue
+			href: "/admin/routines",
+		  },
 		],
-	  },
+	  }, 
 	{ name: "Users", icon: Users, color: "#EC4899", href: "/admin/users" },
 	{ name: "Sales", icon: DollarSign, color: "#10B981", href: "/admin/sales" },
 	{ name: "Orders", icon: ShoppingCart, color: "#F97316", href: "/admin/orders" },
