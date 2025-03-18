@@ -5,10 +5,8 @@ import Footer from '../../components/Layout/Footer';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import { motion } from 'framer-motion';
 import {
-  faCircleInfo,
   faUserEdit,
   faCartPlus,
-  faPlayCircle,
   faRedo,
   faCheck,
 } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +14,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const SkinRoutinePage = () => {
   const navigate = useNavigate();
+  const [routineData, setRoutineData] = useState(null);
+  const [skinTypeInfo, setSkinTypeInfo] = useState(null);
+  const [addedToCart, setAddedToCart] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [cart, setCart] = useState([]); // Add cart state
+
   // Update the getSkinTypeTips function to use includes() instead of strict equality
   const getSkinTypeTips = (skinType) => {
     // Default tips if skin type is not recognized
@@ -111,11 +116,6 @@ const SkinRoutinePage = () => {
 
     return { dailyHabits, thingsToAvoid };
   };
-  const [routineData, setRoutineData] = useState(null);
-  const [skinTypeInfo, setSkinTypeInfo] = useState(null);
-  const [addedToCart, setAddedToCart] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSkinTypeAndRoutine = async () => {
@@ -225,8 +225,145 @@ const SkinRoutinePage = () => {
     navigate('/skinquiz');
   };
 
-  const addToCart = (product) => {
+  // Fix the addToCart function to work correctly with API
+  const addToCart = async (product) => {
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token = localStorage.getItem('token'); // Changed to lowercase 'token'
+
+    // Show feedback immediately for better UX
     setAddedToCart((prev) => [...prev, product.ProductName]);
+
+    // Handle guest user (no CustomerId or token)
+    if (!CustomerId || !token) {
+      console.warn('No CustomerId found! Using localStorage for guest cart.');
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const firstVariation =
+        Array.isArray(product.Variations) && product.Variations.length > 0
+          ? product.Variations[0]
+          : null;
+
+      const existingProductIndex = cart.findIndex(
+        (item) =>
+          item.ProductId === product.ProductId &&
+          item.ProductVariationId === firstVariation?.ProductVariationId
+      );
+
+      if (existingProductIndex !== -1) {
+        cart[existingProductIndex].Quantity += 1;
+      } else {
+        cart.push({
+          ...product,
+          Quantity: 1,
+          Price:
+            firstVariation?.SalePrice > 0
+              ? firstVariation.SalePrice
+              : firstVariation?.Price || product.Price,
+          ProductVariationId: firstVariation?.ProductVariationId || null,
+          ProductVariations: product.Variations,
+        });
+      }
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('storage'));
+
+      // Clear feedback after delay
+      setTimeout(() => {
+        setAddedToCart((prev) =>
+          prev.filter((item) => item !== product.ProductName)
+        );
+      }, 2000);
+
+      return;
+    }
+
+    // Handle logged in user
+    try {
+      // Prepare the payload - simplified to exactly what the API expects
+      const payload = {
+        CustomerId: parseInt(CustomerId),
+        ProductId: product.ProductId,
+        ProductVariationId: null, // Default to null if no variation specified
+        Quantity: 1,
+      };
+
+      // If product has variations, use the first one
+      if (Array.isArray(product.Variations) && product.Variations.length > 0) {
+        payload.ProductVariationId = product.Variations[0].ProductVariationId;
+      }
+
+      console.log('Adding to cart with payload:', payload);
+
+      // Make the API call
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Cart/add',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      // Parse the response - use text first to see any error messages
+      const responseText = await response.text();
+      console.log('Cart API response:', responseText);
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to add item to cart: ${response.status} ${responseText}`
+        );
+      }
+
+      // Update local cart
+      try {
+        // Fetch updated cart from API
+        const cartResponse = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!cartResponse.ok) {
+          console.warn(
+            'Failed to fetch updated cart, using local update instead'
+          );
+          // Update cart locally if we can't get it from the server
+          let cart = JSON.parse(localStorage.getItem('cart')) || [];
+          const existingIndex = cart.findIndex(
+            (item) => item.ProductId === product.ProductId
+          );
+
+          if (existingIndex !== -1) {
+            cart[existingIndex].Quantity += 1;
+          } else {
+            cart.push({
+              ...product,
+              Quantity: 1,
+            });
+          }
+
+          localStorage.setItem('cart', JSON.stringify(cart));
+        } else {
+          // If we got the cart from server, use that
+          const updatedCart = await cartResponse.json();
+          localStorage.setItem('cart', JSON.stringify(updatedCart));
+        }
+
+        window.dispatchEvent(new Event('storage'));
+      } catch (err) {
+        console.error('Error updating local cart:', err);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
+    }
+
+    // Clear feedback after delay
     setTimeout(() => {
       setAddedToCart((prev) =>
         prev.filter((item) => item !== product.ProductName)
@@ -234,16 +371,159 @@ const SkinRoutinePage = () => {
     }, 2000);
   };
 
-  const addAllToCart = () => {
-    const allProducts = routineData.flatMap((routine) =>
-      routine.RoutineStepDTOs.flatMap((step) =>
-        step.RoutineProducts.map((product) => product.Product.ProductName)
-      )
-    );
-    setAddedToCart(allProducts);
-    setTimeout(() => {
-      setAddedToCart([]);
-    }, 2000);
+  // Fix the addAllToCart function to work correctly with API
+  const addAllToCart = async () => {
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token = localStorage.getItem('token'); // Changed to lowercase 'token'
+
+    // Collect all valid products
+    const allProducts = [];
+    routineData.forEach((routine) => {
+      routine.RoutineStepDTOs.forEach((step) => {
+        if (step.RoutineProducts && step.RoutineProducts.length > 0) {
+          step.RoutineProducts.forEach((rp) => {
+            if (
+              rp.Product &&
+              rp.Product.ProductId &&
+              !rp.Product.ProductId.toString().includes('placeholder')
+            ) {
+              allProducts.push(rp.Product);
+            }
+          });
+        }
+      });
+    });
+
+    if (allProducts.length === 0) {
+      alert('No products available to add to cart.');
+      return;
+    }
+
+    // Show loading state
+    const productNames = allProducts.map((p) => p.ProductName);
+    setAddedToCart(productNames);
+
+    // Handle guest user
+    if (!CustomerId || !token) {
+      console.warn('No CustomerId found! Using localStorage for guest cart.');
+      let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      allProducts.forEach((product) => {
+        const firstVariation =
+          Array.isArray(product.Variations) && product.Variations.length > 0
+            ? product.Variations[0]
+            : null;
+
+        const existingProductIndex = cart.findIndex(
+          (item) =>
+            item.ProductId === product.ProductId &&
+            item.ProductVariationId === firstVariation?.ProductVariationId
+        );
+
+        if (existingProductIndex !== -1) {
+          cart[existingProductIndex].Quantity += 1;
+        } else {
+          cart.push({
+            ...product,
+            Quantity: 1,
+            Price:
+              firstVariation?.SalePrice > 0
+                ? firstVariation.SalePrice
+                : firstVariation?.Price || product.Price,
+            ProductVariationId: firstVariation?.ProductVariationId || null,
+            ProductVariations: product.Variations,
+          });
+        }
+      });
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('storage'));
+
+      alert('All products added to your cart!');
+      setTimeout(() => setAddedToCart([]), 2000);
+      return;
+    }
+
+    // Handle logged in user - add items one by one
+    try {
+      let successCount = 0;
+
+      for (const product of allProducts) {
+        // Prepare the payload - simplified to exactly what the API expects
+        const payload = {
+          CustomerId: parseInt(CustomerId),
+          ProductId: product.ProductId,
+          ProductVariationId: null, // Default to null if no variation specified
+          Quantity: 1,
+        };
+
+        // If product has variations, use the first one
+        if (
+          Array.isArray(product.Variations) &&
+          product.Variations.length > 0
+        ) {
+          payload.ProductVariationId = product.Variations[0].ProductVariationId;
+        }
+
+        try {
+          const response = await fetch(
+            'http://careskinbeauty.shop:4456/api/Cart/add',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(payload),
+            }
+          );
+
+          if (response.ok) {
+            successCount++;
+          } else {
+            const errorText = await response.text();
+            console.error(
+              `Failed to add ${product.ProductName} to cart:`,
+              errorText
+            );
+          }
+        } catch (err) {
+          console.error(`Error adding ${product.ProductName} to cart:`, err);
+        }
+      }
+
+      // Update local cart with server data
+      try {
+        const cartResponse = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (cartResponse.ok) {
+          const updatedCart = await cartResponse.json();
+          localStorage.setItem('cart', JSON.stringify(updatedCart));
+          window.dispatchEvent(new Event('storage'));
+        } else {
+          console.warn('Failed to fetch updated cart after bulk add');
+        }
+      } catch (err) {
+        console.error('Error updating local cart after bulk add:', err);
+      }
+
+      if (successCount > 0) {
+      } else {
+        alert('Failed to add products to your cart.');
+      }
+    } catch (error) {
+      console.error('Error in bulk add to cart:', error);
+      alert('An error occurred while adding products to your cart.');
+    }
+
+    setTimeout(() => setAddedToCart([]), 2000);
   };
 
   if (isLoading) {
@@ -362,14 +642,14 @@ const SkinRoutinePage = () => {
         {/* Breadcrumb Section */}
         <div className="max-w-7xl mx-auto flex justify-between items-center px-4 sm:px-6 text-emerald-700 text-sm">
           <Breadcrumb items={[{ label: 'SkinQuiz', active: true }]} />
-
+          {/* 
           <a
             href="/edit-profile"
             className="flex items-center text-emerald-700 hover:text-emerald-800 transition-colors"
           >
             <FontAwesomeIcon icon={faUserEdit} className="mr-2" />
             Edit Profile
-          </a>
+          </a> */}
         </div>
 
         {/* Header Section with enhanced UI */}
@@ -433,9 +713,7 @@ const SkinRoutinePage = () => {
               <FontAwesomeIcon
                 icon={!addedToCart.length ? faCartPlus : faCheck}
               />
-              {!addedToCart.length
-                ? 'Add All Products to Cart'
-                : 'Added to Cart!'}
+              {!addedToCart.length ? 'Add All' : 'Added to Cart!'}
             </motion.button>
 
             <motion.button
@@ -445,7 +723,7 @@ const SkinRoutinePage = () => {
               onClick={resetRoutine}
             >
               <FontAwesomeIcon icon={faRedo} />
-              Reset & Retake Quiz
+              Retake Quiz
             </motion.button>
           </div>
         </motion.div>
