@@ -20,23 +20,25 @@ const BestSellers = () => {
         if (!res.ok) throw new Error('Failed to fetch products');
 
         const data = await res.json();
-        const formattedProducts = data.map((product) => {
-          const variation = product.Variations?.[0] || {};
-          const promotion = product.PromotionProducts?.[0] || null;
-          return {
-            id: product.ProductId,
-            name: product.ProductName || 'Unnamed Product',
-            image: product.PictureUrl || '/placeholder.jpg',
-            category: product.Category || 'Unknown',
-            price:
-              variation?.SalePrice > 0
-                ? variation.SalePrice
-                : variation?.Price || 0,
-            originalPrice: variation?.SalePrice > 0 ? variation.Price : null,
-            discount: promotion ? `${promotion.DiscountPercent}% OFF` : null,
-            rating: product.AverageRating || 0,
-          };
-        });
+        const formattedProducts = data
+          .filter((product) => product.IsActive)
+          .map((product) => {
+            const variation = product.Variations?.[0] || {};
+            const promotion = product.PromotionProducts?.[0] || null;
+            return {
+              id: product.ProductId,
+              name: product.ProductName || 'Unnamed Product',
+              image: product.PictureUrl || '/placeholder.jpg',
+              category: product.Category || 'Unknown',
+              price:
+                variation?.SalePrice > 0
+                  ? variation.SalePrice
+                  : variation?.Price || 0,
+              originalPrice: variation?.SalePrice > 0 ? variation.Price : null,
+              discount: promotion ? `${promotion.DiscountPercent}% OFF` : null,
+              rating: product.AverageRating || 0,
+            };
+          });
 
         setProducts(formattedProducts);
       } catch (err) {

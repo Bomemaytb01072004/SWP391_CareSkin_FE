@@ -17,8 +17,6 @@ import {
   deleteProductVariation,
   deleteProductMainIngredient,
   deleteProductDetailIngredient,
-  fetchActiveProducts,
-  fetchInactiveProducts
 } from '../../utils/api';
 
 import CategoryDistributionChart from '../../components/overview/CategoryDistributionChart';
@@ -622,13 +620,6 @@ const getProductStatusBadge = (product) => {
             Add Product
           </button>
 
-          <button
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            onClick={() => setIsModalBrand(true)}
-          >
-            <PlusCircle size={18} />
-            Add Brand
-          </button>
         </div>
       </div>
 
@@ -723,13 +714,13 @@ const getProductStatusBadge = (product) => {
                       <Edit size={18} />
                     </button>
 
-                    <button
+                    {/* <button
                       className="text-yellow-400 hover:text-yellow-300 mr-2"
                       onClick={() => handleDeactivate(product.PromotionId)}
                       title="Deactivate promotion"
                     >
                       <Power size={18} />
-                    </button>
+                    </button> */}
                     {/* Nút Delete */}
                     <button
                       className="text-red-400 hover:text-red-300"

@@ -1,41 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './SearchProduct.module.css';
-import { fetchProducts } from '../../utils/api';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
+import { LoadingContext } from '../../Pages/Products/ProductsPage';
 
 const SearchProduct = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
   const MAX_SUGGESTIONS = 5;
   const navigate = useNavigate();
+  
+  // Get products and loading state from context
+  const { products, isLoading } = useContext(LoadingContext);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchProducts();
-        setProducts(data);
-      } catch (error) {
-        console.error('Error in SearchProduct:', error);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  // Use useMemo to optimize filtering - moved before conditional rendering
+  const filteredProducts = useMemo(() => {
+    return searchTerm && !isLoading
+      ? products
+          .filter((product) =>
+            product.ProductName.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .slice(0, MAX_SUGGESTIONS)
+      : [];
+  }, [products, searchTerm, MAX_SUGGESTIONS, isLoading]);
 
-  if (loading) {
-    return <LoadingPage />;
+  // If loading, don't render the search bar or show a simplified version
+  if (isLoading) {
+    return null;
   }
-
-  const filteredProducts = searchTerm
-    ? products.filter((product) =>
-        product.ProductName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
-
-  const displayedProducts = filteredProducts.slice(0, MAX_SUGGESTIONS);
 
   const handleProductClick = (product) => {
     navigate(`/product/${product.ProductId}`);
@@ -51,9 +42,9 @@ const SearchProduct = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
 
-      {searchTerm && displayedProducts.length > 0 && (
+      {searchTerm && filteredProducts.length > 0 && (
         <ul className={styles.suggestList}>
-          {displayedProducts.map((product) => (
+          {filteredProducts.map((product) => (
             <li
               key={product.ProductId}
               className={styles.suggestItem}
