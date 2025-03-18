@@ -1,7 +1,5 @@
+
 // api.js
-const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
-const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
-const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
 const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
 const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
 const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
@@ -205,12 +203,7 @@ export async function createProduct(productData) {
       productData.AdditionalPictures &&
       productData.AdditionalPictures.length > 0
     ) {
-    if (
-      productData.AdditionalPictures &&
-      productData.AdditionalPictures.length > 0
-    ) {
       productData.AdditionalPictures.forEach((file) => {
-        formData.append('AdditionalPictures', file);
         formData.append('AdditionalPictures', file);
         // Hoặc nếu backend yêu cầu "AdditionalPictures[]" thì:
         // formData.append("AdditionalPictures[]", file);
