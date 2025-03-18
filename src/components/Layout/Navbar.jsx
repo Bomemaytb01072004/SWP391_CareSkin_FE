@@ -27,6 +27,7 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const token = localStorage.getItem('token');
   const CustomerId = localStorage.getItem('CustomerId');
+  const [userName, setUserName] = useState(null);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const sidebarRef = useRef(null);
@@ -92,7 +93,30 @@ function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (CustomerId && token) {
+        try {
+          const response = await fetch(
+            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
+          if (!response.ok) throw new Error(`Error: ${response.status}`);
+
+          const userData = await response.json();
+          setUserName(userData.FullName || 'Unknown User');
+        } catch (error) {
+          console.error('Error fetching user name:', error);
+          setUserName('Unknown User');
+        }
+      }
+    };
+
+    fetchUserName();
+  }, [CustomerId, token]);
   useEffect(() => {
     const fetchCart = async () => {
       if (CustomerId) {
@@ -365,23 +389,24 @@ function Navbar() {
 
           {/* Navigation Links - Enhanced */}
           <ul className="flex-1 flex justify-center lg:space-x-12 lg:mr-2 mx-auto space-x-4 text-gray-700 lg:font-medium">
-            {navLinks.map((link, index) => (
-              <li key={index}>
-                <Link
-                  to={link.path}
-                  className={`transition py-5 px-2 inline-block relative ${
-                    location.pathname === link.path
-                      ? 'text-emerald-600 font-bold' // Active link styling
-                      : 'text-gray-700 hover:text-emerald-600'
-                  }`}
-                >
-                  {link.name}
-                  {location.pathname === link.path && (
-                    <span className="absolute bottom-9 left-0 w-full h-0.5 bg-emerald-500 rounded-full"></span>
-                  )}
-                </Link>
-              </li>
-            ))}
+            {Array.isArray(navLinks) &&
+              navLinks.map((link, index) => (
+                <li key={index}>
+                  <Link
+                    to={link.path}
+                    className={`transition py-5 px-2 inline-block relative ${
+                      location?.pathname === link.path
+                        ? 'text-emerald-600 font-bold' // Active link styling
+                        : 'text-gray-700 hover:text-emerald-600'
+                    }`}
+                  >
+                    {link.name}
+                    {location?.pathname === link.path && (
+                      <span className="absolute bottom-9 left-0 w-full h-0.5 bg-emerald-500 rounded-full"></span>
+                    )}
+                  </Link>
+                </li>
+              ))}
           </ul>
 
           {/* Right Side Icons - Enhanced */}
@@ -432,7 +457,7 @@ function Navbar() {
                     className="text-xl hover:scale-110 transition-transform"
                   />
                   {cart.length > 0 && (
-                    <span className="absolute -top-2 -right-3 bg-emerald-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                    <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
                       {cart.length}
                     </span>
                   )}
@@ -654,7 +679,9 @@ function Navbar() {
                   <div className="flex flex-col">
                     <p className="text-sm text-gray-500 mb-2">Signed in as</p>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-800">User</span>
+                      <span className="font-medium text-gray-800">
+                        {userName ? userName : 'Loading...'}
+                      </span>
                       <button
                         onClick={handleLogout}
                         className="text-xs text-red-500 px-3 py-1 border border-red-500 rounded-full hover:bg-red-50"

@@ -295,7 +295,7 @@ const SkinQuizPage = () => {
         positive: true,
       },
     ],
-    Normal: [
+    'Normal Skin': [
       { text: 'Well-balanced oil production', positive: true },
       { text: 'Smooth texture with refined pores', positive: true },
       { text: 'Few to no imperfections', positive: true },
@@ -411,7 +411,7 @@ const SkinQuizPage = () => {
           apiQuestions.length > 1 ? answers[apiQuestions[1]?.id] : null;
 
         const result = {
-          skinType: skinType || 'Normal',
+          skinType: skinType || 'Normal Skin',
           concerns: skinConcern ? [skinConcern] : [],
           quizId: quizId,
           timestamp: new Date().toISOString(),
@@ -478,7 +478,8 @@ const SkinQuizPage = () => {
       console.log('Result API response:', resultData);
       setApiResultData(resultData);
       const finalResult = {
-        skinType: resultData.SkinType?.TypeName || 'Normal',
+        skinTypeId: resultData.SkinType?.SkinTypeId || 'Normal Skin',
+        skinType: resultData.SkinType?.TypeName || 'Normal Skin',
         skinTypeDescription: resultData.SkinType?.Description || '',
         totalScore: resultData.TotalScore,
         totalQuestions: resultData.TotalQuestions,
@@ -498,7 +499,9 @@ const SkinQuizPage = () => {
       // Still save local results as fallback if API fails
       const fallbackResult = {
         skinType:
-          apiQuestions.length > 0 ? answers[apiQuestions[0]?.id] : 'Normal',
+          apiQuestions.length > 0
+            ? answers[apiQuestions[0]?.id]
+            : 'Normal Skin',
         concerns: apiQuestions.length > 1 ? [answers[apiQuestions[1]?.id]] : [],
         quizId: quizId,
         timestamp: new Date().toISOString(),
@@ -1026,7 +1029,7 @@ const SkinQuizPage = () => {
                           <span className="text-3xl font-bold text-emerald-600">
                             {apiResultData?.SkinType?.TypeName ||
                               answers[1] ||
-                              'Normal'}
+                              'Normal Skin'}
                           </span>
                           <span className="ml-2 bg-emerald-600 text-white text-xs py-1 px-3 rounded-full">
                             Primary Type
@@ -1131,7 +1134,8 @@ const SkinQuizPage = () => {
                           {(() => {
                             // Get primary concerns based on skin type
                             const skinType =
-                              apiResultData?.SkinType?.TypeName || 'Normal';
+                              apiResultData?.SkinType?.TypeName ||
+                              'Normal Skin';
                             const concerns = [];
 
                             if (skinType.toLowerCase().includes('dry')) {
@@ -1206,7 +1210,8 @@ const SkinQuizPage = () => {
                         <p className="text-gray-600 mt-5 text-sm">
                           {(() => {
                             const skinType =
-                              apiResultData?.SkinType?.TypeName || 'Normal';
+                              apiResultData?.SkinType?.TypeName ||
+                              'Normal Skin';
                             if (skinType.toLowerCase().includes('dry'))
                               return 'Your dry skin needs products that restore moisture and strengthen your skin barrier. Focus on rich moisturizers, gentle cleansing, and ingredients like hyaluronic acid and ceramides.';
                             if (skinType.toLowerCase().includes('sensitive'))

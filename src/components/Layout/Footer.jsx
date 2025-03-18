@@ -27,7 +27,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto">
         {/* Newsletter Section - New Addition */}
         <div className="relative mb-16 bg-emerald-600 rounded-2xl overflow-hidden shadow-lg">
-          <div className="absolute inset-0 bg-[url('/src/assets/pattern-light.png')] opacity-10"></div>
+          <div className="absolute inset-0 opacity-10"></div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400 opacity-20 rounded-full -translate-y-1/3 translate-x-1/4"></div>
           <div className="absolute bottom-0 left-10 w-32 h-32 bg-emerald-300 opacity-20 rounded-full translate-y-1/3"></div>
 
