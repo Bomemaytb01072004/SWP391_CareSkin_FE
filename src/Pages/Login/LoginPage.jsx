@@ -20,9 +20,8 @@ const LoginPage = () => {
   const [loginPassword, setLoginPassword] = useState('password');
   const [loginPasswordType, setLoginPasswordType] = useState(false);
 
-
   const [registerPassword, setRegisterPassword] = useState('password');
-  const [confirmPassword, setConfirmPassword] = useState('password')
+  const [confirmPassword, setConfirmPassword] = useState('password');
   const [registerPasswordType, setRegisterPasswordType] = useState(false);
   const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
@@ -106,15 +105,14 @@ const LoginPage = () => {
 
   const formikLogin = useFormik({
     initialValues: {
-      username: "",
-      password: ""
+      username: '',
+      password: '',
     },
     validationSchema: Yup.object({
-      username: Yup.string()
-        .required("This field is required"),
+      username: Yup.string().required('This field is required'),
       password: Yup.string()
-        .required("You must enter a password")
-        .min(3, "Password must be at least 8 characters")
+        .required('You must enter a password')
+        .min(3, 'Password must be at least 8 characters'),
     }),
     onSubmit: async (values) => {
       const { username, password } = values;
@@ -141,7 +139,9 @@ const LoginPage = () => {
         }
 
         if (!data.token) {
-          toast.error(data.message || data.error || 'Invalid username or password.');
+          toast.error(
+            data.message || data.error || 'Invalid username or password.'
+          );
           return;
         }
 
@@ -185,14 +185,15 @@ const LoginPage = () => {
       userName: Yup.string()
         .required('Please enter username')
         .min(6, 'Username must be at least 6 characters'),
-      email: Yup.string()
-        .email('Invalid email')
-        .required('Please enter email'),
+      email: Yup.string().email('Invalid email').required('Please enter email'),
       password: Yup.string()
         .required('Please enter password')
         .min(3, 'Password minimum 3 characters'),
       confirmPassword: Yup.string()
-        .oneOf([Yup.ref('password'), null], 'Confirmation password does not match')
+        .oneOf(
+          [Yup.ref('password'), null],
+          'Confirmation password does not match'
+        )
         .required('Please confirm password'),
     }),
     onSubmit: async (values) => {
@@ -232,30 +233,30 @@ const LoginPage = () => {
   });
 
   const toggleLoginPassword = () => {
-    setLoginPasswordType(!loginPasswordType)
+    setLoginPasswordType(!loginPasswordType);
     if (loginPasswordType == true) {
-      setLoginPassword('password')
+      setLoginPassword('password');
     } else {
-      setLoginPassword('text')
+      setLoginPassword('text');
     }
   };
 
   const toggleRegisterPassword = () => {
-    setRegisterPasswordType(!registerPasswordType)
+    setRegisterPasswordType(!registerPasswordType);
     if (registerPasswordType == true) {
-      setRegisterPassword('password')
+      setRegisterPassword('password');
     } else {
-      setRegisterPassword('text')
+      setRegisterPassword('text');
     }
   };
 
   const toggleConfirmPassword = () => {
-    setConfirmPasswordType(!confirmPasswordType)
+    setConfirmPasswordType(!confirmPasswordType);
 
     if (confirmPasswordType == true) {
-      setConfirmPassword('password')
+      setConfirmPassword('password');
     } else {
-      setConfirmPassword('text')
+      setConfirmPassword('text');
     }
   };
 

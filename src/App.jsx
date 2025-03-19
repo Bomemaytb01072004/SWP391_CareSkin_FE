@@ -10,6 +10,7 @@ import CompareProduct from './Pages/CompareProductPage/CompareProductPage';
 import CartPage from './Pages/Cart/CartPage';
 import CheckoutPage from './Pages/Checkout/CheckoutPage';
 import OrderConfirmation from './Pages/Checkout/OrderConfirmation';
+import OrderConfirmationMoMo from './Pages/Checkout/OrderConfirmationMoMo';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
 import BlogPage from './Pages/Blog/BlogPage';
@@ -17,6 +18,7 @@ import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
+import AboutPage from './Pages/About/AboutPage';
 export default function App() {
   return (
     <AuthProvider>
@@ -32,9 +34,11 @@ export default function App() {
           <Route path="/product/:id" element={<ProductDetailedPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/blogs" element={<BlogPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/about" element={<AboutPage />} />          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route
+          <Route path="/momo-confirmation" element={<OrderConfirmationMoMo />} />
+
+        <Route
             path="/compare/:product1/:product2"
             element={<CompareProduct />}
           />
