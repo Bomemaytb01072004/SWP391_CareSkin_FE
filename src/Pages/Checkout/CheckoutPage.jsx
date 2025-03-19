@@ -540,14 +540,19 @@ const CheckoutPage = () => {
                   </div>
                 </div>
 
-                {/* Payment Method Section */}
+                {/* Payment Method Section - Enhanced */}
                 <div className="pt-2">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">
                     Payment Method
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {/* Cash on Delivery */}
                     <label
-                      className={`border rounded-lg p-4 flex items-center cursor-pointer ${formik.values.paymentMethod === 'cod' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        formik.values.paymentMethod === 'cod'
+                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                          : 'border-gray-200'
+                      }`}
                     >
                       <input
                         type="radio"
@@ -555,20 +560,62 @@ const CheckoutPage = () => {
                         value="cod"
                         checked={formik.values.paymentMethod === 'cod'}
                         onChange={formik.handleChange}
-                        className="form-radio h-5 w-5 text-emerald-600"
+                        className="form-radio h-5 w-5 text-emerald-600 ml-4"
                       />
-                      <div className="ml-3">
-                        <div className="font-medium text-gray-800">
-                          Cash on Delivery
+                      <div className="flex items-center justify-between flex-grow py-3 px-4">
+                        <div className="flex items-center">
+                          <div className="p-1.5 bg-gray-100 rounded-full mr-3">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-6 w-6 text-gray-600"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                              />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              Cash on Delivery
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Pay when you receive your order
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          Pay when you receive
-                        </div>
+                        {formik.values.paymentMethod === 'cod' && (
+                          <span className="relative flex h-6 w-6">
+                            <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="relative h-6 w-6 text-emerald-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        )}
                       </div>
                     </label>
 
+                    {/* VNPAY */}
                     <label
-                      className={`border rounded-lg p-4 flex items-center cursor-pointer ${formik.values.paymentMethod === 'vnpay' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
+                        formik.values.paymentMethod === 'vnpay'
+                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                          : 'border-gray-200 hover:border-emerald-200'
+                      }`}
                     >
                       <input
                         type="radio"
@@ -576,21 +623,53 @@ const CheckoutPage = () => {
                         value="vnpay"
                         checked={formik.values.paymentMethod === 'vnpay'}
                         onChange={formik.handleChange}
-                        className="form-radio h-5 w-5 text-emerald-600"
+                        className="form-radio h-5 w-5 text-emerald-600 ml-4 focus:ring-emerald-500"
                       />
-                      <div className="ml-3">
-                        <div className="font-medium text-gray-800">VNPay</div>
-                        <div className="text-xs text-gray-500">
-                          Bank transfer
+                      <div className="flex items-center justify-between flex-grow py-3 px-4">
+                        <div className="flex items-center">
+                          <div className="mr-3 bg-white rounded-md p-1 border border-gray-100 shadow-sm w-20 h-14 flex items-center justify-center">
+                            {/* VNPAY Logo */}
+                            <img
+                              src="https://downloadlogomienphi.com/sites/default/files/logos/download-logo-vector-vnpay-mien-phi.jpg"
+                              alt="VNPAY"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800 text-lg">
+                              VNPay
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Pay with bank card, QR code or e-wallet
+                            </div>
+                          </div>
                         </div>
+                        {formik.values.paymentMethod === 'vnpay' && (
+                          <span className="relative flex h-6 w-6">
+                            <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="relative h-6 w-6 text-emerald-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a 1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        )}
                       </div>
                     </label>
 
+                    {/* MoMo */}
                     <label
-                      className={`border rounded-lg p-4 flex items-center cursor-pointer ${
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
                         formik.values.paymentMethod === 'momo'
-                          ? 'border-emerald-500 bg-emerald-50'
-                          : 'border-gray-200'
+                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                          : 'border-gray-200 hover:border-emerald-200'
                       }`}
                     >
                       <input
@@ -599,13 +678,44 @@ const CheckoutPage = () => {
                         value="momo"
                         checked={formik.values.paymentMethod === 'momo'}
                         onChange={formik.handleChange}
-                        className="form-radio h-5 w-5 text-emerald-600"
+                        className="form-radio h-5 w-5 text-emerald-600 ml-4"
                       />
-                      <div className="ml-3">
-                        <div className="font-medium text-gray-800">MoMo</div>
-                        <div className="text-xs text-gray-500">
-                          Pay via MoMo wallet
+                      <div className="flex items-center justify-between flex-grow py-3 px-4">
+                        <div className="flex items-center">
+                          <div className="mr-3 bg-white rounded-md p-1 border border-gray-100 shadow-sm w-20 h-14 flex items-center justify-center">
+                            {/* MoMo Logo */}
+                            <img
+                              src="https://itviec.com/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBM0E3SHc9PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--3873048b5c25240e612222d38b001c927993024c/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdCem9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFJc0FXa0NMQUU9IiwiZXhwIjpudWxsLCJwdXIiOiJ2YXJpYXRpb24ifX0=--15c3f2f3e11927673ae52b71712c1f66a7a1b7bd/MoMo%20Logo.png"
+                              alt="MoMo"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800 text-lg">
+                              MoMo
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Pay with MoMo e-wallet
+                            </div>
+                          </div>
                         </div>
+                        {formik.values.paymentMethod === 'momo' && (
+                          <span className="relative flex h-6 w-6">
+                            <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="relative h-6 w-6 text-emerald-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        )}
                       </div>
                     </label>
                   </div>

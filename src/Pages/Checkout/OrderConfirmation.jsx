@@ -45,6 +45,7 @@ const OrderConfirmation = () => {
         const responseCode = queryParams.get('vnp_ResponseCode');
         const bankCode = queryParams.get('vnp_BankCode');
         const transactionDate = queryParams.get('vnp_PayDate');
+        const paymentAmount = queryParams.get('vnp_Amount');
 
         // Check if we have transaction parameters (online payment)
         if (txnRef) {
@@ -84,6 +85,24 @@ const OrderConfirmation = () => {
             await updateOrderStatus(extractedOrderId, 3); // Successful payment
             const details = await fetchOrderDetails(extractedOrderId); // Fetch order details
             setOrderDetails(details);
+
+            // Calculate payment amount in USD (amount from VNPAY is in VND x 100)
+            if (paymentAmount && details) {
+              // VNPAY amount is in smallest currency unit (VND * 100)
+              const amountInVND = parseInt(paymentAmount) / 100;
+              const amountInUSD = amountInVND / 24000; // Convert to USD using the specified rate
+
+              // Send payment confirmation email
+              await sendPaymentConfirmationEmail(
+                extractedOrderId,
+                details.Email || details.email || localStorage.getItem('email'),
+                details.Name ||
+                  details.name ||
+                  localStorage.getItem('username'),
+                amountInUSD.toFixed(2)
+              );
+            }
+
             setIsSuccess(true);
             setProgressStep(3);
             setMessage(
@@ -751,6 +770,52 @@ const OrderConfirmation = () => {
       <Footer />
     </>
   );
+};
+
+const sendPaymentConfirmationEmail = async (
+  orderId,
+  email,
+  customerName,
+  paymentAmount
+) => {
+  try {
+    if (!orderId || !email) {
+      console.error(
+        'Missing required parameters for payment confirmation email'
+      );
+      return;
+    }
+
+    const response = await fetch(
+      'http://careskinbeauty.shop:4456/api/Email/send-payment-confirmation',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: JSON.stringify({
+          OrderId: parseInt(orderId, 10),
+          Email: email,
+          CustomerName: customerName || 'Valued Customer',
+          PaymentAmount: paymentAmount,
+          PaymentMethod: 'VNPAY',
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to send payment confirmation email:', errorText);
+      throw new Error('Failed to send payment confirmation email');
+    }
+
+    console.log('Payment confirmation email sent successfully');
+  } catch (error) {
+    console.error('Error sending payment confirmation email:', error);
+    // We don't want to break the order flow if the email fails to send
+    // Just log the error and continue
+  }
 };
 
 export default OrderConfirmation;
