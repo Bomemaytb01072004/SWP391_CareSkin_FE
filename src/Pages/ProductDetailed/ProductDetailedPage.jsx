@@ -50,6 +50,13 @@ function ProductDetailedPage() {
       try {
         setLoading(true);
         const data = await fetchProductById(id);
+        
+        // Redirect if product is not active
+        if (!data.IsActive) {
+          navigate('/products');
+          return;
+        }
+        
         setProduct(data);
         if (data && data.Variations && data.Variations.length > 0) {
           setSelectedVariation(data.Variations[0]); // Default to the first variation

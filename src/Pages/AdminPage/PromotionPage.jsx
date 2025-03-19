@@ -23,15 +23,12 @@ const PromotionPageAdmin = () => {
 	if (promotionsLoading) return <div>Loading...</div>;
 	if (promotionsError) return <div>Error fetching data</div>;
 
-	// Calculate stats for the cards
 	const totalPromotions = promotions.length;
 	const activePromotions = promotions.filter(promo => {
-		// Check if promotion has an IsActive property
 		if (promo.hasOwnProperty('IsActive')) {
 			return promo.IsActive;
 		}
 		
-		// If no IsActive property, check dates
 		const now = new Date();
 		const startDate = new Date(promo.StartDate);
 		const endDate = new Date(promo.EndDate);
@@ -56,7 +53,6 @@ const PromotionPageAdmin = () => {
 				<Header title='Promotions' />
 
 				<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
-					{/* STATS */}
 					<motion.div
 						className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8'
 						initial={{ opacity: 0, y: 20 }}

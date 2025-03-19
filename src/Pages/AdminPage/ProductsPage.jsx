@@ -16,6 +16,7 @@ const ProductsPageAdmin = () => {
 		data: products,
 		isLoading: productsLoading,
 		error: productsError,
+		refetch: refetchProducts
 	} = useQuery({
 		queryKey: ["products"],
 		queryFn: fetchProducts,
@@ -45,7 +46,7 @@ const ProductsPageAdmin = () => {
 						<StatCard name='Low Stock' icon={AlertTriangle} value={23} color='#F59E0B' />
 						<StatCard name='Total Revenue' icon={DollarSign} value={"$543,210"} color='#EF4444' />
 					</motion.div>
-					<ProductsTable products={products} />
+					<ProductsTable products={products} refetchProducts={refetchProducts} />
 
 
 				</main>

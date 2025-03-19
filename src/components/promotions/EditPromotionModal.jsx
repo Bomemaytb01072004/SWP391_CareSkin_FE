@@ -31,14 +31,12 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
     const isChecked = e.target.checked;
     
     if (isChecked) {
-      // Add product to the list
       setSelectedProducts(prev => [...prev, productId]);
       setEditPromotion(prev => ({
         ...prev,
         ApplicableProducts: [...(prev.ApplicableProducts || []), productId]
       }));
     } else {
-      // Remove product from the list
       setSelectedProducts(prev => prev.filter(id => id !== productId));
       setEditPromotion(prev => ({
         ...prev,
@@ -58,7 +56,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
         </div>
 
         <div className="space-y-6">
-          {/* Promotion Name */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Promotion Name <span className="text-red-500">*</span>
@@ -74,7 +71,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
             />
           </div>
 
-          {/* Promotion Type */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Promotion Type <span className="text-red-500">*</span>
@@ -122,7 +118,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
             </div>
           </div>
 
-          {/* Discount Percentage */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Discount Percentage <span className="text-red-500">*</span>
@@ -140,7 +135,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
             />
           </div>
 
-          {/* Date Range */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -170,7 +164,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
             </div>
           </div>
 
-          {/* Applicable Products */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Applicable Products
@@ -198,7 +191,6 @@ const EditPromotionModal = ({ editPromotionState, setEditPromotion, products, ha
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="flex justify-end pt-4">
             <button
               type="button"

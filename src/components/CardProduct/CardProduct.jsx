@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
 function CardProduct({ product, addToCart, addToCompare }) {
+
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -59,7 +60,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">
-                {product.rating || '0.0'}
+                {product.AverageRating.toFixed(2) || '0.0'}
                 <Star size={16} className="fill-yellow-500" />
               </span>
             </div>

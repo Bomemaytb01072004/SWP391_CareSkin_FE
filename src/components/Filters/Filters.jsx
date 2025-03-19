@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import './Filters.css';
 import SearchProduct from '../SearchProduct/SearchProduct';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { fetchCategories, fetchSkinTypeProduct } from '../../utils/api';
+import { LoadingContext } from '../../Pages/Products/ProductsPage';
 
 const Filters = ({ onFilterChange }) => {
   const [selectedFilters, setSelectedFilters] = useState({
@@ -12,63 +12,18 @@ const Filters = ({ onFilterChange }) => {
     skinType: [],
   });
 
-  const [categories, setCategories] = useState([]);
-  const [skinTypes, setSkinTypes] = useState([]);
+  // Use the context to get shared data and loading state
+  const { categories, skinTypes, isLoading } = useContext(LoadingContext);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchCategories();
-
-        const splittedCategories = data.flatMap((item) =>
-          item.split(',').map((str) => str.trim())
-        );
-        const uniqueCategories = Array.from(new Set(splittedCategories));
-
-        const mappedCategories = uniqueCategories.map((cat) => {
-          const capitalizedLabel =
-            cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
-          return {
-            label: capitalizedLabel,
-            value: capitalizedLabel.replace(/\s+/g, '_'),
-          };
-        });
-
-        setCategories(mappedCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    })();
-  }, []);
-
-  const priceRanges = [
+  const priceRanges = useMemo(() => [
     { label: 'Under $25', value: 'under_25' },
     { label: '$25 - $50', value: '25_50' },
     { label: '$50 - $100', value: '50_100' },
     { label: 'Over $100', value: 'over_100' },
-  ];
+  ], []);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const dataSkinType = await fetchSkinTypeProduct();
-
-        const mappedSkinTypes = dataSkinType.map((item) => {
-          const labelWithoutSkin = item.TypeName.replace(' Skin', '');
-          return {
-            label: labelWithoutSkin,
-            value: item.SkinTypeId,
-          };
-        });
-
-        setSkinTypes(mappedSkinTypes);
-      } catch (error) {
-        console.error('Error fetching skin type:', error);
-      }
-    })();
-  }, []);
-
-  const handleFilterChange = (filterType, value) => {
+  // Optimize filter change handler with useCallback
+  const handleFilterChange = useCallback((filterType, value) => {
     setSelectedFilters((prev) => {
       const updatedFilters = { ...prev };
       if (updatedFilters[filterType].includes(value)) {
@@ -84,10 +39,19 @@ const Filters = ({ onFilterChange }) => {
       }
       return updatedFilters;
     });
-  };
-
+  }, [onFilterChange]);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // Debug selected filters
+  useEffect(() => {
+    console.log('Selected filters:', selectedFilters);
+  }, [selectedFilters]);
+
+  // If loading, don't render the filters
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <>

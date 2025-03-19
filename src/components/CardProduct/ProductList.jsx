@@ -132,14 +132,16 @@ function ProductList({ products }) {
   return (
     <div className="mx-auto p-2">
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
-        {products.map((product) => (
-          <CardProduct
-            key={product.ProductId}
-            product={product}
-            addToCart={addToCart}
-            addToCompare={addToCompare}
-          />
-        ))}
+        {products
+          .filter((product) => product.IsActive)
+          .map((product) => (
+            <CardProduct
+              key={product.ProductId}
+              product={product}
+              addToCart={addToCart}
+              addToCompare={addToCompare}
+            />
+          ))}
       </div>
 
       {compareList.length > 0 && (

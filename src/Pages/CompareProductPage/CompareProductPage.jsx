@@ -40,7 +40,10 @@ function CompareProduct() {
         }
         for (let id of listIdCompare) {
           const res = await fetchProductById(id);
-          listProduct.push(res);
+          // Only add the product if it's active
+          if (res.IsActive) {
+            listProduct.push(res);
+          }
         }
         setProducts(listProduct);
       } catch (err) {

@@ -14,31 +14,49 @@ import OrderConfirmationMoMo from './Pages/Checkout/OrderConfirmationMoMo';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
 import BlogPage from './Pages/Blog/BlogPage';
+import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
+
 import AboutPage from './Pages/About/AboutPage';
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/joinus" element={<LoginPage />} />
-        <Route path="/skinquiz" element={<SkinQuizPage />} />
-        <Route path="/skinroutine" element={<SkinRoutinePage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/product/:id" element={<ProductDetailedPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/blogs" element={<BlogPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/momo-confirmation" element={<OrderConfirmationMoMo />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/joinus" element={<LoginPage />} />
+          <Route path="/skinquiz" element={<SkinQuizPage />} />
+          <Route path="/skinroutine" element={<SkinRoutinePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/product/:id" element={<ProductDetailedPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/blogs" element={<BlogPage />} />
+        <Route path="/about" element={<AboutPage />} />          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/momo-confirmation" element={<OrderConfirmationMoMo />} />
 
         <Route
-          path="/compare/:product1/:product2"
-          element={<CompareProduct />}
-        />
-        <Route path="/profile" element={<UserProfile />} />
-        <Route path="/admin/*" element={<Admin />} />
-      </Routes>
-    </Router>
+            path="/compare/:product1/:product2"
+            element={<CompareProduct />}
+          />
+          
+          {/* Protected User Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/profile" element={<UserProfile />} />
+          </Route>
+          
+          {/* Admin Routes - Protected by Admin Role */}
+          <Route element={<ProtectedRoute requireAdmin={true} />}>
+            <Route path="/admin/*" element={<Admin />} />
+          </Route>
+          
+          {/* Error Pages */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }

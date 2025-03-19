@@ -13,22 +13,38 @@ function EditProductModal({
     previewUrlEdit,
     setPreviewUrlEdit,
     previewUrlAdditionalImagesEditState,
-    setPreviewUrlAdditionalImagesEdit,
+    setPreviewUrlAdditionalImagesEditState,
     handleRemoveExistingAdditionalImage,
     handleAdditionalImagesChangeEdit,
     handleEdit,
-    onClose,      // Hàm đóng modal
-    skinTypeList, // list skin type do cha truyền xuống
+    onClose,      
+    skinTypeList,
 
-    // Các handler xóa Variation, Ingredient,... 
-    // (nếu cần) bạn truyền thêm vào props
+
     handleRemoveEditVariation,
     handleRemoveEditSkinType,
     handleRemoveEditUsage,
     handleRemoveEditMainIngredient,
     handleRemoveEditDetailIngredient,
 }) {
-    if (!editProductState) return null; // Bảo vệ tránh lỗi
+    if (!editProductState) return null;
+
+    // const handleAdditionalImagesChangeEdit = (e) => {
+    //     if (!e.target.files) return;
+    //     const files = Array.from(e.target.files);
+    
+    //     const newPreviews = files.map((file) => URL.createObjectURL(file));
+    //     setPreviewUrlAdditionalImagesEditState((prev) => [...prev, ...newPreviews]);
+    
+    //     const validFiles = files.filter((file) => file.size > 0);
+    //     if (validFiles.length > 0) {
+    //       setEditProduct((prev) => ({
+    //         ...prev,
+    //         AdditionalPicturesFile: [...(prev.AdditionalPicturesFile || []), ...validFiles],
+    //       }));
+    //     }
+    //   };
+    
 
     return (
         <div
@@ -48,7 +64,6 @@ function EditProductModal({
                     </button>
                 </div>
 
-                {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <input
                         type="text"
@@ -70,7 +85,6 @@ function EditProductModal({
                         }
                     />
 
-                    {/* Brand */}
                     <div className="relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">Brand</label>
                         <input
@@ -82,7 +96,6 @@ function EditProductModal({
                                 const val = e.target.value;
                                 setBrandNameInputEdit(val);
                                 setShowBrandSuggestionsEdit(!!val);
-                                // Chỉ đổi brandName để hiển thị, giữ nguyên BrandId
                                 setEditProduct((prev) => ({
                                     ...prev,
                                     BrandName: val,
@@ -100,7 +113,6 @@ function EditProductModal({
                                             key={brand.BrandId}
                                             className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
-                                                // Khi user chọn => set BrandId
                                                 setEditProduct((prev) => ({
                                                     ...prev,
                                                     BrandName: brand.Name,
@@ -117,7 +129,6 @@ function EditProductModal({
                         )}
                     </div>
 
-                    {/* Ảnh chính */}
                     <div className="relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">Image</label>
                         <div className="flex flex-row items-center gap-4">
@@ -181,7 +192,6 @@ function EditProductModal({
                         </div>
                     </div>
 
-                    {/* Ảnh phụ */}
                     <div className="mt-2 relative col-span-2">
                         <label className="block mb-1 text-gray-700 font-semibold">
                             Additional images
@@ -194,18 +204,13 @@ function EditProductModal({
                                             key={index}
                                             className="relative w-40 h-40 border border-gray-300 rounded overflow-hidden"
                                         >
-                                            <Link
-                                                to={url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-block w-40 h-40"
-                                            >
+                                            <div className="inline-block w-40 h-40">
                                                 <img
                                                     src={url}
                                                     alt={`Additional ${index}`}
                                                     className="w-full h-full object-cover"
                                                 />
-                                            </Link>
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveExistingAdditionalImage(index)}
@@ -218,7 +223,6 @@ function EditProductModal({
                                 </div>
                             )}
 
-                            {/* Thêm ảnh mới */}
                             <label
                                 htmlFor="file-upload-additional-edit"
                                 className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
@@ -238,7 +242,6 @@ function EditProductModal({
                     </div>
                 </div>
 
-                {/* Description */}
                 <div className="mb-4">
                     <label className="block mb-1 text-gray-700 font-semibold">
                         Description
@@ -254,7 +257,6 @@ function EditProductModal({
                     />
                 </div>
 
-                {/* Skin Types */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Skin Types</h4>
@@ -295,7 +297,6 @@ function EditProductModal({
                                 }}
                             />
 
-                            {/* Autocomplete skin type */}
                             {item.showSuggestions && item.TypeName && (
                                 <ul className="absolute left-0 right-0 z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
                                     {skinTypeList
@@ -337,7 +338,6 @@ function EditProductModal({
                     ))}
                 </div>
 
-                {/* Variations */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Variations</h4>
@@ -404,7 +404,6 @@ function EditProductModal({
                     ))}
                 </div>
 
-                {/* Main Ingredients */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Main Ingredients</h4>
@@ -473,7 +472,6 @@ function EditProductModal({
                     ))}
                 </div>
 
-                {/* Detail Ingredients */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Detail Ingredients</h4>
@@ -522,7 +520,6 @@ function EditProductModal({
                     ))}
                 </div>
 
-                {/* Usages */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-700">Usages</h4>

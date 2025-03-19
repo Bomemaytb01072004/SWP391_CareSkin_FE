@@ -1,21 +1,21 @@
+
 // api.js
-const apiURLcustomers = 'http://careskinbeauty.shop:4456/api/Customer';
-const apiURLproducts = 'http://careskinbeauty.shop:4456/api/Product';
-const apiURLorders = 'http://careskinbeauty.shop:4456/api/Order/history';
-const apiURLcategories =
-  'http://careskinbeauty.shop:4456/api/Product/categories';
-const apiURLBrands = 'http://careskinbeauty.shop:4456/api/Brand';
-const apiURLSkinTypeProduct = 'http://careskinbeauty.shop:4456/api/SkinType';
-const apiURLDeleteUsage = 'http://careskinbeauty.shop:4456/api/Product/usage';
-const apiURLDeleteSkinType =
-  'http://careskinbeauty.shop:4456/api/Product/skin-type';
-const apiURLDeleteVariation =
-  'http://careskinbeauty.shop:4456/api/Product/variation';
-const apiURLDeleteMainIngredient =
-  'http://careskinbeauty.shop:4456/api/Product/main-ingredient';
-const apiURLDeleteMainDetailIngredient =
-  'http://careskinbeauty.shop:4456/api/Product/detail-ingredient';
-const apiURLPromotions = 'http://careskinbeauty.shop:4456/api/Promotion';
+const apiBaseURL = 'http://careskinbeauty.shop:4456';
+const apiURLcustomers = `${apiBaseURL}/api/Customer`;
+const apiURLproducts = `${apiBaseURL}/api/Product`;
+const apiURLorders = `${apiBaseURL}/api/Order/history`;
+const apiURLcategories = `${apiBaseURL}/api/Product/categories`;
+const apiURLBrands = `${apiBaseURL}/api/Brand`;
+const apiURLSkinTypeProduct = `${apiBaseURL}/api/SkinType`;
+const apiURLDeleteUsage = `${apiBaseURL}/api/Product/usage`;
+const apiURLDeleteSkinType = `${apiBaseURL}/api/Product/skin-type`;
+const apiURLDeleteVariation = `${apiBaseURL}/api/Product/variation`;
+const apiURLDeleteMainIngredient = `${apiBaseURL}/api/Product/main-ingredient`;
+const apiURLDeleteMainDetailIngredient = `${apiBaseURL}/api/Product/detail-ingredient`;
+const apiURLPromotions = `${apiBaseURL}/api/Promotion`;
+const apiURLBlogs = `${apiBaseURL}/api/BlogNews`;
+const apiURLQuizzes = `${apiBaseURL}/api/Quiz`;
+const apiURLSkinTypes = `${apiBaseURL}/api/SkinType`;
 
 /* ===============================
         CUSTOMERS API
@@ -99,6 +99,40 @@ export async function fetchCategories() {
   }
 }
 
+// Fetch categories from active products only
+export async function fetchCategoriesFromActiveProducts() {
+  try {
+    // First fetch all products
+    const response = await fetch(apiURLproducts);
+    if (!response.ok) throw new Error('Error fetching products');
+    
+    const products = await response.json();
+    
+    // Filter for active products only
+    const activeProducts = products.filter(product => product.IsActive);
+    
+    // Extract categories from active products
+    const categoriesFromActive = activeProducts.map(product => product.Category);
+    
+    return categoriesFromActive;
+  } catch (error) {
+    console.error('Error fetching categories from active products', error);
+    throw error;
+  }
+}
+
+// Fetch only active products (optimized version for ProductsPage)
+export async function fetchActiveProductsWithDetails() {
+  try {
+    const response = await fetch(`${apiURLproducts}?isActive=true`);
+    if (!response.ok) throw new Error('Error fetching active products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching active products:', error);
+    throw error;
+  }
+}
+
 /* ===============================
         BRAND API
 ================================== */
@@ -141,6 +175,45 @@ export async function createBrand(brandData) {
   }
 }
 
+export async function updateBrand(id, brandData) {
+  try {
+    const formData = new FormData();
+
+    formData.append('Name', brandData.Name);
+    // Không gửi IsActive vì API không hỗ trợ
+
+    if (brandData.PictureFile instanceof File) {
+      formData.append('PictureFile', brandData.PictureFile);
+    }
+
+    const response = await fetch(`${apiURLBrands}/${id}`, {
+      method: 'PUT',
+      body: formData,
+    });
+    if (!response.ok) throw new Error('Error updating brand');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating brand:', error);
+    throw error;
+  }
+}
+
+export async function deleteBrand(id) {
+  try {
+    const response = await fetch(`${apiURLBrands}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete brand');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error deleting brand:', error);
+    throw error;
+  }
+}
+
 /* ===============================
         SKIN TYPE PRODUCT API
 ================================== */
@@ -152,6 +225,28 @@ export async function fetchSkinTypeProduct() {
     return await response.json();
   } catch (error) {
     console.error('Error fetching skin type', error);
+    throw error;
+  }
+}
+
+export async function fetchActiveProducts() {
+  try {
+    const response = await fetch(`${apiURLproducts}/active`);
+    if (!response.ok) throw new Error('Error fetching active products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching active products:', error);
+    throw error;
+  }
+}
+
+export async function fetchInactiveProducts() {
+  try {
+    const response = await fetch(`${apiURLproducts}/inactive`);
+    if (!response.ok) throw new Error('Error fetching inactive products');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching inactive products:', error);
     throw error;
   }
 }
@@ -706,6 +801,7 @@ export async function fetchActivePromotions() {
     throw error;
   }
 }
+
 // Fetch only promotions where PromotionType = 2
 export async function fetchAvailablePromotions() {
   try {
@@ -714,7 +810,7 @@ export async function fetchAvailablePromotions() {
 
     const promotions = await response.json();
 
-    // ✅ Filter promotions to only include PromotionType = 2
+    // Filter promotions to only include PromotionType = 2
     return promotions.filter((promo) => promo.PromotionType === 2);
   } catch (error) {
     console.error('Error fetching promotions:', error);
@@ -840,3 +936,384 @@ export async function deactivatePromotion(id) {
     throw error;
   }
 }
+
+/* ===============================
+        BLOGS API
+================================== */
+// Fetch all blogs
+export async function fetchBlogs() {
+  try {
+    const response = await fetch(apiURLBlogs);
+    if (!response.ok) throw new Error('Error fetching blogs');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    throw error;
+  }
+}
+
+// Fetch blog by ID
+export async function fetchBlogById(id) {
+  try {
+    const response = await fetch(`${apiURLBlogs}/${id}`);
+    if (!response.ok) throw new Error('Error fetching blog by ID');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching blog by ID:', error);
+    throw error;
+  }
+}
+
+// Create a new blog
+export async function createBlog(blogData) {
+  try {
+    const formData = new FormData();
+
+    // Add blog data to formData
+    formData.append('Title', blogData.Title);
+    formData.append('Content', blogData.Content);
+
+    // Handle the image file if present
+    if (blogData.PictureFile instanceof File) {
+      formData.append('PictureFile', blogData.PictureFile);
+    }
+
+    const response = await fetch(apiURLBlogs, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create blog');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating blog:', error);
+    throw error;
+  }
+}
+
+// Update a blog
+export async function updateBlog(id, blogData) {
+  try {
+    const formData = new FormData();
+
+    // Add blog data to formData
+    formData.append('Title', blogData.Title);
+    formData.append('Content', blogData.Content);
+
+    // Handle the image file if present
+    if (blogData.PictureFile instanceof File) {
+      formData.append('PictureFile', blogData.PictureFile);
+    }
+
+    const response = await fetch(`${apiURLBlogs}/${id}`, {
+      method: 'PUT',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update blog');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating blog:', error);
+    throw error;
+  }
+}
+
+// Delete a blog
+export async function deleteBlog(id) {
+  try {
+    const response = await fetch(`${apiURLBlogs}/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete blog');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting blog:', error);
+    throw error;
+  }
+}
+
+/* ===============================
+        QUIZ API
+================================== */
+
+// Fetch all quizzes
+export async function fetchQuizzes() {
+  try {
+    const response = await fetch(apiURLQuizzes);
+    if (!response.ok) throw new Error('Error fetching quizzes');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching quizzes:', error);
+    throw error;
+  }
+}
+
+// Fetch active quizzes
+export async function fetchActiveQuizzes() {
+  try {
+    const response = await fetch(`${apiURLQuizzes}/active`);
+    if (!response.ok) throw new Error('Error fetching active quizzes');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching active quizzes:', error);
+    throw error;
+  }
+}
+
+// Fetch inactive quizzes
+export async function fetchInactiveQuizzes() {
+  try {
+    const response = await fetch(`${apiURLQuizzes}/inactive`);
+    if (!response.ok) throw new Error('Error fetching inactive quizzes');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching inactive quizzes:', error);
+    throw error;
+  }
+}
+
+// Fetch quiz by ID
+export async function fetchQuizById(id) {
+  try {
+    const response = await fetch(`${apiURLQuizzes}/${id}`);
+    if (!response.ok) throw new Error('Error fetching quiz by ID');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching quiz by ID:', error);
+    throw error;
+  }
+}
+
+// Create a new quiz
+export async function createQuiz(quizData) {
+  try {
+    const response = await fetch(apiURLQuizzes, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(quizData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error creating quiz');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating quiz:', error);
+    throw error;
+  }
+}
+
+// Update a quiz
+export async function updateQuiz(id, quizData) {
+  try {
+    const response = await fetch(`${apiURLQuizzes}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(quizData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error updating quiz');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating quiz:', error);
+    throw error;
+  }
+}
+
+// Delete a quiz
+export async function deleteQuiz(id) {
+  try {
+    const response = await fetch(`${apiURLQuizzes}/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error deleting quiz');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting quiz:', error);
+    throw error;
+  }
+}
+
+/* ===============================
+        SKIN TYPE API
+================================== */
+
+// Fetch all skin types
+export async function fetchSkinTypes() {
+  try {
+    const response = await fetch(apiURLSkinTypes);
+    if (!response.ok) throw new Error('Error fetching skin types');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching skin types:', error);
+    throw error;
+  }
+}
+
+// Fetch active skin types
+export async function fetchActiveSkinTypes() {
+  try {
+    const response = await fetch(`${apiURLSkinTypes}/active`);
+    if (!response.ok) throw new Error('Error fetching active skin types');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching active skin types:', error);
+    throw error;
+  }
+}
+
+// Fetch inactive skin types
+export async function fetchInactiveSkinTypes() {
+  try {
+    const response = await fetch(`${apiURLSkinTypes}/inactive`);
+    if (!response.ok) throw new Error('Error fetching inactive skin types');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching inactive skin types:', error);
+    throw error;
+  }
+}
+
+// Fetch skin type by id
+export async function fetchSkinTypeById(id) {
+  try {
+    const response = await fetch(`${apiURLSkinTypes}/${id}`);
+    if (!response.ok) throw new Error(`Error fetching skin type with id ${id}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching skin type with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// Create skin type
+export async function createSkinType(skinTypeData) {
+  try {
+    const response = await fetch(apiURLSkinTypes, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(skinTypeData),
+    });
+    if (!response.ok) throw new Error('Error creating skin type');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating skin type:', error);
+    throw error;
+  }
+}
+
+// Update skin type
+export async function updateSkinType(id, skinTypeData) {
+  try {
+    const response = await fetch(`${apiURLSkinTypes}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(skinTypeData),
+    });
+    if (!response.ok) throw new Error(`Error updating skin type with id ${id}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error updating skin type with id ${id}:`, error);
+    throw error;
+  }
+}
+
+// Delete skin type
+export async function deleteSkinType(id) {
+  try {
+    const response = await fetch(`${apiURLSkinTypes}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`Error deleting skin type with id ${id}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`Error deleting skin type with id ${id}:`, error);
+    throw error;
+  }
+}
+
+export default {
+  fetchCustomers,
+  fetchCustomerById,
+  createCustomer,
+  fetchProducts,
+  fetchProductById,
+  fetchCategories,
+  fetchBrands,
+  createBrand,
+  fetchSkinTypeProduct,
+  fetchActiveProducts,
+  fetchInactiveProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  deleteProductUsage,
+  deleteProductSkinType,
+  deleteProductVariation,
+  deleteProductMainIngredient,
+  deleteProductDetailIngredient,
+  fetchOrders,
+  fetchOrderById,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+  fetchPromotions,
+  fetchActivePromotions,
+  fetchAvailablePromotions,
+  fetchPromotionById,
+  createPromotion,
+  updatePromotion,
+  deletePromotion,
+  setProductDiscount,
+  getProductDiscounts,
+  updateProductDiscountStatus,
+  deactivatePromotion,
+  fetchBlogs,
+  fetchBlogById,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+  fetchQuizzes,
+  fetchActiveQuizzes,
+  fetchInactiveQuizzes,
+  fetchQuizById,
+  createQuiz,
+  updateQuiz,
+  deleteQuiz,
+  fetchSkinTypes,
+  fetchActiveSkinTypes,
+  fetchInactiveSkinTypes,
+  fetchSkinTypeById,
+  createSkinType,
+  updateSkinType,
+  deleteSkinType,
+  fetchCategoriesFromActiveProducts,
+  fetchActiveProductsWithDetails,
+};
