@@ -14,6 +14,8 @@ import BrandsPage from './Pages/AdminPage/BrandsPage'
 import BlogsPage from './Pages/AdminPage/BlogsPage'
 import QuizzesPage from './Pages/AdminPage/QuizzesPage'
 import SkinTypesPage from './Pages/AdminPage/SkinTypesPage'
+import Rating from './Pages/AdminPage/RatingsPage'
+import RoutinesPage from './Pages/AdminPage/RoutinesPage'
 
 function Admin() {
 	return (
@@ -37,6 +39,8 @@ function Admin() {
 				<Route path='blogs' element={<BlogsPage />} />
 				<Route path='quizzes' element={<QuizzesPage />} />
 				<Route path='skintypes' element={<SkinTypesPage />} />
+				<Route path='ratings' element={<Rating />} />
+				<Route path='routines' element={<RoutinesPage />} />
 				<Route path='settings' element={<SettingsPage />} />
 			</Routes>
 		</div>
