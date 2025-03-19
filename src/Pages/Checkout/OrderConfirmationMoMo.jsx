@@ -206,19 +206,22 @@ const OrderConfirmationMoMo = () => {
 
         // Send data to MoMo IPN API
         const payloadToSend = {
-          partnerCode: partnerCode,
-          orderId: orderIdParam,
-          requestId: requestId,
-          amount: Number(amount),
-          orderInfo: orderInfo,
-          orderType: orderType,
-          transId: Number(transId),
-          resultCode: Number(resultCode),
-          message: message,
-          payType: '', // As requested, leave empty
-          responseTime: Number(responseTime),
-          extraData: '', // As requested, leave empty
-          signature: signature,
+          callbackDto: {
+            // Wrap everything in callbackDto
+            partnerCode: partnerCode,
+            orderId: orderIdParam,
+            requestId: requestId,
+            amount: Number(amount),
+            orderInfo: orderInfo,
+            orderType: orderType,
+            transId: transId, // Keep as string, don't convert to Number
+            resultCode: Number(resultCode),
+            message: message,
+            payType: '',
+            responseTime: Number(responseTime),
+            extraData: '',
+            signature: signature,
+          },
         };
 
         console.log('Sending to MoMo IPN API:', payloadToSend);
