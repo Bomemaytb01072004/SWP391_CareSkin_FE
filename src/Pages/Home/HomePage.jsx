@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import SloganCarousel from '../../components/HomePage/Carousel/SloganCarousel';
@@ -9,7 +9,9 @@ import IconSlider from '../../components/HomePage/Carousel/IconSlider';
 import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
 import FacebookPosts from '../../components/HomePage/FacebookPosts';
 import { motion } from 'framer-motion';
+import { fetchSkinTypeProduct, fetchProducts } from '../../utils/api.js'; // Import the API functions
 import {
+  // ...existing imports
   faDroplet,
   faSun,
   faJar,
@@ -23,8 +25,20 @@ import {
   faRecycle,
   faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom'; // Import Link for navigation
 
 function HomePage() {
+  // Add state for skin types
+  const [skinTypes, setSkinTypes] = useState([]);
+  const [loadingSkinTypes, setLoadingSkinTypes] = useState(true);
+  // Add new state for products
+  const [products, setProducts] = useState([]);
+
+  // Add state for blog posts
+  const [blogs, setBlogs] = useState([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [errorBlogs, setErrorBlogs] = useState('');
+
   // Featured articles data
   const blogPosts = [
     {
@@ -119,6 +133,144 @@ function HomePage() {
       description: 'Created by skincare scientists with decades of experience',
     },
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingSkinTypes(true);
+
+        // Fetch skin types and all products
+        const [skinTypeData, productsData] = await Promise.all([
+          fetchSkinTypeProduct(),
+          fetchProducts(),
+        ]);
+
+        // Object to store first matching product image for each skin type
+        const skinTypeProductImageMap = {};
+
+        // Filter products that have **exactly one** skin type
+        const filteredProducts = productsData.filter(
+          (product) =>
+            product.ProductForSkinTypes &&
+            Array.isArray(product.ProductForSkinTypes) &&
+            product.ProductForSkinTypes.length === 1 // Only products with exactly one skin type
+        );
+
+        // Iterate over filtered products and map images to corresponding skin types
+        filteredProducts.forEach((product) => {
+          const skinTypeId = product.ProductForSkinTypes[0].SkinTypeId; // Get the single skin type ID
+          if (!skinTypeProductImageMap[skinTypeId]) {
+            // Store the first product image found
+            if (product.PictureUrl && product.PictureUrl.trim() !== '') {
+              skinTypeProductImageMap[skinTypeId] = product.PictureUrl;
+            }
+          }
+        });
+
+        // Process skin types, adding product count and selected images
+        const enhancedSkinTypes = skinTypeData.map((skinType) => {
+          const productCount = productsData.filter(
+            (product) =>
+              product.ProductForSkinTypes &&
+              product.ProductForSkinTypes.some(
+                (p) => p.SkinTypeId === skinType.SkinTypeId
+              )
+          ).length;
+
+          return {
+            id: skinType.SkinTypeId,
+            title: skinType.TypeName,
+            image:
+              skinTypeProductImageMap[skinType.SkinTypeId] ||
+              '/images/skintypes/default.jpg', // Use the matched product image or a default
+            description: `Products specially formulated for ${skinType.TypeName.toLowerCase()}`,
+            products: productCount,
+          };
+        });
+
+        setSkinTypes(enhancedSkinTypes);
+      } catch (error) {
+        console.error('Error fetching skin type products:', error);
+      } finally {
+        setLoadingSkinTypes(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // New useEffect to fetch blog posts
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      setLoadingBlogs(true);
+      try {
+        const response = await fetch(
+          'http://careskinbeauty.shop:4456/api/BlogNews'
+        );
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        // Process and fix image URLs
+        const processedBlogs = data.map((blog) => ({
+          ...blog,
+          // Fix image URLs if needed
+          Picture: blog.Picture
+            ? blog.Picture.startsWith('http')
+              ? blog.Picture
+              : `http://careskinbeauty.shop:4456${blog.Picture.startsWith('/') ? '' : '/'}${blog.Picture}`
+            : null,
+        }));
+
+        // Sort blogs in descending order by BlogId
+        const sortedBlogs = processedBlogs.sort((a, b) => b.BlogId - a.BlogId);
+        setBlogs(sortedBlogs);
+      } catch (error) {
+        console.error('Fetch error:', error);
+        setErrorBlogs('Failed to load blog data. Please try again later.');
+      } finally {
+        setLoadingBlogs(false);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
+
+  // Function to truncate text to a specific length
+  const truncateText = (text, maxLength) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  // Update the formatDate function to handle the new date format
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      // Handle both date formats - the new "MM/DD/YYYY hh:mm:ss AM/PM" and old ISO format
+      const date = dateString.includes('/')
+        ? new Date(dateString.split(' ')[0]) // Extract just the date part
+        : new Date(dateString);
+
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.log('Date parsing error:', error);
+      return dateString; // Return the original string if parsing fails
+    }
+  };
+
+  // Get reading time estimate (roughly 200 words per minute)
+  const getReadingTime = (content) => {
+    if (!content) return '1 min read';
+    const wordCount = content.split(/\s+/).length;
+    const minutes = Math.ceil(wordCount / 200);
+    return `${minutes} min read`;
+  };
 
   return (
     <>
@@ -224,6 +376,73 @@ function HomePage() {
         <IconSlider />
       </motion.div>
 
+      {/* Shop by Skin Type Section */}
+      <motion.div
+        className="py-16 bg-white mx-auto max-w-7xl px-5 mt-10"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
+          Shop by Skin Type
+        </h2>
+        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
+          Find products specifically formulated for your unique skin type.
+        </p>
+
+        {loadingSkinTypes ? (
+          <div className="flex justify-center">
+            <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {skinTypes.map((skinType) => (
+              <motion.div
+                key={skinType.id}
+                className="group block relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <Link
+                  to="/products"
+                  state={{ filterBySkinType: [skinType.id.toString()] }}
+                >
+                  <div className="aspect-w-1 aspect-h-1 w-full">
+                    <img
+                      src={skinType.image}
+                      alt={skinType.title}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition duration-300"
+                      onError={(e) => {
+                        e.target.src = '/images/skintypes/default.jpg'; // Fallback image
+                      }}
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                    <div>
+                      <h3 className="text-white font-medium text-lg">
+                        {skinType.title}
+                      </h3>
+                      <p className="text-white/80 text-sm">
+                        {skinType.products} products
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center mt-12">
+          <motion.a
+            href="/products"
+            className="inline-block px-8 py-3 border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-50 transition font-medium"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            View All Products
+          </motion.a>
+        </div>
+      </motion.div>
       {/* Our Mission Statement */}
       <motion.div
         className="py-20 px-6 max-w-4xl mx-auto text-center"
@@ -291,6 +510,71 @@ function HomePage() {
               <p className="text-gray-600">{value.description}</p>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+      {/* New Arrivals */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <NewArrivals />
+      </motion.div>
+
+      {/* Why Choose Us */}
+      <motion.div
+        className="py-16 bg-emerald-50 mt-16"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.7 }}
+      >
+        <div className="max-w-7xl mx-auto px-5">
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Choose Us
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                icon: faGem,
+                title: 'Premium Quality',
+                description:
+                  'Formulated with the highest quality ingredients for optimal results',
+              },
+              {
+                icon: faUserFriends,
+                title: 'Expert Advice',
+                description:
+                  'Access to skincare experts who can answer your questions',
+              },
+              {
+                icon: faShippingFast,
+                title: 'Fast Shipping',
+                description:
+                  'Free shipping on orders over $50 with delivery in 2-5 business days',
+              },
+              {
+                icon: faHeadset,
+                title: '24/7 Support',
+                description:
+                  'Our customer support team is available around the clock',
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                className="flex flex-col items-center text-center p-6"
+                whileHover={{ y: -5 }}
+              >
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                  <FontAwesomeIcon
+                    icon={feature.icon}
+                    className="text-emerald-600 text-2xl"
+                  />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </motion.div>
 
@@ -370,127 +654,7 @@ function HomePage() {
         </div>
       </motion.div>
 
-      {/* New Arrivals */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <NewArrivals />
-      </motion.div>
-
-      {/* Shop by Skin Concern */}
-      <motion.div
-        className="py-16 bg-white mx-auto max-w-7xl px-5 mt-10"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
-          Shop by Skin Concern
-        </h2>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
-          Target your specific needs with products designed to address your
-          unique skin concerns.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-          {skinConcerns.map((concern) => (
-            <motion.a
-              key={concern.id}
-              href={`/concerns/${concern.title.toLowerCase().replace(/\s+/g, '-')}`}
-              className="group block relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="aspect-w-1 aspect-h-1 w-full">
-                <img
-                  src={concern.image || `/api/placeholder/300/300`}
-                  alt={concern.title}
-                  className="w-full h-64 object-cover group-hover:scale-105 transition duration-300"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
-                <div>
-                  <h3 className="text-white font-medium text-lg">
-                    {concern.title}
-                  </h3>
-                  <p className="text-white/80 text-sm">
-                    {concern.products} products
-                  </p>
-                </div>
-              </div>
-            </motion.a>
-          ))}
-        </div>
-        <div className="text-center mt-12">
-          <motion.a
-            href="/skin-concerns"
-            className="inline-block px-8 py-3 border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-50 transition font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            View All Skin Concerns
-          </motion.a>
-        </div>
-      </motion.div>
-
-      {/* Why Choose Us */}
-      <motion.div
-        className="py-16 bg-emerald-50 mt-16"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.7 }}
-      >
-        <div className="max-w-7xl mx-auto px-5">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Why Choose Us
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: faGem,
-                title: 'Premium Quality',
-                description:
-                  'Formulated with the highest quality ingredients for optimal results',
-              },
-              {
-                icon: faUserFriends,
-                title: 'Expert Advice',
-                description:
-                  'Access to skincare experts who can answer your questions',
-              },
-              {
-                icon: faShippingFast,
-                title: 'Fast Shipping',
-                description:
-                  'Free shipping on orders over $50 with delivery in 2-5 business days',
-              },
-              {
-                icon: faHeadset,
-                title: '24/7 Support',
-                description:
-                  'Our customer support team is available around the clock',
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={index}
-                className="flex flex-col items-center text-center p-6"
-                whileHover={{ y: -5 }}
-              >
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                  <FontAwesomeIcon
-                    icon={feature.icon}
-                    className="text-emerald-600 text-2xl"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Featured Blog Posts */}
+      {/* Featured Blog Posts - Enhanced UI matching BlogPage */}
       <motion.div
         className="py-16 bg-white max-w-7xl mx-auto px-5 mt-10"
         initial={{ opacity: 0, y: 30 }}
@@ -507,47 +671,186 @@ function HomePage() {
             </p>
           </div>
           <motion.a
-            href="/blog"
-            className="mt-4 sm:mt-0 text-emerald-600 font-medium hover:text-emerald-700 transition"
+            href="/blogs"
+            className="mt-4 sm:mt-0 text-emerald-600 font-medium hover:text-emerald-700 transition flex items-center"
             whileHover={{ x: 5 }}
           >
-            View all articles →
+            View all articles
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 ml-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M14 5l7 7m0 0l-7 7m7-7H3"
+              />
+            </svg>
           </motion.a>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {blogPosts.map((post) => (
-            <motion.a
-              key={post.id}
-              href={`/blog/${post.id}`}
-              className="group block rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <div className="aspect-w-16 aspect-h-9">
-                <img
-                  src={post.image || `/api/placeholder/400/250`}
-                  alt={post.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition duration-300"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center text-sm text-gray-500 mb-3">
-                  <span>{post.date}</span>
-                  <span className="mx-2">•</span>
-                  <span>{post.readTime}</span>
-                </div>
-                <h3 className="font-semibold text-xl mb-2 group-hover:text-emerald-600 transition">
-                  {post.title}
-                </h3>
-                <p className="text-gray-600 text-sm line-clamp-2">
-                  {post.excerpt}
-                </p>
-                <p className="mt-4 text-emerald-600 font-medium text-sm group-hover:translate-x-2 transition-transform">
-                  Read more →
-                </p>
-              </div>
-            </motion.a>
-          ))}
-        </div>
+
+        {loadingBlogs ? (
+          <div className="flex justify-center py-20">
+            <div className="w-16 h-16 relative">
+              <div className="absolute inset-0 rounded-full border-t-4 border-emerald-400 animate-spin"></div>
+              <div className="absolute inset-1 rounded-full border-2 border-emerald-100"></div>
+            </div>
+          </div>
+        ) : errorBlogs ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-5 rounded-lg">
+            <p>{errorBlogs}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {blogs
+              .filter((blog) => blog.IsActive)
+              .slice(0, 3)
+              .map((blog) => (
+                <motion.div
+                  key={blog.BlogId}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 h-full flex flex-col hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                >
+                  {/* Blog Image with enhanced hover effect */}
+                  <div className="relative h-56 overflow-hidden group">
+                    <Link to={`/blog/${blog.BlogId}`}>
+                      <img
+                        src={
+                          blog.PictureUrl && blog.PictureUrl.startsWith('http')
+                            ? blog.PictureUrl
+                            : blog.PictureUrl
+                              ? `http://careskinbeauty.shop:4456${blog.PictureUrl}`
+                              : '/images/blog-placeholder.jpg'
+                        }
+                        alt={blog.Title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = '/images/blog-placeholder.jpg';
+                        }}
+                      />
+                      {/* Enhanced overlay gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </Link>
+
+                    {/* Category badge */}
+                    <div className="absolute top-4 left-4 z-10">
+                      <span className="bg-white/90 backdrop-blur-sm text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
+                        Skincare
+                      </span>
+                    </div>
+
+                    {/* Reading time badge */}
+                    <div className="absolute bottom-4 right-4 z-10">
+                      <span className="bg-black/70 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3.5 w-3.5 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {getReadingTime(blog.Content)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Blog Content */}
+                  <div className="p-6 flex-grow flex flex-col">
+                    {/* Date with icon */}
+                    <div className="flex items-center text-xs text-gray-500 mb-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1.5 text-emerald-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <time dateTime={blog.UploadDate || blog.CreateDate}>
+                        {formatDate(blog.UploadDate || blog.CreateDate)}
+                      </time>
+                    </div>
+
+                    {/* Title */}
+                    <Link to={`/blog/${blog.BlogId}`}>
+                      <h3 className="text-xl font-semibold mb-3 line-clamp-2 text-gray-800 hover:text-emerald-600 transition-colors">
+                        {blog.Title}
+                      </h3>
+                    </Link>
+
+                    {/* Excerpt */}
+                    <p className="text-gray-600 text-sm mb-5 flex-grow line-clamp-3">
+                      {truncateText(blog.Content, 120)}
+                    </p>
+
+                    {/* Bottom section with Read More link and time */}
+                    <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
+                      <Link
+                        to={`/blog/${blog.BlogId}`}
+                        className="group inline-flex items-center justify-center text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+                      >
+                        Read More
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 ml-1 group-hover:translate-x-1.5 transition-transform"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                          />
+                        </svg>
+                      </Link>
+
+                      {/* Add time display at bottom right */}
+                      {blog.UploadDate && (
+                        <span className="text-xs text-gray-500 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5 mr-1 text-emerald-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {/* Extract just the time */}
+                          {blog.UploadDate.split(' ').slice(1, 3).join(' ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+          </div>
+        )}
       </motion.div>
 
       {/* Not Sure Where to Start Section */}
@@ -627,8 +930,8 @@ function HomePage() {
         </div>
       </motion.div>
 
-      {/* ServiceFeedback - Customer Testimonials */}
-      <ServiceFeedback />
+      {/* ServiceFeedback - Customer Testimonials
+      <ServiceFeedback /> */}
 
       {/* Footer */}
       <Footer />

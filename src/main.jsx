@@ -8,11 +8,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
-
 createRoot(document.getElementById('root')).render(
   <GoogleOAuthProvider clientId="import.meta.env.VITE_GOOGLE_CLIENT_ID">
     <QueryClientProvider client={queryClient}>
-    <App />
+      <App />
     </QueryClientProvider>
   </GoogleOAuthProvider>
 );

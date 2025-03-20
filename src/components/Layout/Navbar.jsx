@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   faUser,
-  faHeart,
+  faEnvelope,
   faShoppingCart,
   faBars,
   faTimes,
@@ -421,14 +421,14 @@ function Navbar() {
                 </span>
               </button>
 
-              {/* Wishlist Icon */}
-              <Link to="/wishlist" className="relative group">
+              {/* notifications Icon */}
+              <Link to="/notifications" className="relative group">
                 <FontAwesomeIcon
-                  icon={faHeart}
+                  icon={faEnvelope}
                   className="text-gray-700 hover:text-red-500 text-xl transition-colors hover:scale-110 transition-transform"
                 />
                 <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Wishlist
+                  Notifications
                 </span>
               </Link>
 
@@ -564,18 +564,12 @@ function Navbar() {
                           </motion.div>
                         ))}
                       </div>
-                      <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="mt-4 ">
                         <Link
                           to="/cart"
-                          className="block bg-gray-100 text-gray-800 font-medium text-center py-2 px-3 rounded-md hover:bg-gray-200 transition-colors text-sm"
-                        >
-                          View Cart
-                        </Link>
-                        <Link
-                          to="/checkout"
                           className="block bg-emerald-600 text-white font-medium text-center py-2 px-3 rounded-md hover:bg-emerald-700 transition-colors text-sm"
                         >
-                          Checkout
+                          View Cart
                         </Link>
                       </div>
                     </motion.div>
@@ -737,12 +731,12 @@ function Navbar() {
                       )}
                     </Link>
                     <Link
-                      to="/wishlist"
+                      to="/notifications"
                       className="flex items-center gap-2 text-gray-700 hover:text-emerald-600"
                       onClick={() => setIsSidebarOpen(false)}
                     >
-                      <FontAwesomeIcon icon={faHeart} />
-                      <span>Wishlist</span>
+                      <FontAwesomeIcon icon={faEnvelope} />
+                      <span>notifications</span>
                     </Link>
                     <Link
                       to="/profile"
