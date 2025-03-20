@@ -278,11 +278,11 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
       <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
         {/* Search Bar */}
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={18} />
           <input
             type="text"
             placeholder="Search skin types..."
-            className="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-300 text-black pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -303,12 +303,12 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
       {/* Skin Types Table */}
       <div className="overflow-hidden rounded-xl border border-gray-700">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-800">
+          <table className="min-w-full divide-y bg-white">
+            <thead className="bg-white">
               <tr>
                 <th 
                   scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('TypeName')}
                 >
                   <div className="flex items-center space-x-1">
@@ -318,7 +318,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('MinScore')}
                 >
                   <div className="flex items-center space-x-1">
@@ -328,7 +328,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                 </th>
                 <th 
                   scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('MaxScore')}
                 >
                   <div className="flex items-center space-x-1">
@@ -336,31 +336,31 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                     <span>{getSortDirectionIcon('MaxScore')}</span>
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Description
                 </th>
-                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-gray-900 divide-y divide-gray-800">
+            <tbody className="bg-white divide-y divide-gray-200">
               {displayedSkinTypes && displayedSkinTypes.length > 0 ? (
                 displayedSkinTypes.map((skinType) => (
-                  <tr key={skinType.SkinTypeId} className="hover:bg-gray-800 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <tr key={skinType.SkinTypeId} className="hover:bg-gray-100 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {skinType.TypeName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {skinType.MinScore}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {skinType.MaxScore}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-300">
+                    <td className="px-6 py-4 text-sm text-black">
                       {skinType.Description ? 
                         (skinType.Description.length > 50 ? 
                           `${skinType.Description.substring(0, 50)}...` : 
@@ -415,7 +415,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-4 text-center text-black">
                     {searchTerm ? 'No skin types found matching your search.' : 'No skin types available.'}
                   </td>
                 </tr>

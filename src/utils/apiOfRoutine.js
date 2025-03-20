@@ -169,22 +169,22 @@ export async function createRoutineStep(stepData) {
 }
 
 // Update a routine step
-export async function updateRoutineStep(id, stepData) {
-  try {
-    const response = await fetch(`${apiURLRoutineSteps}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(stepData),
-    });
-    if (!response.ok) throw new Error(`Error updating routine step with id ${id}`);
-    return await response.json();
-  } catch (error) {
-    console.error(`Error updating routine step with id ${id}:`, error);
-    throw error;
+  export async function updateRoutineStep(id, stepData) {
+    try {
+      const response = await fetch(`${apiURLRoutineSteps}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(stepData),
+      });
+      if (!response.ok) throw new Error(`Error updating routine step with id ${id}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`Error updating routine step with id ${id}:`, error);
+      throw error;
+    }
   }
-}
 
 // Delete a routine step
 export async function deleteRoutineStep(id) {

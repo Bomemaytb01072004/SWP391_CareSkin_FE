@@ -16,7 +16,6 @@ import {
 } from '../../utils/api';
 
 const PromotionsTable = ({ promotions }) => {
-
   const [localPromotions, setLocalPromotions] = useState([]);
   const [displayedPromotions, setDisplayedPromotions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,7 +39,6 @@ const PromotionsTable = ({ promotions }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProductDiscountModalOpen, setIsProductDiscountModalOpen] = useState(false);
 
-  
   useEffect(() => {
     fetchProducts()
       .then((data) => setProducts(data))
@@ -56,7 +54,7 @@ const PromotionsTable = ({ promotions }) => {
 
     const term = searchTerm.toLowerCase();
     let filtered = [...localPromotions];
-    
+
     if (term) {
       filtered = localPromotions.filter(
         (promotion) =>
@@ -64,7 +62,7 @@ const PromotionsTable = ({ promotions }) => {
           promotion.DiscountPercent.toString().includes(term)
       );
     }
-    
+
     setFilteredPromotions(filtered);
     setCurrentPage(1);
   }, [searchTerm, localPromotions]);
@@ -80,51 +78,37 @@ const PromotionsTable = ({ promotions }) => {
 
   useEffect(() => {
     if (!filteredPromotions) return;
-    
+
     let sortablePromotions = [...filteredPromotions];
-    
+
     if (sortConfig.key) {
       sortablePromotions.sort((a, b) => {
         if (sortConfig.key === 'StartDate' || sortConfig.key === 'EndDate') {
           const dateA = new Date(a[sortConfig.key]);
           const dateB = new Date(b[sortConfig.key]);
-          
-          if (sortConfig.direction === 'ascending') {
-            return dateA - dateB;
-          } else {
-            return dateB - dateA;
-          }
+
+          return sortConfig.direction === 'ascending' ? dateA - dateB : dateB - dateA;
         } else if (sortConfig.key === 'DiscountPercent') {
           const discountA = parseFloat(a[sortConfig.key]);
           const discountB = parseFloat(b[sortConfig.key]);
-          
-          if (sortConfig.direction === 'ascending') {
-            return discountA - discountB;
-          } else {
-            return discountB - discountA;
-          }
+
+          return sortConfig.direction === 'ascending' ? discountA - discountB : discountB - discountA;
         }
-        
         return 0;
       });
     }
-    
+
     // Calculate pagination
     const indexOfLastPromotion = currentPage * productsPerPage;
     const indexOfFirstPromotion = indexOfLastPromotion - productsPerPage;
-    const currentPromotions = sortablePromotions.slice(
-      indexOfFirstPromotion,
-      indexOfLastPromotion
-    );
-    
+    const currentPromotions = sortablePromotions.slice(indexOfFirstPromotion, indexOfLastPromotion);
+
     setDisplayedPromotions(currentPromotions);
   }, [filteredPromotions, currentPage, productsPerPage, sortConfig]);
 
   // Get sort direction icon
   const getSortDirectionIcon = (key) => {
-    if (sortConfig.key !== key) {
-      return null;
-    }
+    if (sortConfig.key !== key) return null;
     return sortConfig.direction === 'ascending' ? '↑' : '↓';
   };
 
@@ -139,9 +123,9 @@ const PromotionsTable = ({ promotions }) => {
 
   const getPromotionTypeBadgeColor = (type) => {
     switch (parseInt(type)) {
-      case 1: return 'bg-blue-900 text-blue-300';
-      case 2: return 'bg-green-900 text-green-300';
-      default: return 'bg-gray-700 text-gray-300';
+      case 1: return 'bg-blue-100 text-blue-800';
+      case 2: return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-200 text-gray-800';
     }
   };
 
@@ -149,26 +133,20 @@ const PromotionsTable = ({ promotions }) => {
     if (promotion.hasOwnProperty('IsActive')) {
       return promotion.IsActive;
     }
-    
     const now = new Date();
     const startDate = new Date(promotion.StartDate);
     const endDate = new Date(promotion.EndDate);
-    
     return startDate <= now && now <= endDate;
   };
 
   const getPromotionStatusBadge = (promotion) => {
     const isActive = getPromotionStatus(promotion);
-    
     return (
-      <span className={`px-2 py-1 rounded-full text-xs ${
-        isActive ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
-      }`}>
+      <span className={`px-2 py-1 rounded-full text-xs ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
         {isActive ? 'Active' : 'Inactive'}
       </span>
     );
   };
-
 
   const handlePageChange = (page) => {
     if (page < 1 || page > Math.ceil(filteredPromotions.length / productsPerPage)) return;
@@ -191,15 +169,9 @@ const PromotionsTable = ({ promotions }) => {
   const handleDeactivate = async (id) => {
     try {
       await deactivatePromotion(id);
-      
-      setLocalPromotions((prev) => 
-        prev.map((p) => 
-          p.PromotionId === id 
-            ? { ...p, IsActive: false } 
-            : p
-        )
+      setLocalPromotions((prev) =>
+        prev.map((p) => (p.PromotionId === id ? { ...p, IsActive: false } : p))
       );
-      
       toast.success('Promotion deactivated successfully!');
     } catch (error) {
       console.error('Failed to deactivate promotion:', error);
@@ -225,18 +197,13 @@ const PromotionsTable = ({ promotions }) => {
       !editPromotionState.PromotionType ||
       editPromotionState.DiscountPercent < 0
     ) {
-      toast.error(
-        'Please fill in all required fields: Promotion Name, Start Date, End Date, Promotion Type, and Discount Percentage'
-      );
+      toast.error('Please fill in all required fields: Promotion Name, Start Date, End Date, Promotion Type, and Discount Percentage');
       return;
     }
-
     try {
       const updated = await updatePromotion(editPromotionState.PromotionId, editPromotionState);
-
       setLocalPromotions((prev) => prev.map((p) => (p.PromotionId === updated.PromotionId ? updated : p)));
       toast.success('Promotion updated successfully!');
-
       setIsEditModalOpen(false);
       setEditPromotion(null);
     } catch (error) {
@@ -254,7 +221,6 @@ const PromotionsTable = ({ promotions }) => {
       const created = await createPromotion(newPromotion);
       setLocalPromotions((prev) => [created, ...prev]);
       setIsModalOpen(false);
-
       setNewPromotion({
         PromotionName: '',
         DiscountPercent: 0,
@@ -288,7 +254,7 @@ const PromotionsTable = ({ promotions }) => {
         <button
           key="page-1"
           onClick={() => handlePageChange(1)}
-          className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+          className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-300 text-black' : 'bg-gray-200 text-black'}`}
         >
           1
         </button>
@@ -303,7 +269,7 @@ const PromotionsTable = ({ promotions }) => {
         <button
           key={`page-${i}`}
           onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+          className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-300 text-black' : 'bg-gray-200 text-black'}`}
         >
           {i}
         </button>
@@ -318,7 +284,7 @@ const PromotionsTable = ({ promotions }) => {
         <button
           key={`page-${Math.ceil(filteredPromotions.length / productsPerPage)}`}
           onClick={() => handlePageChange(Math.ceil(filteredPromotions.length / productsPerPage))}
-          className={`px-4 py-2 rounded-lg ${currentPage === Math.ceil(filteredPromotions.length / productsPerPage) ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+          className={`px-4 py-2 rounded-lg ${currentPage === Math.ceil(filteredPromotions.length / productsPerPage) ? 'bg-blue-300 text-black' : 'bg-gray-200 text-black'}`}
         >
           {Math.ceil(filteredPromotions.length / productsPerPage)}
         </button>
@@ -329,7 +295,7 @@ const PromotionsTable = ({ promotions }) => {
 
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8"
+      className="bg-white shadow-lg rounded-xl p-6 border border-gray-300 mb-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
@@ -345,21 +311,21 @@ const PromotionsTable = ({ promotions }) => {
       )}
 
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-100">Promotions</h2>
+        <h2 className="text-xl font-semibold text-black">Promotions</h2>
         <div className="flex gap-4">
           <div className="relative">
             <input
               type="text"
               placeholder="Search by name or description..."
-              className="bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-gray-100 text-black placeholder-gray-500 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setSearchTerm(e.target.value)}
               value={searchTerm}
             />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
           </div>
 
           <button
-            className="flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"
+            className="flex items-center bg-purple-300 hover:bg-purple-400 text-black px-4 py-2 rounded-lg"
             onClick={handleOpenProductDiscountModal}
           >
             <Tag size={18} className="mr-2" />
@@ -367,7 +333,7 @@ const PromotionsTable = ({ promotions }) => {
           </button>
 
           <button
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            className="flex items-center gap-2 bg-green-300 text-black px-4 py-2 rounded-lg hover:bg-green-400"
             onClick={() => setIsModalOpen(true)}
           >
             <PlusCircle size={18} />
@@ -395,43 +361,43 @@ const PromotionsTable = ({ promotions }) => {
       )}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-700">
+        <table className="min-w-full divide-y divide-gray-300">
           <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                 Name
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-gray-300"
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:text-gray-700"
                 onClick={() => requestSort('DiscountPercent')}
               >
                 Discount % {getSortDirectionIcon('DiscountPercent')}
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-gray-300"
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:text-gray-700"
                 onClick={() => requestSort('StartDate')}
               >
                 Start Date {getSortDirectionIcon('StartDate')}
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase cursor-pointer hover:text-gray-300"
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-black uppercase cursor-pointer hover:text-gray-700"
                 onClick={() => requestSort('EndDate')}
               >
                 End Date {getSortDirectionIcon('EndDate')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                 Type
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase">
                 Actions
               </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-gray-300">
             {displayedPromotions.map((promotion, index) => (
               <motion.tr
                 key={promotion.PromotionId || index}
@@ -439,45 +405,43 @@ const PromotionsTable = ({ promotions }) => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">
                   {promotion.Name}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {promotion.DiscountPercent}%
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {new Date(promotion.StartDate).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {new Date(promotion.EndDate).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   <span className={`px-2 py-1 rounded-full text-xs ${getPromotionTypeBadgeColor(promotion.PromotionType)}`}>
                     {getPromotionTypeText(promotion.PromotionType)}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {getPromotionStatusBadge(promotion)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   <button
-                    className="text-indigo-400 hover:text-indigo-300 mr-2"
+                    className="text-indigo-600 hover:text-indigo-500 mr-2"
                     onClick={() => handleOpenEditModal(promotion)}
                     title="Edit promotion"
                   >
                     <Edit size={18} />
                   </button>
-                  
                   <button
-                    className="text-yellow-400 hover:text-yellow-300 mr-2"
+                    className="text-yellow-600 hover:text-yellow-500 mr-2"
                     onClick={() => handleDeactivate(promotion.PromotionId)}
                     title="Deactivate promotion"
                   >
                     <Power size={18} />
                   </button>
-                  
                   <button
-                    className="text-red-400 hover:text-red-300"
+                    className="text-red-600 hover:text-red-500"
                     onClick={() => handleDelete(promotion.PromotionId)}
                     title="Delete promotion"
                   >
@@ -494,10 +458,9 @@ const PromotionsTable = ({ promotions }) => {
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`px-4 py-2 mx-2 rounded-lg ${currentPage === 1
-            ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-            : 'bg-gray-700 text-white'
-            }`}
+          className={`px-4 py-2 mx-2 rounded-lg ${
+            currentPage === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-black'
+          }`}
         >
           Previous
         </button>
@@ -505,10 +468,11 @@ const PromotionsTable = ({ promotions }) => {
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === Math.ceil(filteredPromotions.length / productsPerPage)}
-          className={`px-4 py-2 mx-2 rounded-lg ${currentPage === Math.ceil(filteredPromotions.length / productsPerPage)
-            ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-            : 'bg-gray-700 text-white'
-            }`}
+          className={`px-4 py-2 mx-2 rounded-lg ${
+            currentPage === Math.ceil(filteredPromotions.length / productsPerPage)
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gray-200 text-black'
+          }`}
         >
           Next
         </button>

@@ -263,18 +263,18 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
 
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700"
+      className="bg-white backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-100">Order List</h2>
+        <h2 className="text-xl font-semibold text-black">Order List</h2>
         <div className="relative">
           <input
             type="text"
             placeholder="Search by Date or Customer"
-            className="bg-gray-700 text-white placeholder-gray-400 placeholder-opacity-70 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-gray-300 text-black placeholder-gray-400 placeholder-opacity-70 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={handleSearch}
           />
@@ -295,13 +295,13 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
               ].map((key) => (
                 <th
                   key={key}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort(key)}
                 >
                   {key.replace(/([A-Z])/g, ' $1').toUpperCase()}
                 </th>
               ))}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -315,24 +315,24 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">
                   {order.orderId}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">
                   {order.customerId}
                 </td>
 
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">
                   {order.customer}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-black">
                   ${(order.total ?? 0).toFixed(2)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {editingOrder === order.orderId ? (
                     <div className="flex items-center gap-2">
                       <select
-                        className="bg-gray-700 text-white p-1 rounded"
+                        className="bg-gray-700 text-black p-1 rounded"
                         defaultValue={order.statusId}
                         onChange={(e) =>
                           updateOrderStatus(
@@ -358,14 +358,14 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                     </div>
                   ) : (
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses[order.status] || 'bg-gray-500 text-white'}`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses[order.status] || 'bg-gray-500 text-black'}`}
                       onClick={() => setEditingOrder(order.orderId)}
                     >
                       {order.status}
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   {order.date}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-300 flex gap-2">

@@ -9,7 +9,7 @@ import { ToastContainer } from 'react-toastify';
 import { CheckCircle2, XCircle, HelpCircle, BarChart } from "lucide-react";
 
 import QuizzesTable from "../../components/quizzes/QuizzesTable";
-import { fetchQuizzes } from "../../utils/api";
+import { fetchQuizzes } from "../../utils/apiQ_A";
 
 const QuizzesPage = () => {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -43,7 +43,7 @@ const QuizzesPage = () => {
     <>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className='flex-1 overflow-auto relative'>
+      <div className='flex-1 overflow-auto relative bg-white text-black'>
         <Header title='Quizzes' />
 
         <main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
@@ -61,41 +61,30 @@ const QuizzesPage = () => {
           </motion.div>
 
           {/* Filter Controls */}
-          <div className="flex space-x-4 mb-6">
+          <div className="flex space-x-4 mb-6 ">
             <button
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === "all"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
+              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
               onClick={() => setFilterStatus("all")}
             >
               All Quizzes
             </button>
             <button
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === "active"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
+              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
               onClick={() => setFilterStatus("active")}
             >
               Active
             </button>
             <button
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filterStatus === "inactive"
-                  ? "bg-yellow-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
+              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
               onClick={() => setFilterStatus("inactive")}
             >
               Inactive
             </button>
           </div>
 
-          {/* Quizzes Table */}
+          <div className="bg-white shadow-lg rounded-xl p-2 border border-gray-300">
           <QuizzesTable quizzes={filteredQuizzes} refetchQuizzes={refetchQuizzes} />
+          </div>
         </main>
       </div>
     </>

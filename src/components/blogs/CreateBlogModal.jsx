@@ -26,10 +26,10 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gray-800 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">Create New Blog</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <h2 className="text-xl font-semibold text-black">Create New Blog</h2>
+          <button onClick={onClose} className="text-gray-600 hover:text-black">
             <X size={24} />
           </button>
         </div>
@@ -37,7 +37,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
         <div className="space-y-6">
           {/* Blog Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Blog Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -45,7 +45,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
               name="Title"
               value={newBlog.Title}
               onChange={handleInputChange}
-              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter blog title"
               required
             />
@@ -53,7 +53,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
 
           {/* Blog Content */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Content <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -61,7 +61,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
               value={newBlog.Content}
               onChange={handleInputChange}
               rows={12}
-              className="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter blog content (Markdown supported)"
               required
             />
@@ -69,7 +69,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
 
           {/* Blog Image */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Blog Image <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center space-x-4">
@@ -82,7 +82,7 @@ const CreateBlogModal = ({ newBlog, setNewBlog, handleAddBlog, onClose }) => {
               />
               <label
                 htmlFor="blogImageUpload"
-                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg cursor-pointer"
+                className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg cursor-pointer"
               >
                 Upload Image
               </label>

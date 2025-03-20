@@ -62,10 +62,10 @@ const BrandsPage = () => {
 		<>
 			<ToastContainer position="top-right" autoClose={3000} />
 
-			<div className='flex-1 overflow-auto relative'>
+			<div className='flex-1 overflow-auto relative bg-white'>
 				<Header title='Brands' />
 
-				<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
+				<main className='bg-white max-w-7xl mx-auto py-6 px-4 lg:px-8'>
 					{/* STATS */}
 					<motion.div
 						className='grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-4 mb-8'
@@ -117,7 +117,7 @@ const BrandsPage = () => {
 						<span className="text-gray-700 mr-3 font-medium">Status Filter:</span>
 						<div className="flex space-x-2">
 							<button 
-								className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+								className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-gray-300 text-black' : 'bg-gray-500 text-gray-700 hover:bg-blue-400'}`}
 								onClick={() => setActiveFilter('all')}
 							>
 								All
