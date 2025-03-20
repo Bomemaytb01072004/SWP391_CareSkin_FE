@@ -52,7 +52,7 @@ const SIDEBAR_ITEMS = [
 	{ name: "Orders", icon: ShoppingCart, color: "#F97316", href: "/admin/orders" },
 	{ name: "Blogs", icon: ScrollText, color: "#8B5CF6", href: "/admin/blogs" },
 	{ name: "Quizzes", icon: FileText , color: "#06B6D4", href: "/admin/quizzes" },
-	{ name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/admin/analytics" },
+	// { name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/admin/analytics" },
 	{ name: "Promotions", icon: TicketPercent, color: "#E11D48", href: "/admin/promotions" },
 	{ name: "Settings", icon: Settings, color: "#64748B", href: "/admin/settings" },
 ];
@@ -67,12 +67,12 @@ const Sidebar = () => {
 				}`}
 			animate={{ width: isSidebarOpen ? 256 : 80 }}
 		>
-			<div className='h-full bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 flex flex-col border-r border-gray-700'>
+			<div className='h-full bg-white backdrop-blur-md text-black p-4 flex flex-col border-r border-gray-300'>
 				<motion.button
 					whileHover={{ scale: 1.1 }}
 					whileTap={{ scale: 0.9 }}
 					onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-					className='p-2 rounded-full hover:bg-gray-700 transition-colors max-w-fit'
+					className='p-2 rounded-full hover:bg-blue-300	 transition-colors max-w-fit'
 				>
 					<Menu size={24} />
 				</motion.button>
@@ -84,7 +84,7 @@ const Sidebar = () => {
 								<div key={item.name}>
 									<motion.div
 										onClick={() => setIsProductsOpen(!isProductsOpen)}
-										className='flex items-center justify-between p-4 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2 cursor-pointer'
+										className='flex items-center justify-between p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2 cursor-pointer'
 									>
 										<div className='flex items-center'>
 											<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
@@ -122,7 +122,7 @@ const Sidebar = () => {
 											>
 												{item.children.map((child) => (
 													<Link key={child.href} to={child.href}>
-														<motion.div className='flex items-center p-4 ml-3 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'>
+														<motion.div className='flex items-center p-4 ml-3 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2'>
 															<child.icon size={20} style={{ color: child.color, minWidth: "20px" }} />
 															<motion.span
 																className='ml-4 whitespace-nowrap'
@@ -144,7 +144,7 @@ const Sidebar = () => {
 						} else {
 							return (
 								<Link key={item.href} to={item.href}>
-									<motion.div className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'>
+									<motion.div className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2'>
 										<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 										<AnimatePresence>
 											{isSidebarOpen && (

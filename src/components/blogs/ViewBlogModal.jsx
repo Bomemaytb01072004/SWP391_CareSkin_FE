@@ -5,19 +5,19 @@ import ReactMarkdown from 'react-markdown';
 const ViewBlogModal = ({ blog, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gray-800 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">{blog.Title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <h2 className="text-xl font-semibold text-black">{blog.Title}</h2>
+          <button onClick={onClose} className="text-gray-600 hover:text-black">
             <X size={24} />
           </button>
         </div>
 
         <div className="space-y-6">
           {/* Header Info */}
-          <div className="flex justify-between items-center border-b border-gray-700 pb-4">
+          <div className="flex justify-between items-center border-b border-gray-300 pb-4">
             <div>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-600 text-sm">
                 {new Date(blog.CreatedDate || Date.now()).toLocaleDateString()}
               </p>
             </div>
@@ -35,7 +35,7 @@ const ViewBlogModal = ({ blog, onClose }) => {
           )}
 
           {/* Blog Content */}
-          <div className="prose prose-invert max-w-none">
+          <div className="prose max-w-none">
             <ReactMarkdown>{blog.Content}</ReactMarkdown>
           </div>
         </div>

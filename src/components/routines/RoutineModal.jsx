@@ -110,14 +110,14 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-      <div className="relative bg-gray-800 text-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b border-gray-700">
+      <div className="relative bg-white text-black rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-4 border-b border-gray-300">
           <h3 className="text-xl font-semibold">
             {isEditMode ? 'Edit Routine' : 'Create New Routine'}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-600 hover:text-black"
           >
             <X size={24} />
           </button>
@@ -127,7 +127,7 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
           {/* Basic Information */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
                 Routine Name *
               </label>
               <input
@@ -135,21 +135,21 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
                 name="RoutineName"
                 value={routineData.RoutineName}
                 onChange={handleInputChange}
-                className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-2 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 placeholder="Enter routine name"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
                 Period *
               </label>
               <select
                 name="RoutinePeriod"
                 value={routineData.RoutinePeriod}
                 onChange={handleInputChange}
-                className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-2 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 required
               >
                 <option value="">Select Period</option>
@@ -160,71 +160,52 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
                 Skin Type *
               </label>
               <select
                 name="SkinTypeId"
                 value={routineData.SkinTypeId}
                 onChange={handleInputChange}
-                className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                className="w-full px-2 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                 required
               >
                 <option value="">Select Skin Type</option>
-                {skinTypes.map((type) => {
-                  return (
-                    <option key={type.SkinTypeId} value={type.SkinTypeId}>
-                      {type.TypeName}
-                    </option>
-                  );
-                })}
+                {skinTypes.map((type) => (
+                  <option key={type.SkinTypeId} value={type.SkinTypeId}>
+                    {type.TypeName}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-600 mb-1">
                 Description
               </label>
               <textarea
                 name="Description"
                 value={routineData.Description}
                 onChange={handleInputChange}
-                className="w-full px-2 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white h-32"
+                className="w-full px-2 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black h-32"
                 placeholder="Enter routine description"
               />
             </div>
-
-            {/* <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="IsActive"
-                id="isActive"
-                checked={routineData.IsActive}
-                onChange={handleInputChange}
-                className="w-4 h-4 text-blue-600 border-gray-600 rounded focus:ring-blue-500 bg-gray-700"
-              />
-              <label
-                htmlFor="isActive"
-                className="ml-2 text-sm font-medium text-gray-300"
-              >
-                Active
-              </label>
-            </div> */}
           </div>
 
           {/* Note about steps */}
-          <div className="bg-gray-700 p-4 rounded-md">
-            <p className="text-sm text-gray-300">
+          <div className="bg-gray-100 p-4 rounded-md">
+            <p className="text-sm text-gray-600">
               <b>Note:</b> Steps and products can be added after creating the routine. This form is for setting up the basic routine information.
             </p>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end pt-4 border-t border-gray-700">
+          <div className="flex justify-end pt-4 border-t border-gray-300">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-600 text-white rounded-md mr-2 hover:bg-gray-500"
+              className="px-4 py-2 bg-gray-200 text-black rounded-md mr-2 hover:bg-gray-300"
               disabled={isLoading}
             >
               Cancel

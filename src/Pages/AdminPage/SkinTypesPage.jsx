@@ -43,7 +43,7 @@ const SkinTypesPage = () => {
     <>
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className='flex-1 overflow-auto relative'>
+      <div className='flex-1 overflow-auto relative bg-white'>
         <Header title='Skin Types' />
 
         <main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
@@ -65,8 +65,8 @@ const SkinTypesPage = () => {
             <button
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filterStatus === "all"
-                  ? "bg-purple-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-purple-600 text-black"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
               }`}
               onClick={() => setFilterStatus("all")}
             >
@@ -76,7 +76,7 @@ const SkinTypesPage = () => {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filterStatus === "active"
                   ? "bg-green-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
               }`}
               onClick={() => setFilterStatus("active")}
             >
@@ -86,7 +86,7 @@ const SkinTypesPage = () => {
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filterStatus === "inactive"
                   ? "bg-yellow-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
               }`}
               onClick={() => setFilterStatus("inactive")}
             >

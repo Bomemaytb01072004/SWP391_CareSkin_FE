@@ -4,14 +4,13 @@ import { Edit, Search, Trash2, PlusCircle, Eye, Power } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import CreateQuizModal from './CreateQuizModal';
-import EditQuizModal from './EditQuizModal';
 import ViewQuizModal from './ViewQuizModal';
 
 import {
   createQuiz,
   updateQuiz,
   deleteQuiz,
-} from '../../utils/api';
+} from '../../utils/apiQ_A';
 
 const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
   // -----------------------------------
@@ -58,7 +57,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
 
     const term = searchTerm.toLowerCase();
     let filtered = [...localQuizzes];
-    
+
     if (term) {
       filtered = localQuizzes.filter(
         (quiz) =>
@@ -66,7 +65,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
           (quiz.Description && quiz.Description.toLowerCase().includes(term))
       );
     }
-    
+
     setFilteredQuizzes(filtered);
     setCurrentPage(1);
   }, [searchTerm, localQuizzes]);
@@ -82,26 +81,26 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
 
   useEffect(() => {
     if (!filteredQuizzes || filteredQuizzes.length === 0) return;
-    
+
     let sortableQuizzes = [...filteredQuizzes];
-    
+
     if (sortConfig.key) {
       sortableQuizzes.sort((a, b) => {
         if (sortConfig.key === 'Title') {
           const valueA = (a[sortConfig.key] || '').toLowerCase();
           const valueB = (b[sortConfig.key] || '').toLowerCase();
-          
+
           if (sortConfig.direction === 'ascending') {
             return valueA.localeCompare(valueB);
           } else {
             return valueB.localeCompare(valueA);
           }
         }
-        
+
         return 0;
       });
     }
-    
+
     // Calculate pagination
     const indexOfLastQuiz = currentPage * quizzesPerPage;
     const indexOfFirstQuiz = indexOfLastQuiz - quizzesPerPage;
@@ -109,7 +108,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
       indexOfFirstQuiz,
       indexOfLastQuiz
     );
-    
+
     setDisplayedQuizzes(currentQuizzes);
   }, [filteredQuizzes, currentPage, quizzesPerPage, sortConfig]);
 
@@ -133,13 +132,11 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
   const handleToggleActive = async (quiz) => {
     try {
       const updatedQuiz = { ...quiz, IsActive: !quiz.IsActive };
-      await updateQuiz(quiz.Id, updatedQuiz);
-      
-      // Update local state
-      setLocalQuizzes(prev => 
-        prev.map(q => q.Id === quiz.Id ? { ...q, IsActive: !q.IsActive } : q)
-      );
-      
+      await updateQuiz(quiz.QuizId, updatedQuiz);
+
+      // Refetch quizzes from the server
+      refetchQuizzes();
+
       toast.success(`Quiz ${updatedQuiz.IsActive ? 'activated' : 'deactivated'} successfully!`);
     } catch (error) {
       console.error('Failed to toggle quiz status:', error);
@@ -152,7 +149,10 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
       try {
         await deleteQuiz(quizId);
-        setLocalQuizzes((prev) => prev.filter((q) => q.Id !== quizId));
+
+        // Refetch quizzes from the server instead of updating local state
+        refetchQuizzes();
+
         toast.success('Quiz deleted successfully!');
       } catch (error) {
         console.error('Failed to delete quiz:', error);
@@ -163,15 +163,13 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
 
   // Open Edit modal
   const handleOpenEditModal = (quiz) => {
-    setEditQuiz({
-      ...quiz
-    });
+    setEditQuiz({ ...quiz });
     setIsEditModalOpen(true);
   };
 
   // Open View modal
   const handleOpenViewModal = (quiz) => {
-    setViewQuiz(quiz);
+    setViewQuiz(quiz.QuizId);
     setIsViewModalOpen(true);
   };
 
@@ -180,31 +178,29 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     if (!editQuizState) return;
     if (
       !editQuizState.Title ||
-      !editQuizState.Description ||
-      !editQuizState.Questions || 
-      editQuizState.Questions.length === 0
+      !editQuizState.Description
     ) {
       toast.error(
-        'Please fill in all required fields: Title, Description, and add at least one question'
+        'Please fill in all required fields: Title and Description'
       );
       return;
     }
 
     try {
-      const updated = await updateQuiz(editQuizState.Id, editQuizState);
+      const updated = await updateQuiz(editQuizState.QuizId, {
+        Title: editQuizState.Title,
+        Description: editQuizState.Description,
+        IsActive: editQuizState.IsActive
+      });
 
       // Update localQuizzes
       setLocalQuizzes((prev) =>
-        prev.map((quiz) => (quiz.Id === updated.Id ? updated : quiz))
+        prev.map((quiz) => (quiz.QuizId === updated.QuizId ? updated : quiz))
       );
 
       setIsEditModalOpen(false);
       toast.success('Quiz updated successfully!');
-      
-      // Refresh the quizzes data
-      if (refetchQuizzes) {
-        refetchQuizzes();
-      }
+      refetchQuizzes();
     } catch (error) {
       console.error('Failed to update quiz:', error);
       toast.error('Error updating quiz!');
@@ -221,7 +217,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     try {
       const createdQuiz = await createQuiz(newQuiz);
       setLocalQuizzes((prev) => [...prev, createdQuiz]);
-      
+
       // Reset form
       setNewQuiz({
         Title: '',
@@ -229,10 +225,10 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
         IsActive: true,
         Questions: []
       });
-      
+
       setIsModalOpen(false);
       toast.success('Quiz created successfully!');
-      
+
       // Refresh the quizzes data
       if (refetchQuizzes) {
         refetchQuizzes();
@@ -247,16 +243,16 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
   // 4) Render Table
   // -----------------------------------
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white text-black p-4">
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
         {/* Search Bar */}
         <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
           <input
             type="text"
             placeholder="Search quizzes..."
-            className="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-white text-black pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -266,7 +262,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          className="flex items-center space-x-2 bg-white text-black border border-gray-300 hover:bg-gray-200 px-4 py-2 rounded-lg"
           onClick={() => setIsModalOpen(true)}
         >
           <PlusCircle size={18} />
@@ -275,14 +271,14 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
       </div>
 
       {/* Quizzes Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-700">
+      <div className="overflow-hidden rounded-xl border border-gray-300">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-700">
-            <thead className="bg-gray-800">
+          <table className="min-w-full divide-y divide-gray-300">
+            <thead className="bg-white">
               <tr>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('Title')}
                 >
                   <div className="flex items-center space-x-1">
@@ -290,44 +286,43 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                     <span>{getSortDirectionIcon('Title')}</span>
                   </div>
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Description
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Questions
                 </th>
-                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-gray-900 divide-y divide-gray-800">
+            <tbody className="bg-white divide-y divide-gray-300">
               {displayedQuizzes && displayedQuizzes.length > 0 ? (
                 displayedQuizzes.map((quiz) => (
-                  <tr key={quiz.Id} className="hover:bg-gray-800 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  <tr key={quiz.Id} className="hover:bg-gray-100 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {quiz.Title}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-300">
-                      {quiz.Description ? 
-                        (quiz.Description.length > 50 ? 
-                          `${quiz.Description.substring(0, 50)}...` : 
-                          quiz.Description) : 
+                    <td className="px-6 py-4 text-sm text-black">
+                      {quiz.Description ?
+                        (quiz.Description.length > 50 ?
+                          `${quiz.Description.substring(0, 50)}...` :
+                          quiz.Description) :
                         'No description'
                       }
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black text-center">
                       {quiz.Questions ? quiz.Questions.length : 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex justify-center">
-                        <span 
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            quiz.IsActive ? 'bg-green-800 text-green-100' : 'bg-yellow-800 text-yellow-100'
-                          }`}
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${quiz.IsActive ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'
+                            }`}
                         >
                           {quiz.IsActive ? 'Active' : 'Inactive'}
                         </span>
@@ -336,29 +331,15 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-3">
                         <button
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-blue-600 hover:text-blue-800"
                           onClick={() => handleOpenViewModal(quiz)}
                           title="View quiz"
                         >
                           <Eye size={18} />
                         </button>
                         <button
-                          className="text-yellow-400 hover:text-yellow-300"
-                          onClick={() => handleOpenEditModal(quiz)}
-                          title="Edit quiz"
-                        >
-                          <Edit size={18} />
-                        </button>
-                        <button
-                          className={`${quiz.IsActive ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
-                          onClick={() => handleToggleActive(quiz)}
-                          title={quiz.IsActive ? 'Deactivate quiz' : 'Activate quiz'}
-                        >
-                          <Power size={18} />
-                        </button>
-                        <button
-                          className="text-red-400 hover:text-red-300"
-                          onClick={() => handleDelete(quiz.Id)}
+                          className="text-red-600 hover:text-red-800"
+                          onClick={() => handleDelete(quiz.QuizId)}
                           title="Delete quiz"
                         >
                           <Trash2 size={18} />
@@ -369,7 +350,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-4 text-center text-black">
                     {searchTerm ? 'No quizzes found matching your search.' : 'No quizzes available.'}
                   </td>
                 </tr>
@@ -385,7 +366,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
           <nav className="flex items-center space-x-2">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
-              className="px-3 py-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+              className="px-3 py-1 rounded-md bg-white text-black border border-gray-300 hover:bg-gray-200 disabled:opacity-50"
               disabled={currentPage === 1}
             >
               Previous
@@ -396,11 +377,10 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                 <button
                   key={i}
                   onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === i + 1
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
+                  className={`px-3 py-1 rounded-md border border-gray-300 ${currentPage === i + 1
+                    ? 'bg-blue-200 text-blue-800'
+                    : 'bg-white text-black hover:bg-gray-200'
+                    }`}
                 >
                   {i + 1}
                 </button>
@@ -408,7 +388,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
             )}
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              className="px-3 py-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
+              className="px-3 py-1 rounded-md bg-white text-black border border-gray-300 hover:bg-gray-200 disabled:opacity-50"
               disabled={
                 currentPage === Math.ceil(filteredQuizzes.length / quizzesPerPage)
               }
@@ -429,21 +409,13 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
         />
       )}
 
-      {/* Edit Quiz Modal */}
-      {isEditModalOpen && (
-        <EditQuizModal
-          editQuizState={editQuizState}
-          setEditQuiz={setEditQuiz}
-          handleEdit={handleEdit}
-          onClose={() => setIsEditModalOpen(false)}
-        />
-      )}
 
       {/* View Quiz Modal */}
       {isViewModalOpen && (
         <ViewQuizModal
-          quiz={viewQuizState}
+          quizId={viewQuizState}
           onClose={() => setIsViewModalOpen(false)}
+          refetchQuizzes={refetchQuizzes}
         />
       )}
     </div>

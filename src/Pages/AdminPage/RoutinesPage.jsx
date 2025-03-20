@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import { Plus, Eye, Edit, Layers } from 'lucide-react';
-import { fetchRoutines } from '../../utils/apiOfRoutine';
-import RoutinesTable from '../../components/routines/RoutinesTable';
-import RoutineModal from '../../components/routines/RoutineModal';
-import ViewRoutineModal from '../../components/routines/ViewRoutineModal';
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { ToastContainer } from "react-toastify";
+import { Layers, CheckCircle, XCircle, Calendar } from "lucide-react";
+
+import Header from "../../components/common/Header";
+import StatCard from "../../components/common/StatCard";
+import RoutinesTable from "../../components/routines/RoutinesTable";
+import RoutineModal from "../../components/routines/RoutineModal";
+import ViewRoutineModal from "../../components/routines/ViewRoutineModal";
+import { fetchRoutines } from "../../utils/apiOfRoutine";
 
 const RoutinesPage = () => {
   const [routines, setRoutines] = useState([]);
@@ -19,17 +23,9 @@ const RoutinesPage = () => {
     setLoading(true);
     try {
       const data = await fetchRoutines();
-      console.log('Routines data:', data);
-      if (Array.isArray(data)) {
-        setRoutines(data);
-      } else {
-        console.error('Data received is not an array:', data);
-        setRoutines([]);
-      }
+      setRoutines(data);
     } catch (error) {
-      console.error('Error fetching routines:', error);
-      toast.error('Failed to load routines. Please try again.');
-      setRoutines([]);
+      console.error("Error fetching routines:", error);
     } finally {
       setLoading(false);
     }
@@ -64,43 +60,46 @@ const RoutinesPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-900">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
+  const totalRoutines = routines.length;
+  const activeRoutines = routines.filter((routine) => routine.IsActive).length;
+  const inactiveRoutines = totalRoutines - activeRoutines;
+  const routinesWithSteps = routines.filter((routine) => routine.RoutineStepDTOs && routine.RoutineStepDTOs.length > 0).length;
+
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      
-      <div className="flex-1 overflow-auto relative bg-gray-900 text-white">
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold mb-6">Skin Care Routines</h1>
-        </div>
 
-        <main className="max-w-7xl mx-auto py-2 px-4 lg:px-8">
-          {/* Header with Add Button */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-xl font-medium">Manage Routines</div>
-            <button
-              onClick={handleCreateRoutine}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 flex items-center transition duration-200"
-            >
-              <Plus size={18} className="mr-1" />
-              Add New Routine
-            </button>
-          </div>
+      <div className="flex-1 overflow-auto relative bg-white text-black">
+        <Header title="Skin Care Routines" />
 
-          {/* Content */}
-          <div>
-            <RoutinesTable
-              routines={routines}
-              onEdit={handleEditRoutine}
-              onView={handleViewRoutine}
-              refetchRoutines={fetchRoutinesData}
-            />
-          </div>
+        <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
+          {/* Stat Cards */}
+          <motion.div
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+          >
+            <StatCard name="Total Routines" icon={Layers} value={totalRoutines} color="#6366F1" />
+            <StatCard name="Active Routines" icon={CheckCircle} value={activeRoutines} color="#10B981" />
+            <StatCard name="Inactive Routines" icon={XCircle} value={inactiveRoutines} color="#EF4444" />
+            <StatCard name="Routines with Steps" icon={Calendar} value={routinesWithSteps} color="#F59E0B" />
+          </motion.div>
+
+          {/* Routines Table */}
+          <RoutinesTable
+            routines={routines}
+            onCreate={handleCreateRoutine}
+            onEdit={handleEditRoutine}
+            onView={handleViewRoutine}
+            refetchRoutines={fetchRoutinesData}
+          />
         </main>
       </div>
 
@@ -110,6 +109,7 @@ const RoutinesPage = () => {
           isOpen={showCreateModal}
           onClose={handleCloseModal}
           onSave={fetchRoutinesData}
+          onCreate={handleCreateRoutine}
           routine={selectedRoutine}
           isEditing={false}
         />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Clock, DollarSign, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -15,12 +15,13 @@ const OrdersPage = () => {
     completedOrders: 0,
     totalRevenue: 0,
   });
-  // 🔹 Move modal state up here
+
   const [viewingOrder, setViewingOrder] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [orders, setOrders] = useState([]);
   const [editingOrderInfo, setEditingOrderInfo] = useState(null);
   const [filteredOrders, setFilteredOrders] = useState([]);
+
   const statusClasses = {
     Pending: 'bg-yellow-100 text-yellow-800',
     'Out Of Delivery': 'bg-blue-100 text-blue-800',
@@ -28,12 +29,14 @@ const OrdersPage = () => {
     Done: 'bg-gray-100 text-gray-800',
     Cancel: 'bg-red-100 text-red-800',
   };
+
   const [orderForm, setOrderForm] = useState({
     Name: '',
     Phone: '',
     Address: '',
     PromotionId: '',
   });
+
   const updateOrderInfo = async (orderId) => {
     try {
       const response = await fetch(
@@ -54,19 +57,17 @@ const OrdersPage = () => {
         throw new Error(`Failed: ${errorText || response.statusText}`);
       }
 
-      // Fetch updated order details after update
       const updatedOrderResponse = await fetch(
         `http://careskinbeauty.shop:4456/api/Order/${orderId}`
       );
       const updatedOrderData = await updatedOrderResponse.json();
 
-      // ✅ Update main orders state
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.orderId === orderId ? { ...order, ...updatedOrderData } : order
         )
       );
-      // 🔹 Update both the Orders Table & Order Details Modal
+
       setFilteredOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.orderId === orderId
@@ -81,12 +82,10 @@ const OrdersPage = () => {
         )
       );
 
-      // Update modal details if it's open
       if (viewingOrder === orderId) {
         setOrderDetails(updatedOrderData);
       }
 
-      // Close the edit modal
       setEditingOrderInfo(null);
     } catch (error) {
       console.error('Failed to update order info:', error);
@@ -94,10 +93,11 @@ const OrdersPage = () => {
   };
 
   return (
-    <div className="flex-1 relative z-10 overflow-auto">
+    <div className="flex-1 relative z-10 overflow-auto bg-white text-black">
       <Header title={'Orders'} />
 
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
+        {/* Stat Cards */}
         <motion.div
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -110,21 +110,18 @@ const OrdersPage = () => {
             value={orderStats.totalOrders}
             color="#6366F1"
           />
-
           <StatCard
             name="Pending Orders"
             icon={Clock}
             value={orderStats.pendingOrders}
             color="#F59E0B"
           />
-
           <StatCard
             name="Completed Orders"
             icon={CheckCircle}
             value={orderStats.completedOrders}
             color="#10B981"
           />
-
           <StatCard
             name="Total Revenue"
             icon={DollarSign}
@@ -133,12 +130,13 @@ const OrdersPage = () => {
           />
         </motion.div>
 
+        {/* Daily Orders and Order Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <DailyOrders />
           <OrderDistribution />
         </div>
 
-        {/* Pass modal state & setter to OrdersTable */}
+        {/* Orders Table */}
         <OrdersTable
           setOrderStats={setOrderStats}
           orders={orders}
@@ -148,30 +146,30 @@ const OrdersPage = () => {
         />
       </main>
 
-      {/* 🔥 Move the modal here so it blurs the whole screen */}
+      {/* Order Details Modal */}
       {viewingOrder && orderDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-lg">
-          <div className="bg-gray-800 p-6 rounded-lg shadow-xl w-[90%] max-w-2xl relative">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-md">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-[90%] max-w-2xl relative">
             {/* Close Button */}
             <button
-              className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl"
+              className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 text-xl"
               onClick={() => {
                 setViewingOrder(null);
-                setEditingOrderInfo(null); // Close edit mode if active
+                setEditingOrderInfo(null);
               }}
             >
               ✖
             </button>
 
             {/* Modal Header */}
-            <h2 className="text-xl font-semibold text-white text-center mb-4 border-b pb-2">
+            <h2 className="text-xl font-semibold text-black text-center mb-4 border-b pb-2">
               Order Details
             </h2>
 
             {/* Order Info Section */}
             {!editingOrderInfo ? (
               <>
-                <div className="text-gray-300 text-sm grid grid-cols-2 gap-4">
+                <div className="text-gray-700 text-sm grid grid-cols-2 gap-4">
                   <p>
                     <strong>Order ID:</strong> {orderDetails.OrderId}
                   </p>
@@ -195,7 +193,6 @@ const OrdersPage = () => {
                       {orderDetails.OrderStatusName}
                     </span>
                   </p>
-
                   <p className="col-span-2">
                     <strong>Total Price:</strong> $
                     {(orderDetails.TotalPriceSale > 0
@@ -206,21 +203,21 @@ const OrdersPage = () => {
                 </div>
 
                 {/* Products List */}
-                <h3 className="text-white mt-5 text-lg border-b pb-2">
+                <h3 className="text-black mt-5 text-lg border-b pb-2">
                   Products
                 </h3>
                 <div className="max-h-64 overflow-y-auto mt-3 space-y-3 pr-2">
                   {orderDetails.OrderProducts.map((product) => (
                     <div
                       key={product.ProductId}
-                      className="flex items-center gap-4 p-3 bg-gray-700 rounded-lg shadow-md"
+                      className="flex items-center gap-4 p-3 bg-gray-100 rounded-lg shadow-md"
                     >
                       <img
                         src={product.PictureUrl}
                         alt={product.ProductName}
                         className="w-16 h-16 rounded-lg object-cover"
                       />
-                      <div className="text-gray-300 flex-1">
+                      <div className="text-gray-700 flex-1">
                         <p className="text-sm font-semibold">
                           {product.ProductName}
                         </p>
@@ -237,10 +234,10 @@ const OrdersPage = () => {
                   ))}
                 </div>
 
-                {/* Edit Button */}
+                {/* Edit and Close Buttons */}
                 <div className="flex justify-between items-center gap-3 mt-5">
                   <button
-                    className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-gradient-to-r from-gray-800 to-black hover:from-gray-700 hover:to-gray-900 shadow-md hover:shadow-xl transition-all duration-300 ease-in-out border border-gray-700"
+                    className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-blue-500 hover:bg-blue-600 shadow-md transition-all duration-300"
                     onClick={() => {
                       setOrderForm({
                         Name: orderDetails.Name,
@@ -255,7 +252,7 @@ const OrdersPage = () => {
                   </button>
 
                   <button
-                    className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-gradient-to-r from-[#fd5c63] to-[#ff3b4a] hover:from-[#ff474f] hover:to-[#e84750] shadow-md hover:shadow-xl transition-all duration-300 ease-in-out border border-[#e63946]"
+                    className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-red-500 hover:bg-red-600 shadow-md transition-all duration-300"
                     onClick={() => setViewingOrder(null)}
                   >
                     Close
@@ -263,9 +260,9 @@ const OrdersPage = () => {
                 </div>
               </>
             ) : (
-              /* EDIT MODE - Order Info Form */
+              /* Edit Mode */
               <div className="mt-4">
-                <h2 className="text-lg text-white mb-4 text-center">
+                <h2 className="text-lg text-black mb-4 text-center">
                   Edit Order Info
                 </h2>
 
@@ -276,7 +273,7 @@ const OrdersPage = () => {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, Name: e.target.value })
                   }
-                  className="block p-2 mt-2 w-full bg-gray-700 text-white rounded"
+                  className="block p-2 mt-2 w-full bg-gray-100 text-black rounded"
                 />
                 <input
                   type="text"
@@ -285,7 +282,7 @@ const OrdersPage = () => {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, Phone: e.target.value })
                   }
-                  className="block p-2 mt-2 w-full bg-gray-700 text-white rounded"
+                  className="block p-2 mt-2 w-full bg-gray-100 text-black rounded"
                 />
                 <input
                   type="text"
@@ -294,7 +291,7 @@ const OrdersPage = () => {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, Address: e.target.value })
                   }
-                  className="block p-2 mt-2 w-full bg-gray-700 text-white rounded"
+                  className="block p-2 mt-2 w-full bg-gray-100 text-black rounded"
                 />
 
                 <div className="flex justify-end gap-2 mt-4">
