@@ -137,22 +137,30 @@
 
 /* Code blocks */
 .markdown-content pre {
-  background-color: #1e293b;
-  color: #e2e8f0;
+  background-color: #1f2937;
+  border-radius: 0.375rem;
   padding: 1rem;
-  border-radius: 0.5rem;
+  margin: 1rem 0;
   overflow-x: auto;
-  margin: 1.5rem 0;
-  font-family: 'Fira Code', 'Courier New', monospace;
 }
 
 .markdown-content code {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #065f46;
-  padding: 0.2rem 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-content pre code {
+  color: #e5e7eb;
+  display: block;
+  line-height: 1.5;
+}
+
+.markdown-content :not(pre) > code {
+  background-color: #f3f4f6;
+  color: #db2777;
+  padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 0.9em;
 }
 
 /* Horizontal rule */

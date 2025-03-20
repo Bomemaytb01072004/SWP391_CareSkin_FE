@@ -5,24 +5,41 @@ import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { fetchActivePromotions } from '../../utils/api';
+import { motion } from 'framer-motion'; // Make sure to import motion if not already
 
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [discountPercent, setDiscountPercent] = useState(0);
-
-  const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    paymentMethod: 'cod',
-    voucherCode: '',
-  });
+  const [isRedirecting, setIsRedirecting] = useState(false); // Add this state to handle redirection UI
 
   const navigate = useNavigate();
 
-  // Load only the selected items for checkout
+  // Authentication check - run this first
+  useEffect(() => {
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token =
+      localStorage.getItem('Token') || localStorage.getItem('token');
+
+    if (!CustomerId || !token) {
+      setIsRedirecting(true);
+
+      // Save current cart URL to return after login
+      localStorage.setItem('redirectAfterLogin', '/checkout');
+
+      // Show message briefly before redirecting
+      setTimeout(() => {
+        navigate('/login', {
+          state: {
+            from: 'checkout',
+            message: 'Please log in or register to proceed with checkout',
+          },
+        });
+      }, 2000);
+    }
+  }, [navigate]);
+
+  // Existing useEffect for loading checkout items
   useEffect(() => {
     const storedSelectedItems =
       JSON.parse(localStorage.getItem('checkoutItems')) || [];
@@ -375,6 +392,60 @@ const CheckoutPage = () => {
     }
   };
 
+  // Add this conditional rendering for redirecting state
+  if (isRedirecting) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-emerald-50 to-teal-50 px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center"
+          >
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Authentication Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please sign in or register to continue with your checkout process.
+            </p>
+            <div className="flex flex-col space-y-3">
+              <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-emerald-500 rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 2 }}
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                Redirecting to login page...
+              </p>
+            </div>
+          </motion.div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
@@ -655,7 +726,7 @@ const CheckoutPage = () => {
                             >
                               <path
                                 fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a 1 1 0 001.414 0l4-4z"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
                                 clipRule="evenodd"
                               />
                             </svg>

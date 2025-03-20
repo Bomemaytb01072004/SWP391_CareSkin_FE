@@ -1,45 +1,80 @@
-import React, { useState, useEffect, useMemo, useCallback, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useContext,
+} from 'react';
 import './Filters.css';
 import SearchProduct from '../SearchProduct/SearchProduct';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { LoadingContext } from '../../Pages/Products/ProductsPage';
 
-const Filters = ({ onFilterChange }) => {
+const Filters = ({ onFilterChange, initialFilters }) => {
+  // Initialize with the parent component's filter state
   const [selectedFilters, setSelectedFilters] = useState({
-    category: [],
-    priceRange: [],
-    skinType: [],
+    category: initialFilters?.category || [],
+    priceRange: initialFilters?.priceRange || [],
+    skinType: initialFilters?.skinType || [],
   });
 
   // Use the context to get shared data and loading state
   const { categories, skinTypes, isLoading } = useContext(LoadingContext);
 
-  const priceRanges = useMemo(() => [
-    { label: 'Under $25', value: 'under_25' },
-    { label: '$25 - $50', value: '25_50' },
-    { label: '$50 - $100', value: '50_100' },
-    { label: 'Over $100', value: 'over_100' },
-  ], []);
+  // This effect syncs the selectedFilters with parent component changes
+  useEffect(() => {
+    if (initialFilters) {
+      // Only update if values have actually changed
+      const needsUpdate = ['category', 'priceRange', 'skinType'].some(
+        (key) =>
+          JSON.stringify(initialFilters[key]) !==
+          JSON.stringify(selectedFilters[key])
+      );
+
+      if (needsUpdate) {
+        console.log('Syncing filter UI with parent state:', initialFilters);
+        setSelectedFilters((prevState) => ({
+          ...prevState,
+          category: initialFilters.category || [],
+          priceRange: initialFilters.priceRange || [],
+          skinType: initialFilters.skinType || [],
+        }));
+      }
+    }
+  }, [initialFilters]);
+
+  const priceRanges = useMemo(
+    () => [
+      { label: 'Under $25', value: 'under_25' },
+      { label: '$25 - $50', value: '25_50' },
+      { label: '$50 - $100', value: '50_100' },
+      { label: 'Over $100', value: 'over_100' },
+    ],
+    []
+  );
 
   // Optimize filter change handler with useCallback
-  const handleFilterChange = useCallback((filterType, value) => {
-    setSelectedFilters((prev) => {
-      const updatedFilters = { ...prev };
-      if (updatedFilters[filterType].includes(value)) {
-        updatedFilters[filterType] = updatedFilters[filterType].filter(
-          (item) => item !== value
-        );
-      } else {
-        updatedFilters[filterType].push(value);
-      }
-      console.log('Updated Filters:', updatedFilters);
-      if (onFilterChange && typeof onFilterChange === 'function') {
-        onFilterChange(updatedFilters);
-      }
-      return updatedFilters;
-    });
-  }, [onFilterChange]);
+  const handleFilterChange = useCallback(
+    (filterType, value) => {
+      setSelectedFilters((prev) => {
+        const updatedFilters = { ...prev };
+        if (updatedFilters[filterType].includes(value)) {
+          updatedFilters[filterType] = updatedFilters[filterType].filter(
+            (item) => item !== value
+          );
+        } else {
+          updatedFilters[filterType].push(value);
+        }
+        console.log('Updated Filters:', updatedFilters);
+        if (onFilterChange && typeof onFilterChange === 'function') {
+          onFilterChange(updatedFilters);
+        }
+        return updatedFilters;
+      });
+    },
+    [onFilterChange]
+  );
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -78,7 +113,7 @@ const Filters = ({ onFilterChange }) => {
                 <h4 className="font-semibold">Category</h4>
                 {categories.map((item) => (
                   <label key={item.value} className="block my-1">
-                    <input  
+                    <input
                       type="checkbox"
                       value={item.value}
                       checked={selectedFilters.category.includes(item.value)}
