@@ -1,9 +1,18 @@
 import { motion } from 'framer-motion';
 
-const StatCard = ({ name, icon: Icon, value, color, onClick, isActive }) => {
+const StatCard = ({
+  name,
+  icon: Icon,
+  value,
+  color,
+  onClick = () => {},
+  isActive = false
+}) => {
   return (
     <motion.div
-      className={`${isActive ? 'bg-white' : 'bg-white'} backdrop-blur-md overflow-hidden shadow-lg rounded-xl border ${isActive ? 'border-' + color.replace('#', '') : 'border-gray-300'} z-0 cursor-pointer transition-all duration-300`}
+      className={`${isActive ? 'bg-white' : 'bg-white'} backdrop-blur-md overflow-hidden shadow-lg rounded-xl border ${
+        isActive ? 'border-' + color.replace('#', '') : 'border-gray-300'
+      } z-0 cursor-pointer transition-all duration-300`}
       whileHover={{ y: -5, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}
       onClick={onClick}
     >
@@ -16,12 +25,6 @@ const StatCard = ({ name, icon: Icon, value, color, onClick, isActive }) => {
       </div>
     </motion.div>
   );
-};
-
-// Set default props
-StatCard.defaultProps = {
-  onClick: () => {},
-  isActive: false
 };
 
 export default StatCard;

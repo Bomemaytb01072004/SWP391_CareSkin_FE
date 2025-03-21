@@ -54,7 +54,7 @@ const SIDEBAR_ITEMS = [
 	{ name: "Quizzes", icon: FileText , color: "#06B6D4", href: "/admin/quizzes" },
 	// { name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/admin/analytics" },
 	{ name: "Promotions", icon: TicketPercent, color: "#E11D48", href: "/admin/promotions" },
-	{ name: "Settings", icon: Settings, color: "#64748B", href: "/admin/settings" },
+	// { name: "Settings", icon: Settings, color: "#64748B", href: "/admin/settings" },
 ];
 
 const Sidebar = () => {
