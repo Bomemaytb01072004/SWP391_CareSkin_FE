@@ -40,18 +40,13 @@ function Navbar() {
 
   // ▼▼▼ Add the Tawk.to chatbot here ▼▼▼
   useEffect(() => {
-    // Track the current user ID to detect changes
-    const currentUserId = localStorage.getItem('CustomerId');
+    // Prevent multiple initializations
+    if (window.Tawk_API && window.tawkInitialized) {
+      return;
+    }
 
-    // Fetch customer data, then inject Tawk.to script
+    // Function to initialize chatbot only once
     const loadChatbot = async () => {
-      // Clean up any existing Tawk.to instances
-      if (window.Tawk_API && typeof window.Tawk_API.endChat === 'function') {
-        window.Tawk_API.endChat();
-      }
-
-      // Remove scripts and clear storage as before...
-
       try {
         let name = 'Guest';
         let email = 'guest@example.com';
@@ -83,61 +78,74 @@ function Navbar() {
             email = isValidEmail(data.Email) ? data.Email : 'guest@example.com';
             console.log(`Chat initialized for user: ${name} (${email})`);
           }
-        } else {
-          // Log for guest users
-          console.log(`Chat initialized for guest user`);
         }
 
-        // Create Tawk.to script element - THIS PART NEEDS TO BE EXECUTED FOR BOTH GUESTS AND LOGGED-IN USERS
-        const tawkScript = document.createElement('script');
-        tawkScript.async = true;
-        tawkScript.innerHTML = `
-          var Tawk_API = Tawk_API || {};
-          
-          // This prevents fullscreen mode
-          Tawk_API.onBeforeLoad = function() {
-            Tawk_API.maximized = false;
+        // Don't create a new script if one already exists
+        if (!document.getElementById('tawk-script')) {
+          window.Tawk_API = window.Tawk_API || {};
+          window.Tawk_LoadStart = new Date();
+
+          // Set initial properties
+          window.Tawk_API.visitor = {
+            name: name,
+            email: email,
+            hash: uniqueId,
           };
-          
-          Tawk_API.visitor = {
-            name: '${name}',
-            email: '${email}',
-            hash: '${uniqueId}' // Force new visitor session
+
+          // This is critical - don't auto-hide the widget
+          window.Tawk_API.onBeforeLoad = function () {
+            // Allow the widget to be visible
+            window.Tawk_API.maximized = true;
+            window.Tawk_API.showWidget();
           };
-          
-          Tawk_API.onLoad = function () {
-            Tawk_API.setAttributes(
+
+          // Track that we've initialized
+          window.tawkInitialized = true;
+
+          const s1 = document.createElement('script');
+          s1.id = 'tawk-script';
+          s1.async = true;
+          s1.src = 'https://embed.tawk.to/67dc7f197bc349190b46342c/1imql0vm8';
+          s1.charset = 'UTF-8';
+          s1.setAttribute('crossorigin', '*');
+          document.head.appendChild(s1);
+
+          console.log('Tawk.to script initialized successfully');
+        } else {
+          // If script exists but session ended, just update visitor info
+          if (
+            window.Tawk_API &&
+            typeof window.Tawk_API.setAttributes === 'function'
+          ) {
+            window.Tawk_API.setAttributes(
               {
-                name: '${name}',
-                email: '${email}'
+                name: name,
+                email: email,
               },
-              function (error) {
-                if (error) console.error("Error setting Tawk attributes:", error);
-              }
+              function (error) {}
             );
-          };
-          
-          (function () {
-            var s1 = document.createElement('script'),
-              s0 = document.getElementsByTagName('script')[0];
-            s1.async = true;
-            s1.src = 'https://embed.tawk.to/67dc7f197bc349190b46342c/1imql0vm8';
-            s1.charset = 'UTF-8';
-            s1.setAttribute('crossorigin', '*');
-            s0.parentNode.insertBefore(s1, s0);
-          })();
-        `;
-        document.body.appendChild(tawkScript);
+
+            if (typeof window.Tawk_API.showWidget === 'function') {
+              window.Tawk_API.showWidget();
+            }
+          }
+        }
       } catch (error) {
         console.error('Error loading Tawk.to script:', error);
       }
     };
 
-    // Always load chatbot, even for guests
-    loadChatbot();
+    // Load chatbot only if not already initialized
+    if (!window.tawkInitialized) {
+      loadChatbot();
+    }
 
-    // Rest of your code...
-  }, [token, CustomerId]);
+    // Cleanup function
+    return () => {
+      // Don't remove the script or end the chat on component unmount
+      // Only do this when explicitly logging out
+    };
+  }, [token, CustomerId]); // Only re-run if user login state changes
   // ▲▲▲ Add the Tawk.to chatbot here ▲▲▲
 
   const handleLogout = () => {
@@ -523,6 +531,72 @@ function Navbar() {
     );
   }, 0);
 
+  // Add this function to your Navbar component
+  const mergeCartsAfterLogin = async (customerId, authToken) => {
+    try {
+      // Check if there's a local cart to merge
+      const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      if (localCart.length === 0) return;
+
+      console.log(
+        'Merging local cart with server cart:',
+        localCart.length,
+        'items'
+      );
+
+      // Add each local item to the server cart
+      for (const item of localCart) {
+        await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            CustomerId: parseInt(customerId),
+            ProductId: item.ProductId,
+            ProductVariationId:
+              item.ProductVariationId ||
+              item.ProductVariations?.[0]?.ProductVariationId ||
+              null,
+            Quantity: item.Quantity || 1,
+          }),
+        });
+      }
+
+      // Clear local cart after successful merge
+      localStorage.removeItem('cart');
+      console.log('Local cart merged and cleared');
+
+      // Refresh cart data from server
+      const response = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/customer/${customerId}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+
+      if (response.ok) {
+        const cartData = await response.json();
+        setCart(cartData);
+      }
+    } catch (error) {
+      console.error('Error merging carts:', error);
+    }
+  };
+
+  // Add this useEffect to handle login redirects
+  useEffect(() => {
+    // Handle redirect after login if there was a pending checkout
+    if (isLoggedIn && localStorage.getItem('pendingCheckout') === 'true') {
+      localStorage.removeItem('pendingCheckout');
+      // Small delay to ensure cart merge completes
+      const timer = setTimeout(() => navigate('/cart'), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoggedIn, navigate]);
+
   return (
     <>
       {/* Enhanced Main Navbar */}
@@ -726,9 +800,21 @@ function Navbar() {
                       <div className="mt-4 ">
                         <Link
                           to="/cart"
+                          onClick={(e) => {
+                            if (cart.length > 0 && !isLoggedIn) {
+                              e.preventDefault();
+                              // Save cart state
+                              localStorage.setItem('pendingCheckout', 'true');
+                              // Redirect to login
+                              navigate('/login', {
+                                state: { returnUrl: '/cart' },
+                              });
+                              setIsCartOpen(false);
+                            }
+                          }}
                           className="block bg-emerald-600 text-white font-medium text-center py-2 px-3 rounded-md hover:bg-emerald-700 transition-colors text-sm"
                         >
-                          View Cart
+                          {isLoggedIn ? 'View Cart' : 'View Cart'}
                         </Link>
                       </div>
                     </motion.div>
