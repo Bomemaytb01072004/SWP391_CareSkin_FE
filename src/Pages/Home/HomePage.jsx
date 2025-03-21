@@ -8,8 +8,12 @@ import NewArrivals from '../../components/HomePage/NewArrivals';
 import IconSlider from '../../components/HomePage/Carousel/IconSlider';
 import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
 import FacebookPosts from '../../components/HomePage/FacebookPosts';
-import { motion } from 'framer-motion';
-import { fetchSkinTypeProduct, fetchProducts } from '../../utils/api.js'; // Import the API functions
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  fetchSkinTypeProduct,
+  fetchProducts,
+  fetchCategoriesFromActiveProducts,
+} from '../../utils/api.js'; // Import the API functions
 import {
   // ...existing imports
   faDroplet,
@@ -24,6 +28,8 @@ import {
   faShippingFast,
   faRecycle,
   faHeadset,
+  faChevronLeft,
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom'; // Import Link for navigation
 
@@ -38,6 +44,35 @@ function HomePage() {
   const [blogs, setBlogs] = useState([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [errorBlogs, setErrorBlogs] = useState('');
+
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Add state for tracking current slide
+  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
+  const categoriesPerPage = 4;
+
+  // Icon and description mapping for categories
+  const categoryMetadata = {
+    Cleanser: { icon: faDroplet, description: 'Start with a clean slate' },
+    Cleansers: { icon: faDroplet, description: 'Start with a clean slate' },
+    Toner: { icon: faFlask, description: 'Balance and prep your skin' },
+    Toners: { icon: faFlask, description: 'Balance and prep your skin' },
+    Serum: { icon: faFlask, description: 'Target specific concerns' },
+    Serums: { icon: faFlask, description: 'Target specific concerns' },
+    Moisturizer: { icon: faJar, description: 'Lock in hydration' },
+    Moisturizers: { icon: faJar, description: 'Lock in hydration' },
+    Sunscreen: { icon: faSun, description: 'Daily protection' },
+    Sunscreens: { icon: faSun, description: 'Daily protection' },
+    Mask: { icon: faLeaf, description: 'Weekly treatments' },
+    Masks: { icon: faLeaf, description: 'Weekly treatments' },
+    'Eye Cream': { icon: faDroplet, description: 'Targeted care' },
+    'Eye Creams': { icon: faDroplet, description: 'Targeted care' },
+    Exfoliator: { icon: faRecycle, description: 'Renew your skin' },
+    Exfoliators: { icon: faRecycle, description: 'Renew your skin' },
+    // Default mapping for unknown categories
+    default: { icon: faJar, description: 'Specialized skincare' },
+  };
 
   // Featured articles data
   const blogPosts = [
@@ -237,6 +272,99 @@ function HomePage() {
     fetchBlogs();
   }, []);
 
+  // Fetch categories and products
+  useEffect(() => {
+    const fetchCategoriesData = async () => {
+      setLoadingCategories(true);
+      try {
+        // Use the same function as ProductsPage
+        const categoriesData = await fetchCategoriesFromActiveProducts();
+        const productsData = await fetchProducts();
+
+        // Transform raw categories into a consistent format (like in ProductsPage)
+        const splittedCategories = categoriesData.flatMap((item) =>
+          item.split(',').map((str) => str.trim())
+        );
+        const uniqueCategories = Array.from(new Set(splittedCategories));
+
+        // Process each category with product counts and metadata
+        const enhancedCategories = uniqueCategories.map((categoryName) => {
+          // Count products in this category
+          const productCount = productsData.filter(
+            (product) =>
+              product.Category &&
+              product.Category.split(',')
+                .map((c) => c.trim())
+                .includes(categoryName) &&
+              product.IsActive
+          ).length;
+
+          // Format the category name
+          const normalizedName = categoryName.trim();
+          let metadata = categoryMetadata[normalizedName];
+
+          // If not found, try case-insensitive matching
+          if (!metadata) {
+            const lowerCaseName = normalizedName.toLowerCase();
+            const metadataKey = Object.keys(categoryMetadata).find(
+              (key) => key.toLowerCase() === lowerCaseName
+            );
+
+            if (metadataKey) {
+              metadata = categoryMetadata[metadataKey];
+            } else {
+              console.log(`No metadata match for: ${normalizedName}`);
+              metadata = categoryMetadata['default'];
+            }
+          }
+
+          return {
+            id: categoryName,
+            title:
+              categoryName.charAt(0).toUpperCase() +
+              categoryName.slice(1).toLowerCase(),
+            icon: metadata.icon,
+            description: metadata.description,
+            products: productCount,
+            // This value should match exactly what the filter component expects
+            filterValue: categoryName.toLowerCase().replace(/\s+/g, '_'),
+          };
+        });
+
+        // Sort by product count (most products first)
+        const sortedCategories = enhancedCategories.sort(
+          (a, b) => b.products - a.products
+        );
+
+        setCategories(sortedCategories);
+        console.log(
+          'Total categories after processing:',
+          sortedCategories.length
+        );
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategoriesData();
+  }, []);
+
+  // Add this debugging code in your fetchCategoriesAndProducts function:
+  useEffect(() => {
+    console.log('Total categories:', categories.length);
+    console.log(
+      'Categories:',
+      categories.map((c) => c.title)
+    );
+    console.log(
+      'Should show right arrow:',
+      categories.length > categoriesPerPage
+    );
+    console.log('Current index:', currentCategoryIndex);
+  }, [categories, currentCategoryIndex]);
+
   // Function to truncate text to a specific length
   const truncateText = (text, maxLength) => {
     if (!text) return '';
@@ -271,6 +399,10 @@ function HomePage() {
     const minutes = Math.ceil(wordCount / 200);
     return `${minutes} min read`;
   };
+
+  // First, add this state to track current skin type page
+  const [currentSkinTypeIndex, setCurrentSkinTypeIndex] = useState(0);
+  const skinTypesPerPage = 5; // Show 5 skin types at a time
 
   return (
     <>
@@ -334,18 +466,21 @@ function HomePage() {
             <div className="mt-8 flex items-center">
               <div className="flex -space-x-2">
                 <img
+                  key="customer1"
                   src="https://media-cdn-v2.laodong.vn/storage/newsportal/2024/3/19/1317075/Kim-Ji-Won-6.jpg"
-                  alt="Customer"
+                  alt="Customer 1"
                   className="w-14 h-14 rounded-full border-2 border-white object-cover"
                 />
                 <img
+                  key="customer2"
                   src="https://cdn.tuoitre.vn/thumb_w/640/471584752817336320/2023/2/16/20210903165700624111jpeg-16765450383411414552189.jpg"
-                  alt="Customer"
+                  alt="Customer 2"
                   className="w-14 h-14 rounded-full border-2 border-white object-cover"
                 />
                 <img
+                  key="customer3"
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Tr%E1%BA%A5n_Th%C3%A0nh_191226.png/800px-Tr%E1%BA%A5n_Th%C3%A0nh_191226.png"
-                  alt="Customer"
+                  alt="Customer 3"
                   className="w-14 h-14 rounded-full border-2 border-white object-cover"
                 />
               </div>
@@ -376,73 +511,6 @@ function HomePage() {
         <IconSlider />
       </motion.div>
 
-      {/* Shop by Skin Type Section */}
-      <motion.div
-        className="py-16 bg-white mx-auto max-w-7xl px-5 mt-10"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
-          Shop by Skin Type
-        </h2>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
-          Find products specifically formulated for your unique skin type.
-        </p>
-
-        {loadingSkinTypes ? (
-          <div className="flex justify-center">
-            <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {skinTypes.map((skinType) => (
-              <motion.div
-                key={skinType.id}
-                className="group block relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
-                <Link
-                  to="/products"
-                  state={{ filterBySkinType: [skinType.id.toString()] }}
-                >
-                  <div className="aspect-w-1 aspect-h-1 w-full">
-                    <img
-                      src={skinType.image}
-                      alt={skinType.title}
-                      className="w-full h-64 object-cover group-hover:scale-105 transition duration-300"
-                      onError={(e) => {
-                        e.target.src = '/images/skintypes/default.jpg'; // Fallback image
-                      }}
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
-                    <div>
-                      <h3 className="text-white font-medium text-lg">
-                        {skinType.title}
-                      </h3>
-                      <p className="text-white/80 text-sm">
-                        {skinType.products} products
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        <div className="text-center mt-12">
-          <motion.a
-            href="/products"
-            className="inline-block px-8 py-3 border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-50 transition font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            View All Products
-          </motion.a>
-        </div>
-      </motion.div>
       {/* Our Mission Statement */}
       <motion.div
         className="py-20 px-6 max-w-4xl mx-auto text-center"
@@ -468,7 +536,312 @@ function HomePage() {
           Learn More About Our Story →
         </motion.a>
       </motion.div>
+      {/* Shop by Skin Type Section */}
+      <motion.div
+        className="py-16 bg-white mx-auto max-w-7xl px-5 mt-10"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
+          Shop by Skin Type
+        </h2>
+        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
+          Find products specifically formulated for your unique skin type.
+        </p>
 
+        {loadingSkinTypes ? (
+          <div className="flex justify-center">
+            <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="relative">
+            {/* Visible skin types with inline navigation arrows */}
+            <div className="flex items-center justify-center gap-4">
+              {/* Left arrow */}
+              {currentSkinTypeIndex > 0 && (
+                <motion.button
+                  className="bg-white text-emerald-600 rounded-full p-4 shadow-lg hover:bg-emerald-50 border border-emerald-100 flex items-center justify-center h-12 w-12 flex-shrink-0 self-center"
+                  onClick={() =>
+                    setCurrentSkinTypeIndex((prev) =>
+                      Math.max(0, prev - skinTypesPerPage)
+                    )
+                  }
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: 'rgb(236 253 245)',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-lg" />
+                </motion.button>
+              )}
+
+              {/* Skin types grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-5 max-w-7xl mx-auto flex-grow">
+                <AnimatePresence mode="wait">
+                  {skinTypes
+                    .slice(
+                      currentSkinTypeIndex,
+                      currentSkinTypeIndex + skinTypesPerPage
+                    )
+                    .map((skinType) => (
+                      <motion.div
+                        key={skinType.id}
+                        className="group block relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.4 }}
+                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                      >
+                        <Link
+                          to="/products"
+                          state={{ filterBySkinType: [skinType.id.toString()] }}
+                        >
+                          <div className="aspect-w-1 aspect-h-1 w-full">
+                            <img
+                              src={skinType.image}
+                              alt={skinType.title}
+                              className="w-full h-64 object-cover group-hover:scale-105 transition duration-300"
+                              onError={(e) => {
+                                e.target.src = '/images/skintypes/default.jpg';
+                              }}
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                            <div>
+                              <h3 className="text-white font-medium text-lg">
+                                {skinType.title}
+                              </h3>
+                              <p className="text-white/80 text-sm">
+                                {skinType.products} products
+                              </p>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Right arrow */}
+              {currentSkinTypeIndex < skinTypes.length - skinTypesPerPage && (
+                <motion.button
+                  className="bg-white text-emerald-600 rounded-full p-4 shadow-lg hover:bg-emerald-50 border border-emerald-100 flex items-center justify-center h-12 w-12 flex-shrink-0 self-center"
+                  onClick={() =>
+                    setCurrentSkinTypeIndex((prev) =>
+                      Math.min(
+                        skinTypes.length - skinTypesPerPage,
+                        prev + skinTypesPerPage
+                      )
+                    )
+                  }
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: 'rgb(236 253 245)',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} className="text-lg" />
+                </motion.button>
+              )}
+            </div>
+
+            {/* Pagination indicator */}
+            {skinTypes.length > skinTypesPerPage && (
+              <div className="flex justify-center mt-6 space-x-2">
+                {Array.from({
+                  length: Math.ceil(skinTypes.length / skinTypesPerPage),
+                }).map((_, index) => (
+                  <button
+                    key={index}
+                    className={`h-2 rounded-full transition-all ${
+                      index ===
+                      Math.floor(currentSkinTypeIndex / skinTypesPerPage)
+                        ? 'w-6 bg-emerald-600'
+                        : 'w-2 bg-emerald-200'
+                    }`}
+                    onClick={() =>
+                      setCurrentSkinTypeIndex(index * skinTypesPerPage)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="text-center mt-12">
+          <motion.a
+            href="/products"
+            className="inline-block px-8 py-3 border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-50 transition font-medium"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            View All Products
+          </motion.a>
+        </div>
+      </motion.div>
+      {/* Shop by Category Section */}
+      <motion.div
+        className="py-16 bg-gray-50 rounded-xl mx-auto max-w-screen-2xl px-5 mt-10 mb-20 relative"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
+          Shop by Category
+        </h2>
+        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
+          Find the perfect products for every step in your skincare routine.
+        </p>
+
+        {loadingCategories ? (
+          <div className="flex justify-center">
+            <div className="w-16 h-16 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="relative">
+            {/* Visible categories with inline navigation arrows */}
+            <div className="flex items-center justify-center gap-4">
+              {/* Left arrow - positioned within the flow */}
+              {currentCategoryIndex > 0 && (
+                <motion.button
+                  className="bg-white text-emerald-600 rounded-full p-4 shadow-lg hover:bg-emerald-50 border border-emerald-100 flex items-center justify-center h-12 w-12 flex-shrink-0 self-center"
+                  onClick={() =>
+                    setCurrentCategoryIndex((prev) =>
+                      Math.max(0, prev - categoriesPerPage)
+                    )
+                  }
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: 'rgb(236 253 245)',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} className="text-lg" />
+                </motion.button>
+              )}
+
+              {/* Categories grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto justify-items-center overflow-hidden flex-grow">
+                <AnimatePresence mode="wait">
+                  {categories
+                    .slice(
+                      currentCategoryIndex,
+                      currentCategoryIndex + categoriesPerPage
+                    )
+                    .map((category) => (
+                      <motion.div
+                        key={category.id}
+                        className="flex flex-col items-center justify-center bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition w-full cursor-pointer"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.4 }}
+                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                      >
+                        <Link
+                          to="/products"
+                          state={{ filterByCategory: [category.filterValue] }} // Use filterValue instead of title
+                          className="flex flex-col items-center justify-center w-full"
+                        >
+                          <span className="p-5 bg-emerald-100 rounded-full flex items-center justify-center w-20 h-20">
+                            <FontAwesomeIcon
+                              icon={category.icon}
+                              className="text-emerald-600 text-3xl"
+                            />
+                          </span>
+                          <h3 className="text-xl font-semibold text-center mt-4">
+                            {category.title}
+                          </h3>
+                          <p className="text-gray-600 font-light text-sm text-center mt-2 mb-4">
+                            {category.description}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {category.products} products
+                          </span>
+                        </Link>
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Right arrow - positioned within the flow */}
+              {currentCategoryIndex < categories.length - categoriesPerPage && (
+                <motion.button
+                  className="bg-white text-emerald-600 rounded-full p-4 shadow-lg hover:bg-emerald-50 border border-emerald-100 flex items-center justify-center h-12 w-12 flex-shrink-0 self-center"
+                  onClick={() =>
+                    setCurrentCategoryIndex((prev) =>
+                      Math.min(
+                        categories.length - categoriesPerPage,
+                        prev + categoriesPerPage
+                      )
+                    )
+                  }
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: 'rgb(236 253 245)',
+                    boxShadow:
+                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <FontAwesomeIcon icon={faChevronRight} className="text-lg" />
+                </motion.button>
+              )}
+            </div>
+
+            {/* Pagination indicator */}
+            {categories.length > categoriesPerPage && (
+              <div className="flex justify-center mt-6 space-x-2">
+                {Array.from({
+                  length: Math.ceil(categories.length / categoriesPerPage),
+                }).map((_, index) => (
+                  <button
+                    key={index}
+                    className={`h-2 rounded-full transition-all ${
+                      index ===
+                      Math.floor(currentCategoryIndex / categoriesPerPage)
+                        ? 'w-6 bg-emerald-600'
+                        : 'w-2 bg-emerald-200'
+                    }`}
+                    onClick={() =>
+                      setCurrentCategoryIndex(index * categoriesPerPage)
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="text-center mt-12">
+          <motion.a
+            href="/shop"
+            className="inline-block px-8 py-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition font-medium"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            View All Categories
+          </motion.a>
+        </div>
+      </motion.div>
       {/* Best Sellers Section */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -520,7 +893,6 @@ function HomePage() {
       >
         <NewArrivals />
       </motion.div>
-
       {/* Why Choose Us */}
       <motion.div
         className="py-16 bg-emerald-50 mt-16"
@@ -575,82 +947,6 @@ function HomePage() {
               </motion.div>
             ))}
           </div>
-        </div>
-      </motion.div>
-
-      {/* Shop by Category Section */}
-      <motion.div
-        className="py-16 bg-gray-50 rounded-xl mx-auto max-w-screen-2xl px-5 mt-10 mb-20"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-      >
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-6">
-          Shop by Category
-        </h2>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
-          Find the perfect products for every step in your skincare routine.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto justify-items-center">
-          {[
-            {
-              icon: faDroplet,
-              title: 'Cleansers',
-              description: 'Start with a clean slate',
-              products: 18,
-            },
-            {
-              icon: faFlask,
-              title: 'Serums',
-              description: 'Target specific concerns',
-              products: 24,
-            },
-            {
-              icon: faJar,
-              title: 'Moisturizers',
-              description: 'Lock in hydration',
-              products: 16,
-            },
-            {
-              icon: faSun,
-              title: 'Sunscreen',
-              description: 'Daily protection',
-              products: 12,
-            },
-          ].map((category, index) => (
-            <motion.a
-              href={`/category/${category.title.toLowerCase()}`}
-              key={index}
-              className="flex flex-col items-center justify-center bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition w-full cursor-pointer"
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-            >
-              <span className="p-5 bg-emerald-100 rounded-full flex items-center justify-center w-20 h-20">
-                <FontAwesomeIcon
-                  icon={category.icon}
-                  className="text-emerald-600 text-3xl"
-                />
-              </span>
-              <h3 className="text-xl font-semibold text-center mt-4">
-                {category.title}
-              </h3>
-              <p className="text-gray-600 font-light text-sm text-center mt-2 mb-4">
-                {category.description}
-              </p>
-              <span className="text-xs text-gray-500">
-                {category.products} products
-              </span>
-            </motion.a>
-          ))}
-        </div>
-        <div className="text-center mt-12">
-          <motion.a
-            href="/shop"
-            className="inline-block px-8 py-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            View All Categories
-          </motion.a>
         </div>
       </motion.div>
 

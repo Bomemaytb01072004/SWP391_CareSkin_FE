@@ -29,6 +29,7 @@ function Navbar() {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const sidebarRef = useRef(null);
+  const lastUserId = useRef(null);
   let closeTimeout = null;
 
   useEffect(() => {
@@ -37,23 +38,181 @@ function Navbar() {
     setIsLoggedIn(!!userSession);
   }, []);
 
-  const handleLogout = () => {
-    console.log('Logging out... Clearing localStorage');
+  // ▼▼▼ Add the Tawk.to chatbot here ▼▼▼
+  useEffect(() => {
+    // Track the current user ID to detect changes
+    const currentUserId = localStorage.getItem('CustomerId');
 
-    // Remove all user-related session data
+    // Fetch customer data, then inject Tawk.to script
+    const loadChatbot = async () => {
+      // Clean up any existing Tawk.to instances
+      if (window.Tawk_API && typeof window.Tawk_API.endChat === 'function') {
+        window.Tawk_API.endChat();
+      }
+
+      // Remove scripts and clear storage as before...
+
+      try {
+        let name = 'Guest';
+        let email = 'guest@example.com';
+        let uniqueId = Date.now() + Math.random().toString(36).substring(2, 15);
+
+        // Only try to fetch user info if logged in
+        if (token && CustomerId) {
+          const response = await fetch(
+            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              cache: 'no-store',
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            name = (data.UserName || 'Guest').replace(/["'\\]/g, '');
+
+            const isValidEmail = (email) => {
+              const simpleEmailRegex =
+                /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+              return (
+                email &&
+                typeof email === 'string' &&
+                simpleEmailRegex.test(email)
+              );
+            };
+
+            email = isValidEmail(data.Email) ? data.Email : 'guest@example.com';
+            console.log(`Chat initialized for user: ${name} (${email})`);
+          }
+        } else {
+          // Log for guest users
+          console.log(`Chat initialized for guest user`);
+        }
+
+        // Create Tawk.to script element - THIS PART NEEDS TO BE EXECUTED FOR BOTH GUESTS AND LOGGED-IN USERS
+        const tawkScript = document.createElement('script');
+        tawkScript.async = true;
+        tawkScript.innerHTML = `
+          var Tawk_API = Tawk_API || {};
+          
+          // This prevents fullscreen mode
+          Tawk_API.onBeforeLoad = function() {
+            Tawk_API.maximized = false;
+          };
+          
+          Tawk_API.visitor = {
+            name: '${name}',
+            email: '${email}',
+            hash: '${uniqueId}' // Force new visitor session
+          };
+          
+          Tawk_API.onLoad = function () {
+            Tawk_API.setAttributes(
+              {
+                name: '${name}',
+                email: '${email}'
+              },
+              function (error) {
+                if (error) console.error("Error setting Tawk attributes:", error);
+              }
+            );
+          };
+          
+          (function () {
+            var s1 = document.createElement('script'),
+              s0 = document.getElementsByTagName('script')[0];
+            s1.async = true;
+            s1.src = 'https://embed.tawk.to/67dc7f197bc349190b46342c/1imql0vm8';
+            s1.charset = 'UTF-8';
+            s1.setAttribute('crossorigin', '*');
+            s0.parentNode.insertBefore(s1, s0);
+          })();
+        `;
+        document.body.appendChild(tawkScript);
+      } catch (error) {
+        console.error('Error loading Tawk.to script:', error);
+      }
+    };
+
+    // Always load chatbot, even for guests
+    loadChatbot();
+
+    // Rest of your code...
+  }, [token, CustomerId]);
+  // ▲▲▲ Add the Tawk.to chatbot here ▲▲▲
+
+  const handleLogout = () => {
+    // First, explicitly end chat and destroy session on Tawk side
+    if (window.Tawk_API) {
+      try {
+        // End the chat conversation
+        if (typeof window.Tawk_API.endChat === 'function') {
+          window.Tawk_API.endChat();
+        }
+
+        // Hide the widget
+        if (typeof window.Tawk_API.hideWidget === 'function') {
+          window.Tawk_API.hideWidget();
+        }
+      } catch (e) {
+        console.error('Error ending Tawk chat:', e);
+      }
+    }
+
+    // Remove any existing Tawk.to script from the DOM
+    const existingTawkScripts = document.querySelectorAll(
+      'script[src*="embed.tawk.to"]'
+    );
+    existingTawkScripts.forEach((script) => script.remove());
+
+    // Remove ALL Tawk_ variables from window object
+    for (let prop in window) {
+      if (prop.startsWith('Tawk_')) {
+        try {
+          delete window[prop];
+        } catch (e) {
+          window[prop] = undefined;
+        }
+      }
+    }
+
+    // Clear ALL storage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('Tawk_')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('Tawk_')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+
+    // Remove ALL Tawk.to cookies - be more aggressive
+    document.cookie.split(';').forEach((c) => {
+      const cookieName = c.trim().split('=')[0];
+      if (
+        cookieName.includes('tawk') ||
+        cookieName.includes('Tawk') ||
+        cookieName.includes('__ta')
+      ) {
+        document.cookie = `${cookieName}=;expires=${new Date(0).toUTCString()};path=/`;
+      }
+    });
+
+    // Clear your own user/session data
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('CustomerId');
-
-    // Clear cart and checkout items when logging out
     localStorage.removeItem('cart');
     localStorage.removeItem('checkoutItems');
 
-    // Update state and navigate to home
     setIsLoggedIn(false);
     setCart([]);
     window.dispatchEvent(new Event('storage'));
-    navigate('/');
+
+    // Force a full page reload to ensure everything is fresh
+    window.location.href = '/';
   };
 
   useEffect(() => {

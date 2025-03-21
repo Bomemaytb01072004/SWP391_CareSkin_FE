@@ -111,7 +111,8 @@ function ProductsPage() {
             cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
           return {
             label: capitalizedLabel,
-            value: capitalizedLabel.replace(/\s+/g, '_'),
+            // Change this to match exactly what HomePage is sending
+            value: cat.toLowerCase().replace(/\s+/g, '_'),
           };
         });
 
@@ -168,29 +169,6 @@ function ProductsPage() {
   }, [location.state]);
 
   useEffect(() => {
-    // Handle skin type filter from location state
-    if (location.state?.filterBySkinType) {
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        skinType: location.state.filterBySkinType,
-      }));
-    }
-
-    // Handle category filter from location state (new)
-    if (location.state?.filterByCategory) {
-      // Convert category names to their form values (replace spaces with underscores)
-      const categoryValues = location.state.filterByCategory.map((cat) =>
-        cat.replace(/\s+/g, '_').toLowerCase()
-      );
-
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        category: categoryValues,
-      }));
-    }
-  }, [location.state]);
-
-  useEffect(() => {
     let newFiltered = [...products];
 
     // Filter by category
@@ -198,19 +176,15 @@ function ProductsPage() {
       newFiltered = newFiltered.filter((product) => {
         if (!product.Category) return false;
 
-        const productCategories = product.Category.split(',').map(
-          (cat) =>
-            cat.trim().charAt(0).toUpperCase() +
-            cat.trim().slice(1).toLowerCase()
+        // Convert product categories to lowercase with underscores for comparison
+        const productCategories = product.Category.split(',').map((cat) =>
+          cat.trim().toLowerCase().replace(/\s+/g, '_')
         );
 
-        return filters.category.some((selectedCat) => {
-          // Convert selected category value back to label format by replacing underscores with spaces
-          const selectedCatLabel = selectedCat.replace(/_/g, ' ');
-          return productCategories.some(
-            (prodCat) => prodCat === selectedCatLabel
-          );
-        });
+        // Compare directly with the filter values (which are already lowercase with underscores)
+        return filters.category.some((selectedCat) =>
+          productCategories.includes(selectedCat.toLowerCase())
+        );
       });
     }
 
@@ -437,7 +411,7 @@ function ProductsPage() {
   useEffect(() => {
     console.log('Location state:', location.state);
 
-    // Handle skin type filter from location state
+    // Handle skin type filter
     if (location.state?.filterBySkinType) {
       console.log(
         'Applying skin type filter:',
@@ -449,21 +423,20 @@ function ProductsPage() {
       }));
     }
 
-    // Handle category filter from location state
+    // Handle category filter
     if (location.state?.filterByCategory) {
       console.log('Applying category filter:', location.state.filterByCategory);
-      // Map category names to values that match your filter component
+      // Ensure consistent case transformation
       const categoryValues = location.state.filterByCategory.map((cat) =>
         cat.toLowerCase().replace(/\s+/g, '_')
       );
+
+      console.log('Transformed category values:', categoryValues);
 
       setFilters((prev) => ({
         ...prev,
         category: categoryValues,
       }));
-
-      // Store the category filter in sessionStorage for persistence
-      sessionStorage.setItem('categoryFilter', JSON.stringify(categoryValues));
     }
   }, [location.state]);
 
@@ -491,7 +464,7 @@ function ProductsPage() {
           <div className={`col-lg-2 ${styles.productPage_sidebar}`}>
             <Filters
               onFilterChange={handleFilterChange}
-              initialFilters={filters} // Pass current filters to component
+              initialFilters={filters}
             />
           </div>
 
