@@ -10,13 +10,16 @@ import CompareProduct from './Pages/CompareProductPage/CompareProductPage';
 import CartPage from './Pages/Cart/CartPage';
 import CheckoutPage from './Pages/Checkout/CheckoutPage';
 import OrderConfirmation from './Pages/Checkout/OrderConfirmation';
+import OrderConfirmationMoMo from './Pages/Checkout/OrderConfirmationMoMo';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
 import BlogPage from './Pages/Blog/BlogPage';
+import BlogDetails from './Pages/Blog/BlogDetails';
 import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
+import AboutPage from './Pages/About/AboutPage';
 export default function App() {
   return (
     <AuthProvider>
@@ -32,23 +35,30 @@ export default function App() {
           <Route path="/product/:id" element={<ProductDetailedPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/blogs" element={<BlogPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route
+            path="/momo-confirmation"
+            element={<OrderConfirmationMoMo />}
+          />
+          <Route path="/blog/:blogId" element={<BlogDetails />} />
+
           <Route
             path="/compare/:product1/:product2"
             element={<CompareProduct />}
           />
-          
+
           {/* Protected User Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<UserProfile />} />
           </Route>
-          
+
           {/* Admin Routes - Protected by Admin Role */}
           <Route element={<ProtectedRoute requireAdmin={true} />}>
             <Route path="/admin/*" element={<Admin />} />
           </Route>
-          
+
           {/* Error Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
         </Routes>

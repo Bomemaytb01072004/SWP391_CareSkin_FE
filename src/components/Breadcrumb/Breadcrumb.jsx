@@ -1,13 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const Breadcrumb = ({ items }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex mt-6 items-center space-x-2">
-      <a href="/" className="hover:underline">
+      <span
+        className="hover:underline cursor-pointer"
+        onClick={() => navigate('/')}
+      >
         Home
-      </a>
+      </span>
 
       {items.map((item, index) => (
         <React.Fragment key={index}>
@@ -18,9 +24,12 @@ const Breadcrumb = ({ items }) => {
           {item.active ? (
             <span className="font-semibold">{item.label}</span>
           ) : (
-            <a href={item.link} className="hover:underline">
+            <span
+              className="hover:underline cursor-pointer"
+              onClick={() => navigate(item.link)}
+            >
               {item.label}
-            </a>
+            </span>
           )}
         </React.Fragment>
       ))}

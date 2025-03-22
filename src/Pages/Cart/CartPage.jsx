@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 
@@ -222,34 +223,88 @@ const CartPage = () => {
     }
   };
 
-  const handleVariationChange = (productId, newVariationId) => {
-    setCart((prevCart) => {
-      const updatedCart = prevCart.map((item) => {
-        if (item.ProductId === productId) {
-          const newVariation = item.ProductVariations?.find(
-            (v) => v.ProductVariationId === newVariationId
-          );
+  const handleVariationChange = async (productId, newVariationId) => {
+    const cartItem = cart.find((item) => item.ProductId === productId);
+    if (!cartItem) {
+      console.error(`Cart item with ProductId ${productId} not found.`);
+      return;
+    }
 
-          return {
-            ...item,
-            ProductVariationId: newVariationId,
-            Price:
-              newVariation?.SalePrice > 0
-                ? newVariation.SalePrice
-                : newVariation?.Price || item.Price, // ✅ Update price correctly
-          };
+    const selectedVariation = cartItem.ProductVariations?.find(
+      (v) => v.ProductVariationId === newVariationId
+    );
+
+    if (CustomerId) {
+      try {
+        const payload = {
+          CustomerId: parseInt(CustomerId),
+          ProductId: cartItem.ProductId,
+          ProductVariationId: newVariationId,
+          Quantity: cartItem.Quantity,
+        };
+
+        console.log('Sending payload to API:', payload);
+
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/update`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to update variation (ProductId: ${cartItem.ProductId}). Response: ${response.status} - ${errorText}`
+          );
         }
-        return item;
+
+        const responseData = await response.json();
+        console.log('API response data:', responseData);
+
+        const updatedCart = cart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                ProductVariationId: newVariationId,
+                SalePrice:
+                  selectedVariation?.SalePrice > 0
+                    ? selectedVariation.SalePrice
+                    : selectedVariation?.Price || item.Price,
+              }
+            : item
+        );
+
+        setCart(updatedCart);
+      } catch (error) {
+        console.error('Error updating cart variation:', error);
+      }
+    } else {
+      setCart((prevCart) => {
+        const updatedCart = prevCart.map((item) =>
+          item.ProductId === productId
+            ? {
+                ...item,
+                ProductVariationId: newVariationId,
+                SalePrice:
+                  selectedVariation?.SalePrice > 0
+                    ? selectedVariation.SalePrice
+                    : selectedVariation?.Price || item.Price,
+              }
+            : item
+        );
+
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
       });
 
-      // ✅ If guest user, update localStorage as well
-      if (!CustomerId) {
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
-        window.dispatchEvent(new Event('storage')); // ✅ Ensure navbar updates across components
-      }
-
-      return updatedCart;
-    });
+      window.dispatchEvent(new Event('storage'));
+    }
   };
 
   const handleCheckboxChange = (id) => {
@@ -322,6 +377,19 @@ const CartPage = () => {
   };
 
   const proceedToCheckout = async () => {
+    // Check if user is logged in
+    if (!CustomerId || !token) {
+      // Save selected items and cart info before redirecting
+      localStorage.setItem('pendingCheckout', 'true');
+      localStorage.setItem('selectedCartItems', JSON.stringify(selectedItems));
+
+      // Show login message
+      toast.info('Please log in to complete your checkout');
+      navigate('/login', { state: { returnUrl: '/cart' } });
+      return;
+    }
+
+    // Continue with normal checkout for logged-in users
     const selectedProducts = cart.filter((item) =>
       selectedItems.includes(item.ProductId)
     );
@@ -333,18 +401,109 @@ const CartPage = () => {
 
     localStorage.setItem('checkoutItems', JSON.stringify(selectedProducts));
 
-    // Guest user: remove selected items from localStorage only
-    const updatedCart = cart.filter(
-      (item) => !selectedItems.includes(item.ProductId)
-    );
-    setCart(updatedCart);
-    setSelectedItems([]); // Clear selected items in real time
+    // Remove selected items from cart API for logged-in users
+    if (CustomerId && token) {
+      try {
+        const cartIdsToRemove = selectedProducts.map((item) => item.CartId);
 
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event('storage'));
+        // Perform batch delete requests
+        const removeRequests = cartIdsToRemove.map((cartId) =>
+          fetch(`http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        );
 
-    navigate('/checkout'); // Navigate to checkout page
+        await Promise.all(removeRequests);
+      } catch (error) {
+        console.error('Error removing checkout items from cart:', error);
+      }
+    }
+
+    // Navigate to checkout page
+    navigate('/checkout');
   };
+
+  // Add a function to merge local cart with API cart
+  const mergeLocalCartWithAPI = async () => {
+    const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    if (localCart.length === 0) return;
+
+    toast.info('Syncing your cart...', { autoClose: 2000 });
+
+    // For each item in local cart, add to API cart
+    const addPromises = localCart.map((item) => {
+      return fetch(`http://careskinbeauty.shop:4456/api/Cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          CustomerId: parseInt(CustomerId),
+          ProductId: item.ProductId,
+          ProductVariationId:
+            item.ProductVariationId ||
+            (item.ProductVariations && item.ProductVariations.length > 0
+              ? item.ProductVariations[0].ProductVariationId
+              : null),
+          Quantity: item.Quantity || 1,
+        }),
+      });
+    });
+
+    try {
+      await Promise.all(addPromises);
+      localStorage.removeItem('cart'); // Clear local cart after successful merge
+      toast.success('Your cart has been updated!');
+
+      // Refresh cart data from API
+      const response = await fetch(
+        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const cartData = await response.json();
+        setCart(cartData);
+      }
+    } catch (error) {
+      console.error('Error merging carts:', error);
+      toast.error('There was a problem updating your cart');
+    }
+  };
+
+  // Add a useEffect to check for local cart when logged in
+  useEffect(() => {
+    // Check if user is logged in and has local cart items
+    if (CustomerId && token) {
+      const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+      if (localCart.length > 0) {
+        // User has logged in and has items in local storage
+        mergeLocalCartWithAPI();
+      }
+
+      // Check if user just logged in with intent to checkout
+      const pendingCheckout =
+        localStorage.getItem('pendingCheckout') === 'true';
+      if (pendingCheckout) {
+        localStorage.removeItem('pendingCheckout');
+
+        // Restore selected items if available
+        const savedSelectedItems = JSON.parse(
+          localStorage.getItem('selectedCartItems') || '[]'
+        );
+        if (savedSelectedItems.length > 0) {
+          setSelectedItems(savedSelectedItems);
+          localStorage.removeItem('selectedCartItems');
+        }
+      }
+    }
+  }, [CustomerId, token]); // Dependencies ensure this runs when login state changes
 
   const selectedProducts = cart.filter((item) =>
     selectedItems.includes(item.ProductId)

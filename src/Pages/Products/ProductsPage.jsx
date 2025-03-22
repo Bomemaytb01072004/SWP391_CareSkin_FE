@@ -21,10 +21,11 @@ export const LoadingContext = createContext({
   isLoading: true,
   categories: [],
   skinTypes: [],
-  products: []
+  products: [],
 });
 
 function ProductsPage() {
+  console.log('--- ProductsPage Mounted ---');
   const breadcrumbItems = [
     { label: 'Products', link: '/products', active: true },
   ];
@@ -44,8 +45,12 @@ function ProductsPage() {
     skinType: [],
   });
 
-  // Loading states
+  console.log('Initial filters state:', filters);
+
+  // Central loading state
   const [isLoading, setIsLoading] = useState(true);
+
+  // Individual loading trackers
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingSkinTypes, setLoadingSkinTypes] = useState(true);
@@ -97,6 +102,8 @@ function ProductsPage() {
       try {
         setLoadingCategories(true);
         const data = await fetchCategoriesFromActiveProducts();
+
+        // Transform raw categories into the format expected by Filters component
         const splittedCategories = data.flatMap((item) =>
           item.split(',').map((str) => str.trim())
         );
@@ -107,9 +114,11 @@ function ProductsPage() {
             cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
           return {
             label: capitalizedLabel,
-            value: capitalizedLabel.replace(/\s+/g, '_'),
+            // Change this to match exactly what HomePage is sending
+            value: cat.toLowerCase().replace(/\s+/g, '_'),
           };
         });
+
 
         setCategories(mappedCategories);
       } catch (error) {
@@ -151,6 +160,15 @@ function ProductsPage() {
       setSortOption('Newest');
     }
   }, [location.state]);
+  // Check if coming from "Shop by Skin Type" and update the filters
+  useEffect(() => {
+    if (location.state?.filterBySkinType) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        skinType: location.state.filterBySkinType, // Set the skin type filter
+      }));
+    }
+  }, [location.state]);
 
   // Filter + Sort
   useEffect(() => {
@@ -174,7 +192,12 @@ function ProductsPage() {
     // Filter by price range
     if (filters.priceRange.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        if (!product.Variations || product.Variations.length === 0) {
+        // Check if product has Variations
+        if (
+          !product.Variations ||
+          !Array.isArray(product.Variations) ||
+          product.Variations.length === 0
+        ) {
           return false;
         }
         const firstVariation = product.Variations[0];
@@ -262,7 +285,122 @@ function ProductsPage() {
     setCurrentPage(1);
   }, [products, filters, sortOption]);
 
-  // Hàm nhận updatedFilters từ Filters
+  useEffect(() => {
+    if (filters.skinType.length > 0) {
+      console.log('Active skin type filters:', filters.skinType);
+      console.log(
+        'Selected skin type filters (as numbers):',
+        filters.skinType.map((id) => Number(id))
+      );
+
+      // Check the first 2 products to see if they match the skin type filters
+      if (products.length >= 2) {
+        const productSample = products.slice(0, 2);
+        productSample.forEach((product, index) => {
+          if (
+            product.ProductForSkinTypes &&
+            Array.isArray(product.ProductForSkinTypes)
+          ) {
+            const skinTypeIds = product.ProductForSkinTypes.map(
+              (item) => item.SkinTypeId
+            );
+            console.log(`Product ${index} skin type IDs:`, skinTypeIds);
+
+            // Check if this product matches any of the selected filters
+            const matches = filters.skinType.some((selectedId) => {
+              const numericId = Number(selectedId);
+              return skinTypeIds.includes(numericId);
+            });
+
+            console.log(`Product ${index} matches skin type filter:`, matches);
+          }
+        });
+      }
+    }
+  }, [filters.skinType, products]);
+
+  // Debug: Log product structure
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log('Product example:', products[0]);
+      console.log('Skin Type information:');
+      console.log('- products[0].SkinType:', products[0].SkinType);
+      console.log(
+        '- products[0].ProductSkinTypes:',
+        products[0].ProductSkinTypes
+      );
+      console.log(
+        '- products[0].ProductForSkinTypes:',
+        products[0].ProductForSkinTypes
+      );
+    }
+  }, [products]);
+
+  // Debug: Add more product structure info for price
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log('Price information:');
+      const sampleProduct = products[0];
+      console.log('Direct price property:', sampleProduct.Price);
+      console.log('Variations:', sampleProduct.Variations);
+
+      if (sampleProduct.Variations && sampleProduct.Variations.length > 0) {
+        console.log(
+          'First variation price:',
+          sampleProduct.Variations[0].Price
+        );
+        console.log(
+          'First variation sale price:',
+          sampleProduct.Variations[0].SalePrice
+        );
+      }
+    }
+  }, [products]);
+
+  // Debug price range filtering
+  useEffect(() => {
+    if (filters.priceRange.length > 0 && products.length > 0) {
+      console.log('Active price range filters:', filters.priceRange);
+
+      // Check a few sample products
+      const sampleProducts = products.slice(0, 3);
+      sampleProducts.forEach((product, index) => {
+        if (product.Variations && product.Variations.length > 0) {
+          const firstVariation = product.Variations[0];
+          const priceToCompare =
+            firstVariation.SalePrice && firstVariation.SalePrice > 0
+              ? firstVariation.SalePrice
+              : firstVariation.Price;
+
+          console.log(
+            `Product ${index} - Name: ${product.ProductName}, Price: ${priceToCompare}`
+          );
+
+          // Check if the product matches any selected price range
+          const matches = filters.priceRange.some((range) => {
+            switch (range) {
+              case 'under_25':
+                return priceToCompare < 25;
+              case '25_50':
+                return priceToCompare >= 25 && priceToCompare <= 50;
+              case '50_100':
+                return priceToCompare >= 50 && priceToCompare <= 100;
+              case 'over_100':
+                return priceToCompare > 100;
+              default:
+                return false;
+            }
+          });
+
+          console.log(`Product ${index} matches price filter: ${matches}`);
+        } else {
+          console.log(`Product ${index} has no variations or prices`);
+        }
+      });
+    }
+  }, [filters.priceRange, products]);
+
+  // 5. Hàm nhận updatedFilters từ Filters
   const handleFilterChange = (updatedFilters) => {
     setFilters(updatedFilters);
   };
@@ -278,8 +416,42 @@ function ProductsPage() {
     isLoading,
     categories,
     skinTypes,
-    products
+    products,
   };
+
+  useEffect(() => {
+    console.log('Location state:', location.state);
+
+    // Handle skin type filter
+    if (location.state?.filterBySkinType) {
+      console.log(
+        'Applying skin type filter:',
+        location.state.filterBySkinType
+      );
+      setFilters((prev) => ({
+        ...prev,
+        skinType: location.state.filterBySkinType,
+      }));
+    }
+
+    // Handle category filter
+    if (location.state?.filterByCategory) {
+      console.log('Applying category filter:', location.state.filterByCategory);
+      // Ensure consistent case transformation
+      const categoryValues = location.state.filterByCategory.map((cat) =>
+        cat.toLowerCase().replace(/\s+/g, '_')
+      );
+
+      console.log('Transformed category values:', categoryValues);
+
+      setFilters((prev) => ({
+        ...prev,
+        category: categoryValues,
+      }));
+    }
+  }, [location.state]);
+
+  console.log('Updated filters state:', filters);
 
   if (isLoading) {
     return <LoadingPage />;
@@ -301,7 +473,10 @@ function ProductsPage() {
 
         <div className="row">
           <div className={`col-lg-2 ${styles.productPage_sidebar}`}>
-            <Filters onFilterChange={handleFilterChange} />
+            <Filters
+              onFilterChange={handleFilterChange}
+              initialFilters={filters}
+            />
           </div>
 
           <div className={`col-12 col-md-8 col-lg-9`}>

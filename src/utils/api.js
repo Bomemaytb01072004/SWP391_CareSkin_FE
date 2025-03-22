@@ -725,6 +725,42 @@ export async function updateOrder(id, updatedData) {
     throw error;
   }
 }
+/**
+ * Update the status of an order
+ * @param {string} orderId - The ID of the order
+ * @param {number} newStatusId - The new status ID to be set
+ */
+export async function updateOrderStatus(orderId, newStatusId) {
+  try {
+    console.log('Updating Order:', orderId);
+    console.log('Sending OrderStatusId as:', newStatusId);
+
+    const response = await fetch(
+      `http://careskinbeauty.shop:4456/api/Order/${orderId}/status`,
+      {
+        method: 'PUT',
+        headers: {
+          Accept: '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newStatusId),
+      }
+    );
+
+    console.log('Response Status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`Failed: ${errorText || response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to update order status:', error);
+    throw error;
+  }
+}
 
 // Delete an order
 export async function deleteOrder(id) {

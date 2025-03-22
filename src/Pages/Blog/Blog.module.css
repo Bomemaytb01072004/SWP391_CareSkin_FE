@@ -1,0 +1,262 @@
+/* Base content styling */
+.markdown-content {
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  color: #374151;
+  line-height: 1.8;
+}
+
+/* Headings with decorative elements */
+.markdown-content h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #033325;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.markdown-content h2::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 3rem;
+  height: 3px;
+  background-color: #688d81;
+  border-radius: 3px;
+}
+
+.markdown-content h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #047857;
+  margin-top: 1.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.markdown-content h3::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 1.35rem;
+  background-color: #34d399;
+  margin-right: 0.75rem;
+  border-radius: 2px;
+}
+
+/* Paragraph styling with improved readability */
+.markdown-content p {
+  margin-bottom: 1.25rem;
+  line-height: 1.8;
+  color: #4b5563;
+  font-size: 1.05rem;
+}
+
+/* First paragraph after headings with special treatment */
+.markdown-content h2 + p,
+.markdown-content h3 + p {
+  font-size: 1.1rem;
+  color: #374151;
+}
+
+/* Beautiful lists */
+.markdown-content ul {
+  margin: 1.5rem 0 1.5rem 1.5rem;
+  list-style-type: none;
+}
+
+.markdown-content ul li {
+  margin-bottom: 0.75rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.markdown-content ul li::before {
+  content: '•';
+  color: #10b981;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  font-size: 1.25rem;
+}
+
+/* Nested lists with different bullet styles */
+.markdown-content ul ul li::before {
+  content: '◦';
+  color: #34d399;
+}
+
+/* Typography enhancements */
+.markdown-content strong {
+  font-weight: 600;
+  color: #065f46;
+  background-color: rgba(16, 185, 129, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+}
+
+.markdown-content em {
+  font-style: italic;
+  color: #4b5563;
+}
+
+/* Link styling */
+.markdown-content a {
+  color: #059669;
+  text-decoration: none;
+  border-bottom: 1px dotted #10b981;
+  transition: all 0.2s ease-in-out;
+}
+
+.markdown-content a:hover {
+  color: #047857;
+  border-bottom: 1px solid #047857;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Blockquote styling */
+.markdown-content blockquote {
+  border-left: 4px solid #10b981;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: #6b7280;
+  font-style: italic;
+  background-color: #f9fafb;
+  padding: 1rem 1.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Code blocks */
+.markdown-content pre {
+  background-color: #1f2937;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.markdown-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875rem;
+}
+
+.markdown-content pre code {
+  color: #e5e7eb;
+  display: block;
+  line-height: 1.5;
+}
+
+.markdown-content :not(pre) > code {
+  background-color: #f3f4f6;
+  color: #db2777;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+/* Horizontal rule */
+.markdown-content hr {
+  margin: 2rem 0;
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(
+    to right,
+    rgba(16, 185, 129, 0),
+    rgba(16, 185, 129, 0.5),
+    rgba(16, 185, 129, 0)
+  );
+}
+
+/* Special styling for product mentions */
+.markdown-content li:has(strong) {
+  background-color: #f0fdf4;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border-left: 3px solid #10b981;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Product highlight box */
+.productHighlight {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 10px rgba(167, 243, 208, 0.2);
+}
+
+.productHighlight h4 {
+  color: #065f46;
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.productHighlight h4::before {
+  content: '★';
+  margin-right: 0.5rem;
+  color: #10b981;
+}
+
+/* Table styling */
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.markdown-content th {
+  background-color: #ecfdf5;
+  color: #065f46;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+}
+
+.markdown-content td {
+  border-top: 1px solid #d1d5db;
+  padding: 0.75rem 1rem;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+/* Image captions */
+.imageCaption {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Reading progress bar */
+.readingProgressContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  z-index: 50;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.readingProgress {
+  height: 100%;
+  background-color: #10b981;
+  transition: width 0.2s ease;
+}

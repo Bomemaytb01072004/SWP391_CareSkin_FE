@@ -7,10 +7,10 @@ import { ToastContainer, toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import FacebookLogin from "react-facebook-login-lite";
+import FacebookLogin from 'react-facebook-login-lite';
 import axios from 'axios';
 import { Formik, useFormik } from 'formik';
-import * as Yup from 'yup'
+import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
 import styles from './LoginPage.module.css';
 
@@ -20,9 +20,8 @@ const LoginPage = () => {
   const [loginPassword, setLoginPassword] = useState('password');
   const [loginPasswordType, setLoginPasswordType] = useState(false);
 
-
   const [registerPassword, setRegisterPassword] = useState('password');
-  const [confirmPassword, setConfirmPassword] = useState('password')
+  const [confirmPassword, setConfirmPassword] = useState('password');
   const [registerPasswordType, setRegisterPasswordType] = useState(false);
   const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
@@ -48,7 +47,9 @@ const LoginPage = () => {
       console.error('Error sending token to BE:', error);
       if (error.response && error.response.data) {
         // If server responds with a specific error message
-        toast.error(`Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`);
+        toast.error(
+          `Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`
+        );
       } else if (error.request) {
         // If request was made but no response was received
         toast.error('Login failed: No response from server');
@@ -65,7 +66,7 @@ const LoginPage = () => {
   };
 
   const handleFacebookLoginSuccess = async (response) => {
-    console.log("Facebook Token:", response.authResponse.accessToken);
+    console.log('Facebook Token:', response.authResponse.accessToken);
 
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -73,18 +74,20 @@ const LoginPage = () => {
         token: response.authResponse.accessToken,
       });
 
-      console.log("Backend Response:", res.data);
-      toast.success("Login successful!", { autoClose: 2000 });
+      console.log('Backend Response:', res.data);
+      toast.success('Login successful!', { autoClose: 2000 });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data));
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data));
 
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate('/'), 2000);
     } catch (error) {
-      console.error("Error sending token to BE", error);
+      console.error('Error sending token to BE', error);
       if (error.response && error.response.data) {
         // If server responds with a specific error message
-        toast.error(`Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`);
+        toast.error(
+          `Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`
+        );
       } else if (error.request) {
         // If request was made but no response was received
         toast.error('Login failed: No response from server');
@@ -96,25 +99,22 @@ const LoginPage = () => {
   };
 
   const handleFacebookLoginFailure = () => {
-    console.error("Facebook Login Failed");
-    toast.error("Login with Facebook failed!");
+    console.error('Facebook Login Failed');
+    toast.error('Login with Facebook failed!');
   };
-
-
 
   const { login } = useAuth();
 
   const formikLogin = useFormik({
     initialValues: {
-      username: "",
-      password: ""
+      username: '',
+      password: '',
     },
     validationSchema: Yup.object({
-      username: Yup.string()
-        .required("This field is required"),
+      username: Yup.string().required('This field is required'),
       password: Yup.string()
-        .required("You must enter a password")
-        .min(3, "Password must be at least 8 characters")
+        .required('You must enter a password')
+        .min(3, 'Password must be at least 8 characters'),
     }),
     onSubmit: async (values) => {
       const { username, password } = values;
@@ -141,7 +141,9 @@ const LoginPage = () => {
         }
 
         if (!data.token) {
-          toast.error(data.message || data.error || 'Invalid username or password.');
+          toast.error(
+            data.message || data.error || 'Invalid username or password.'
+          );
           return;
         }
 
@@ -163,6 +165,9 @@ const LoginPage = () => {
             navigate('/admin');
           }
         }, 2000);
+
+        // Call this after successful login
+        mergeCartsAfterLogin(CustomerId, token);
       } catch (error) {
         console.error('Login Error:', error);
         if (error.name === 'SyntaxError') {
@@ -185,14 +190,15 @@ const LoginPage = () => {
       userName: Yup.string()
         .required('Please enter username')
         .min(6, 'Username must be at least 6 characters'),
-      email: Yup.string()
-        .email('Invalid email')
-        .required('Please enter email'),
+      email: Yup.string().email('Invalid email').required('Please enter email'),
       password: Yup.string()
         .required('Please enter password')
         .min(3, 'Password minimum 3 characters'),
       confirmPassword: Yup.string()
-        .oneOf([Yup.ref('password'), null], 'Confirmation password does not match')
+        .oneOf(
+          [Yup.ref('password'), null],
+          'Confirmation password does not match'
+        )
         .required('Please confirm password'),
     }),
     onSubmit: async (values) => {
@@ -232,30 +238,30 @@ const LoginPage = () => {
   });
 
   const toggleLoginPassword = () => {
-    setLoginPasswordType(!loginPasswordType)
+    setLoginPasswordType(!loginPasswordType);
     if (loginPasswordType == true) {
-      setLoginPassword('password')
+      setLoginPassword('password');
     } else {
-      setLoginPassword('text')
+      setLoginPassword('text');
     }
   };
 
   const toggleRegisterPassword = () => {
-    setRegisterPasswordType(!registerPasswordType)
+    setRegisterPasswordType(!registerPasswordType);
     if (registerPasswordType == true) {
-      setRegisterPassword('password')
+      setRegisterPassword('password');
     } else {
-      setRegisterPassword('text')
+      setRegisterPassword('text');
     }
   };
 
   const toggleConfirmPassword = () => {
-    setConfirmPasswordType(!confirmPasswordType)
+    setConfirmPasswordType(!confirmPasswordType);
 
     if (confirmPasswordType == true) {
-      setConfirmPassword('password')
+      setConfirmPassword('password');
     } else {
-      setConfirmPassword('text')
+      setConfirmPassword('text');
     }
   };
 
@@ -272,14 +278,50 @@ const LoginPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Add to your Login component after successful login:
+  const mergeCartsAfterLogin = async (userId, authToken) => {
+    try {
+      const localCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+
+      if (localCart.length === 0) return;
+
+      // Add each local cart item to the user's server cart
+      for (const item of localCart) {
+        await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            CustomerId: parseInt(userId),
+            ProductId: item.ProductId,
+            ProductVariationId: item.ProductVariationId,
+            Quantity: item.Quantity || 1,
+          }),
+        });
+      }
+
+      // Clear local cart data
+      localStorage.removeItem('guestCart');
+
+      // Check if user was trying to checkout
+      const pendingCheckout =
+        localStorage.getItem('pendingCheckout') === 'true';
+      if (pendingCheckout) {
+        localStorage.removeItem('pendingCheckout');
+        window.location.href = '/cart'; // Redirect back to cart
+      }
+    } catch (error) {
+      console.error('Error merging carts:', error);
+    }
+  };
+
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <>
         <ToastContainer position="top-right" autoClose={3000} />
-        <button
-          onClick={() => navigate('/')}
-          className={styles.homeButton}
-        >
+        <button onClick={() => navigate('/')} className={styles.homeButton}>
           ← Homepage
         </button>
 
@@ -322,11 +364,11 @@ const LoginPage = () => {
               className={`${styles.formBase} ${mobileView && rightPanelActive ? styles.inactive : ''}`}
               style={{
                 left: rightPanelActive ? '-50%' : '0',
-                ...(mobileView && { position: 'relative', left: '0' })
+                ...(mobileView && { position: 'relative', left: '0' }),
               }}
             >
               <h1 className={styles.formTitle}>Sign In</h1>
-              
+
               <div className={styles.socialButtonsContainer}>
                 <div className="google-button-container">
                   <GoogleLogin
@@ -338,20 +380,18 @@ const LoginPage = () => {
                 <FacebookLogin
                   appId={import.meta.env.VITE_FACEBOOK_APP_ID}
                   onSuccess={(response) => {
-                      console.log("Facebook Response:", response);
-                      if (response.authResponse) {
-                          handleFacebookLoginSuccess(response);
-                      } else {
-                          handleFacebookLoginFailure();
-                      }
+                    console.log('Facebook Response:', response);
+                    if (response.authResponse) {
+                      handleFacebookLoginSuccess(response);
+                    } else {
+                      handleFacebookLoginFailure();
+                    }
                   }}
-              />
+                />
               </div>
-              
-              <span className={styles.divider}>
-                or use your account
-              </span>
-              
+
+              <span className={styles.divider}>or use your account</span>
+
               <input
                 type="text"
                 name="username"
@@ -363,7 +403,7 @@ const LoginPage = () => {
                 onChange={formikLogin.handleChange}
                 onBlur={formikLogin.handleBlur}
               />
-              
+
               {formikLogin.touched.username && formikLogin.errors.username && (
                 <div className={styles.errorMessage}>
                   {formikLogin.errors.username}
@@ -384,28 +424,22 @@ const LoginPage = () => {
                   onBlur={formikLogin.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${loginPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
+                  className={`fa-solid ${loginPasswordType ? 'fa-eye' : 'fa-eye-slash'} ${styles.toggleButton}`}
                   onClick={toggleLoginPassword}
                 ></i>
               </div>
-              
+
               {formikLogin.touched.password && formikLogin.errors.password && (
                 <div className={styles.errorMessage}>
                   {formikLogin.errors.password}
                 </div>
               )}
-              
-              <a
-                href="#forgot-password"
-                className={styles.forgotPassword}
-              >
+
+              <a href="#forgot-password" className={styles.forgotPassword}>
                 Forgot your password?
               </a>
-              
-              <button
-                type="submit"
-                className={styles.primaryButton}
-              >
+
+              <button type="submit" className={styles.primaryButton}>
                 Sign In
               </button>
 
@@ -414,7 +448,11 @@ const LoginPage = () => {
                   type="button"
                   onClick={() => setRightPanelActive(true)}
                   className={styles.switchButton}
-                  style={{ position: 'relative', transform: 'none', left: 'auto' }}
+                  style={{
+                    position: 'relative',
+                    transform: 'none',
+                    left: 'auto',
+                  }}
                 >
                   Sign Up
                 </button>
@@ -427,13 +465,14 @@ const LoginPage = () => {
               className={`${styles.formBase} ${mobileView && !rightPanelActive ? styles.inactive : ''}`}
               style={{
                 left: rightPanelActive ? '50%' : '100%',
-                ...(mobileView && { position: 'relative', left: rightPanelActive ? '0' : '100%' })
+                ...(mobileView && {
+                  position: 'relative',
+                  left: rightPanelActive ? '0' : '100%',
+                }),
               }}
             >
-              <h1 className={styles.formTitle}>
-                Create Account
-              </h1>
-              
+              <h1 className={styles.formTitle}>Create Account</h1>
+
               <div className={styles.socialButtonsContainer}>
                 <div className="google-button-container">
                   <GoogleLogin
@@ -445,20 +484,20 @@ const LoginPage = () => {
                 <FacebookLogin
                   appId={import.meta.env.VITE_FACEBOOK_APP_ID}
                   onSuccess={(response) => {
-                      console.log("Facebook Response:", response);
-                      if (response.authResponse) {
-                          handleFacebookLoginSuccess(response);
-                      } else {
-                          handleFacebookLoginFailure();
-                      }
+                    console.log('Facebook Response:', response);
+                    if (response.authResponse) {
+                      handleFacebookLoginSuccess(response);
+                    } else {
+                      handleFacebookLoginFailure();
+                    }
                   }}
-              />
+                />
               </div>
-              
+
               <span className={styles.divider}>
                 or use your email for registration
               </span>
-              
+
               <input
                 type="text"
                 name="userName"
@@ -470,13 +509,14 @@ const LoginPage = () => {
                 onChange={formikRegister.handleChange}
                 onBlur={formikRegister.handleBlur}
               />
-              
-              {formikRegister.touched.userName && formikRegister.errors.userName && (
-                <div className={styles.errorMessage}>
-                  {formikRegister.errors.userName}
-                </div>
-              )}
-              
+
+              {formikRegister.touched.userName &&
+                formikRegister.errors.userName && (
+                  <div className={styles.errorMessage}>
+                    {formikRegister.errors.userName}
+                  </div>
+                )}
+
               <input
                 type="email"
                 name="email"
@@ -509,17 +549,18 @@ const LoginPage = () => {
                   onBlur={formikRegister.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${registerPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
+                  className={`fa-solid ${registerPasswordType ? 'fa-eye' : 'fa-eye-slash'} ${styles.toggleButton}`}
                   onClick={toggleRegisterPassword}
                 ></i>
               </div>
-              
-              {formikRegister.touched.password && formikRegister.errors.password && (
-                <div className={styles.errorMessage}>
-                  {formikRegister.errors.password}
-                </div>
-              )}
-              
+
+              {formikRegister.touched.password &&
+                formikRegister.errors.password && (
+                  <div className={styles.errorMessage}>
+                    {formikRegister.errors.password}
+                  </div>
+                )}
+
               <div className={styles.passwordContainer}>
                 <input
                   type={confirmPassword}
@@ -534,22 +575,19 @@ const LoginPage = () => {
                   onBlur={formikRegister.handleBlur}
                 />
                 <i
-                  className={`fa-solid ${confirmPasswordType ? "fa-eye" : "fa-eye-slash"} ${styles.toggleButton}`}
+                  className={`fa-solid ${confirmPasswordType ? 'fa-eye' : 'fa-eye-slash'} ${styles.toggleButton}`}
                   onClick={toggleConfirmPassword}
                 ></i>
               </div>
-              
+
               {formikRegister.touched.confirmPassword &&
                 formikRegister.errors.confirmPassword && (
                   <div className={styles.errorMessage}>
                     {formikRegister.errors.confirmPassword}
                   </div>
                 )}
-              
-              <button
-                type="submit"
-                className={styles.primaryButton}
-              >
+
+              <button type="submit" className={styles.primaryButton}>
                 Sign Up
               </button>
 
@@ -558,7 +596,11 @@ const LoginPage = () => {
                   type="button"
                   onClick={() => setRightPanelActive(false)}
                   className={styles.switchButton}
-                  style={{ position: 'relative', transform: 'none', left: 'auto' }}
+                  style={{
+                    position: 'relative',
+                    transform: 'none',
+                    left: 'auto',
+                  }}
                 >
                   Sign In
                 </button>
