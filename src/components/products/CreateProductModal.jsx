@@ -345,7 +345,7 @@ function CreateProductModal({
                                     ...prev,
                                     Variations: [
                                         ...prev.Variations,
-                                        { ProductVariationId: '', Ml: 0, Price: 0 },
+                                        { ProductVariationId: '', Ml: '', Price: '' },
                                     ],
                                 }))
                             }
@@ -356,38 +356,46 @@ function CreateProductModal({
                     </div>
                     {newProduct.Variations.map((variation, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="number"
-                                placeholder="Ml"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={variation.Ml}
-                                onChange={(e) =>
-                                    setNewProduct((prev) => {
-                                        const updated = [...prev.Variations];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Ml: parseInt(e.target.value) || 0,
-                                        };
-                                        return { ...prev, Variations: updated };
-                                    })
-                                }
-                            />
-                            <input
-                                type="number"
-                                placeholder="Price"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={variation.Price}
-                                onChange={(e) =>
-                                    setNewProduct((prev) => {
-                                        const updated = [...prev.Variations];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Price: parseFloat(e.target.value) || 0,
-                                        };
-                                        return { ...prev, Variations: updated };
-                                    })
-                                }
-                            />
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Ml</label>
+                                <input
+                                    type="number"
+                                    placeholder="Ml"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={variation.Ml}
+                                    onChange={(e) =>
+                                        setNewProduct((prev) => {
+                                            const updated = [...prev.Variations];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Ml: parseInt(e.target.value) || 0,
+                                            };
+                                            return { ...prev, Variations: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Price</label>
+                                <input
+                                    type="number"
+                                    placeholder="Price"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={variation.Price}
+                                    onChange={(e) =>
+                                        setNewProduct((prev) => {
+                                            const updated = [...prev.Variations];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Price: parseFloat(e.target.value) || 0,
+                                            };
+                                            return { ...prev, Variations: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
                             <button
                                 onClick={() =>
                                     setNewProduct((prev) => ({
@@ -401,6 +409,7 @@ function CreateProductModal({
                             </button>
                         </div>
                     ))}
+
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -427,10 +436,10 @@ function CreateProductModal({
                     </div>
                     {newProduct.MainIngredients.map((ing, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="text"
+                            <textarea
                                 placeholder="IngredientName"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
+                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded 
+             h-24 resize-none overflow-auto"
                                 value={ing.IngredientName}
                                 onChange={(e) =>
                                     setNewProduct((prev) => {
@@ -443,10 +452,10 @@ function CreateProductModal({
                                     })
                                 }
                             />
-                            <input
-                                type="text"
+                            <textarea
                                 placeholder="Description"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
+                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded 
+             h-24 resize-none overflow-auto"
                                 value={ing.Description}
                                 onChange={(e) =>
                                     setNewProduct((prev) => {
@@ -459,6 +468,7 @@ function CreateProductModal({
                                     })
                                 }
                             />
+
                             <button
                                 onClick={() =>
                                     setNewProduct((prev) => ({
@@ -494,10 +504,10 @@ function CreateProductModal({
                             + Add Detail Ingredient
                         </button>
                     </div>
+
                     {newProduct.DetailIngredients.map((ing, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="text"
+                            <textarea
                                 placeholder="IngredientName"
                                 className="w-full p-1 border border-gray-300 text-gray-900 rounded"
                                 value={ing.IngredientName}
@@ -511,6 +521,7 @@ function CreateProductModal({
                                         return { ...prev, DetailIngredients: updated };
                                     })
                                 }
+                                rows={2}
                             />
                             <button
                                 onClick={() =>
@@ -528,6 +539,7 @@ function CreateProductModal({
                         </div>
                     ))}
                 </div>
+
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">

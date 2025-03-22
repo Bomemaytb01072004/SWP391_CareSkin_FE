@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { fetchOrders } from '../../utils/api'; // ✅ Import API function
+import { fetchOrders } from '../../utils/api';
 
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA'];
 
@@ -20,19 +20,19 @@ const OrderDistribution = () => {
       try {
         const orders = await fetchOrders();
 
-        // ✅ Count orders per status
+        // Đếm số lượng đơn hàng theo trạng thái
         const statusCounts = orders.reduce((acc, order) => {
           acc[order.OrderStatusName] = (acc[order.OrderStatusName] || 0) + 1;
           return acc;
         }, {});
 
-        // ✅ Convert to array format for Recharts
+        // Chuyển đổi dữ liệu theo định dạng của Recharts
         const chartData = Object.entries(statusCounts).map(([name, value]) => ({
           name,
           value,
         }));
 
-        setOrderStatusData(chartData); // ✅ Update state
+        setOrderStatusData(chartData);
       } catch (error) {
         console.error('Error fetching order distribution:', error);
       }
@@ -43,12 +43,12 @@ const OrderDistribution = () => {
 
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700"
+      className="bg-white shadow-lg rounded-xl p-6 border border-gray-300"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
     >
-      <h2 className="text-xl font-semibold text-gray-100 mb-4">
+      <h2 className="text-xl font-semibold text-black mb-4">
         Order Status Distribution
       </h2>
 
@@ -75,10 +75,10 @@ const OrderDistribution = () => {
             </Pie>
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgba(31, 41, 55, 0.8)',
-                borderColor: '#4B5563',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderColor: '#ccc',
               }}
-              itemStyle={{ color: '#E5E7EB' }}
+              itemStyle={{ color: '#000' }}
             />
             <Legend />
           </PieChart>

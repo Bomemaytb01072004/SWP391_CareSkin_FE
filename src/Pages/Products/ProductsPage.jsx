@@ -1,3 +1,4 @@
+// ProductsPage.jsx
 import styles from './ProductsPage.module.css';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
@@ -9,7 +10,7 @@ import Pagination from '../../components/Pagination/Pagination';
 import {
   fetchActiveProductsWithDetails,
   fetchCategoriesFromActiveProducts,
-  fetchSkinTypeProduct,
+  fetchSkinTypeProduct
 } from '../../utils/api.js';
 import { useState, useEffect, useMemo, createContext } from 'react';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
@@ -34,7 +35,10 @@ function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [skinTypes, setSkinTypes] = useState([]);
   const location = useLocation();
+
+  // Đặt mặc định "" hoặc "Price: Low to High" tuỳ nhu cầu
   const [sortOption, setSortOption] = useState('');
+
   const [filters, setFilters] = useState({
     category: [],
     priceRange: [],
@@ -56,22 +60,18 @@ function ProductsPage() {
   // -----------------------------
   // Phân trang
   // -----------------------------
-  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-  const itemsPerPage = 20; // Số sản phẩm mỗi trang (tuỳ ý)
-
-  // Lấy tổng số trang = làm tròn trên (filteredProducts / itemsPerPage)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const totalPages = Math.ceil(totalProduct / itemsPerPage);
 
-  // Tính mảng sản phẩm hiển thị cho trang hiện tại
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  // Memoize the current page products to avoid unnecessary recalculations
   const currentPageProducts = useMemo(() => {
     return filteredProducts.slice(startIndex, endIndex);
   }, [filteredProducts, startIndex, endIndex]);
 
-  // Update the master loading state whenever any individual state changes
+  // Cập nhật isLoading tổng khi 1 trong 3 loading thay đổi
   useEffect(() => {
     setIsLoading(loadingProducts || loadingCategories || loadingSkinTypes);
   }, [loadingProducts, loadingCategories, loadingSkinTypes]);
@@ -82,9 +82,12 @@ function ProductsPage() {
       try {
         setLoadingProducts(true);
         const data = await fetchActiveProductsWithDetails();
-        setProducts(data);
-        setFilteredProducts(data);
-        setTotalProduct(data.length);
+        // Lọc lại các sản phẩm Active để chắc chắn chỉ tính totalProduct cho những sản phẩm đang Active
+        const activeProducts = data.filter((prod) => prod.IsActive === true);
+
+        setProducts(activeProducts);
+        setFilteredProducts(activeProducts);
+        setTotalProduct(activeProducts.length);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {
@@ -93,7 +96,7 @@ function ProductsPage() {
     })();
   }, []);
 
-  // Fetch categories and transform them for the Filters component
+  // Fetch categories
   useEffect(() => {
     (async () => {
       try {
@@ -116,6 +119,7 @@ function ProductsPage() {
           };
         });
 
+
         setCategories(mappedCategories);
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -125,21 +129,19 @@ function ProductsPage() {
     })();
   }, []);
 
-  // Fetch skin types and transform them for the Filters component
+  // Fetch skin types (chỉ lấy IsActive = true)
   useEffect(() => {
     (async () => {
       try {
         setLoadingSkinTypes(true);
         const data = await fetchSkinTypeProduct();
+        const activeSkinTypes = data.filter((item) => item.IsActive === true);
 
-        // Transform skin types into the format expected by Filters component
-        const mappedSkinTypes = data.map((item) => {
-          // Extract the skin type name without the 'Skin' suffix
+        const mappedSkinTypes = activeSkinTypes.map((item) => {
           const labelWithoutSkin = item.TypeName.replace(' Skin', '');
           return {
             label: labelWithoutSkin,
-            // Ensure SkinTypeId is stored as a string to match form value format
-            value: item.SkinTypeId.toString(),
+            value: item.SkinTypeId.toString()
           };
         });
 
@@ -152,10 +154,10 @@ function ProductsPage() {
     })();
   }, []);
 
+  // Nếu đến từ New Arrivals, tự set sort = "Newest"
   useEffect(() => {
-    // Check if navigation state contains `fromNewArrivals`
     if (location.state?.fromNewArrivals) {
-      setSortOption('Newest'); // Apply sorting ONLY when coming from New Arrivals
+      setSortOption('Newest');
     }
   }, [location.state]);
   // Check if coming from "Shop by Skin Type" and update the filters
@@ -168,6 +170,7 @@ function ProductsPage() {
     }
   }, [location.state]);
 
+  // Filter + Sort
   useEffect(() => {
     let newFiltered = [...products];
 
@@ -175,16 +178,14 @@ function ProductsPage() {
     if (filters.category.length > 0) {
       newFiltered = newFiltered.filter((product) => {
         if (!product.Category) return false;
-
-        // Convert product categories to lowercase with underscores for comparison
-        const productCategories = product.Category.split(',').map((cat) =>
-          cat.trim().toLowerCase().replace(/\s+/g, '_')
+        const productCategories = product.Category.split(',').map(cat =>
+          cat.trim().charAt(0).toUpperCase() + cat.trim().slice(1).toLowerCase()
         );
 
-        // Compare directly with the filter values (which are already lowercase with underscores)
-        return filters.category.some((selectedCat) =>
-          productCategories.includes(selectedCat.toLowerCase())
-        );
+        return filters.category.some(selectedCat => {
+          const selectedCatLabel = selectedCat.replace(/_/g, ' ');
+          return productCategories.some(prodCat => prodCat === selectedCatLabel);
+        });
       });
     }
 
@@ -199,22 +200,16 @@ function ProductsPage() {
         ) {
           return false;
         }
-
-        // Get the first variation
         const firstVariation = product.Variations[0];
-
-        // Determine the price to use for comparison (use SalePrice if available, otherwise regular Price)
         const priceToCompare =
-          firstVariation.SalePrice && firstVariation.SalePrice > 0
+          (firstVariation.SalePrice && firstVariation.SalePrice > 0)
             ? firstVariation.SalePrice
             : firstVariation.Price;
 
-        // If no valid price, exclude this product
         if (typeof priceToCompare !== 'number' || isNaN(priceToCompare)) {
           return false;
         }
 
-        // Check if the price falls within any of the selected ranges
         return filters.priceRange.some((range) => {
           switch (range) {
             case 'under_25':
@@ -235,45 +230,59 @@ function ProductsPage() {
     // Filter by skin type
     if (filters.skinType.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        if (!product.ProductForSkinTypes) return false;
-
-        // Extract skin type IDs from product
-        const productSkinTypeIds = product.ProductForSkinTypes.map(
-          (item) => item.SkinTypeId
-        );
-
-        // Check if product matches the selected skin type
-        return filters.skinType.some((selectedSkinTypeId) =>
-          productSkinTypeIds.includes(Number(selectedSkinTypeId))
-        );
+        if (!product.ProductForSkinTypes || product.ProductForSkinTypes.length === 0) {
+          return false;
+        }
+        const productSkinTypeIds = product.ProductForSkinTypes.map(item => item.SkinTypeId);
+        return filters.skinType.some(selectedSkinTypeId => {
+          const numericSelectedId = Number(selectedSkinTypeId);
+          return productSkinTypeIds.includes(numericSelectedId);
+        });
       });
     }
 
-    console.log('Applying filters to products:', filters);
+    // Ưu tiên SalePrice nếu > 0, nếu không lấy Price, nếu không có Variations thì = 0
+    const getPriceFromFirstVariation = (product) => {
+      if (!product.Variations || product.Variations.length === 0) {
+        return 0;
+      }
+      const firstVariation = product.Variations[0];
+      const price = (firstVariation.SalePrice && firstVariation.SalePrice > 0)
+        ? firstVariation.SalePrice
+        : firstVariation.Price;
+      return price ?? 0; // phòng khi cả SalePrice lẫn Price bị null/undefined
+    };
 
     // Sort products
     if (sortOption) {
-      newFiltered = [...newFiltered].sort((a, b) => {
+      newFiltered.sort((a, b) => {
+        const priceA = getPriceFromFirstVariation(a);
+        const priceB = getPriceFromFirstVariation(b);
+
         switch (sortOption) {
           case 'Price: Low to High':
-            return a.Price - b.Price;
+            return priceA - priceB;
           case 'Price: High to Low':
-            return b.Price - a.Price;
+            return priceB - priceA;
           case 'Newest':
-            return (
-              new Date(b.PublishedDate || 0) - new Date(a.PublishedDate || 0)
-            );
+            // Giả định ID cao hơn = mới hơn
+            return b.ProductId - a.ProductId;
           case 'Popular':
-            return (b.AvgRating || 0) - (a.AvgRating || 0);
+            // Giả định AverageRating cao = popular hơn
+            return (b.AverageRating || 0) - (a.AverageRating || 0);
           default:
+            console.log('No matching sort option:', sortOption);
             return 0;
         }
       });
+
+      // Kiểm tra thứ tự cuối sau sort
+      console.log('filteredProducts after sort:', newFiltered.map(p => p.ProductId));
     }
 
     setFilteredProducts(newFiltered);
     setTotalProduct(newFiltered.length);
-    setCurrentPage(1); // Reset về trang 1 mỗi khi filter/sort thay đổi
+    setCurrentPage(1);
   }, [products, filters, sortOption]);
 
   useEffect(() => {
@@ -396,11 +405,13 @@ function ProductsPage() {
     setFilters(updatedFilters);
   };
 
+  // Hàm nhận option sort
   const handleSortChange = (option) => {
+    // Đảm bảo option là 1 trong các case ("Price: Low to High", "Price: High to Low", "Newest", "Popular")
+    console.log('Sort changed to:', option);
     setSortOption(option);
   };
 
-  // Create the context value to pass to child components
   const loadingContextValue = {
     isLoading,
     categories,

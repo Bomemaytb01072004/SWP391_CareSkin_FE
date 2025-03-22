@@ -7,23 +7,23 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
   const [productDiscounts, setProductDiscounts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState('');
   const [selectedPromotion, setSelectedPromotion] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProductDiscounts = async () => {
-      try {
-        setLoading(true);
-        const data = await getProductDiscounts();
-        setProductDiscounts(data);
-      } catch (error) {
-        console.error('Error fetching product discounts:', error);
-        toast.error('Failed to load product discounts');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchProductDiscounts = async () => {
+    try {
+      setLoading(true);
+      const data = await getProductDiscounts();
+      console.log('Fetched product discounts:', data);
+      setProductDiscounts(data);
+    } catch (error) {
+      console.error('Error fetching product discounts:', error);
+      toast.error('Failed to load product discounts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProductDiscounts();
   }, []);
 
@@ -39,11 +39,14 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
         PromotionId: parseInt(selectedPromotion)
       };
 
-      const result = await setProductDiscount(productDiscountData);
-      setProductDiscounts(prev => [...prev, result]);
+      console.log('Adding product discount:', productDiscountData);
+      await setProductDiscount(productDiscountData);
+      
+      // Fetch lại data sau khi thêm thành công
+      await fetchProductDiscounts();
+      
       setSelectedProduct('');
       setSelectedPromotion('');
-      setDiscountPercent(0);
       toast.success('Product discount added successfully!');
     } catch (error) {
       console.error('Error adding product discount:', error);
@@ -51,22 +54,26 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
     }
   };
 
-  const handleToggleStatus = async (discountId, currentStatus) => {
+  const handleToggleStatus = async (discount) => {
     try {
       const statusData = {
-        ProductDiscountId: discountId,
-        IsActive: !currentStatus
+        ProductId: discount.ProductId,
+        PromotionId: discount.PromotionId,
+        IsActive: !discount.IsActive
       };
 
+      console.log('Updating status with:', statusData);
       await updateProductDiscountStatus(statusData);
+      
       setProductDiscounts(prev =>
-        prev.map(discount =>
-          discount.ProductDiscountId === discountId
-            ? { ...discount, IsActive: !currentStatus }
-            : discount
+        prev.map(d =>
+          d.ProductId === discount.ProductId && d.PromotionId === discount.PromotionId
+            ? { ...d, IsActive: !d.IsActive }
+            : d
         )
       );
-      toast.success(`Discount ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+      
+      toast.success(`Discount ${!discount.IsActive ? 'activated' : 'deactivated'} successfully!`);
     } catch (error) {
       console.error('Error updating discount status:', error);
       toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
@@ -119,33 +126,13 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                   required
                 >
                   <option value="">Select a promotion</option>
-                  {promotions
-                    .filter(promo => promo.PromotionType === 1)
-                    .map((promotion) => (
-                      <option key={promotion.PromotionId} value={promotion.PromotionId}>
-                        {promotion.PromotionName} ({promotion.DiscountPercent}%)
-                      </option>
-                    ))}
+                  {promotions.map((promotion) => (
+                    <option key={promotion.PromotionId} value={promotion.PromotionId}>
+                      {promotion.Name || promotion.PromotionName} ({promotion.DiscountPercent}%)
+                    </option>
+                  ))}
                 </select>
               </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-black mb-1">
-                Discount Percentage (Optional)
-              </label>
-              <input
-                type="number"
-                value={discountPercent}
-                onChange={(e) => setDiscountPercent(e.target.value)}
-                className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Leave empty to use promotion's default percentage"
-                min="0"
-                max="100"
-              />
-              <p className="text-xs text-gray-600 mt-1">
-                If left empty, the promotion's default discount percentage will be used
-              </p>
             </div>
 
             <div className="flex justify-end">
@@ -199,10 +186,14 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                             {product ? product.ProductName : 'Unknown Product'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
-                            {promotion ? promotion.Name : 'Unknown Promotion'}
+                            {promotion ? (promotion.Name || promotion.PromotionName) : 'Unknown Promotion'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
-                            {discount.DiscountPercent || (promotion ? promotion.DiscountPercent : 0)}%
+                            {discount.DiscountPercent !== null && discount.DiscountPercent !== undefined 
+                              ? `${discount.DiscountPercent}%` 
+                              : promotion 
+                                ? `${promotion.DiscountPercent}% (Default)` 
+                                : '0%'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <span className={`px-2 py-1 rounded-full text-xs ${discount.IsActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -211,8 +202,12 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                             <button
-                              onClick={() => handleToggleStatus(discount.ProductDiscountId, discount.IsActive)}
-                              className={`px-3 py-1 rounded-md text-xs font-medium ${discount.IsActive ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
+                              onClick={() => handleToggleStatus(discount)}
+                              className={`text-sm px-2 py-1 rounded ${
+                                discount.IsActive
+                                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-800 hover:bg-green-200'
+                              }`}
                             >
                               {discount.IsActive ? 'Deactivate' : 'Activate'}
                             </button>

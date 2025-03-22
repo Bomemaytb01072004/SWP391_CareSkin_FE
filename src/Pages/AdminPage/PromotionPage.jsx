@@ -15,6 +15,7 @@ const PromotionPageAdmin = () => {
     data: promotions,
     isLoading: promotionsLoading,
     error: promotionsError,
+    refetch: refetchPromotions,
   } = useQuery({
     queryKey: ["promotions"],
     queryFn: fetchPromotions,
@@ -64,7 +65,7 @@ const PromotionPageAdmin = () => {
             <StatCard name="Upcoming Promotions" icon={Calendar} value={upcomingPromotions} color="#F59E0B" />
             <StatCard name="Avg. Discount" icon={Percent} value={`${avgDiscount}%`} color="#EF4444" />
           </motion.div>
-          <PromotionsTable promotions={promotions} />
+          <PromotionsTable promotions={promotions} refetchPromotions={refetchPromotions}/>
         </main>
       </div>
     </>

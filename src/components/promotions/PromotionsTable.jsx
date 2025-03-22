@@ -15,7 +15,7 @@ import {
   deactivatePromotion
 } from '../../utils/api';
 
-const PromotionsTable = ({ promotions }) => {
+const PromotionsTable = ({ promotions, refetchPromotions }) => {
   const [localPromotions, setLocalPromotions] = useState([]);
   const [displayedPromotions, setDisplayedPromotions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,6 +159,7 @@ const PromotionsTable = ({ promotions }) => {
         await deletePromotion(promotionId);
         setLocalPromotions((prev) => prev.filter((p) => p.PromotionId !== promotionId));
         toast.success('Promotion deleted successfully!');
+        refetchPromotions();
       } catch (error) {
         console.error('Failed to delete promotion:', error);
         toast.error('Error deleting promotion!');
@@ -173,25 +174,39 @@ const PromotionsTable = ({ promotions }) => {
         prev.map((p) => (p.PromotionId === id ? { ...p, IsActive: false } : p))
       );
       toast.success('Promotion deactivated successfully!');
+      refetchPromotions();
     } catch (error) {
       console.error('Failed to deactivate promotion:', error);
       toast.error(`Failed to deactivate promotion: ${error.message || 'Unknown error'}`);
     }
   };
 
-  const handleOpenEditModal = (promotion) => {
-    setEditPromotion({
+  const handleEditClick = (promotion) => {
+    // Make sure we have all required fields with correct types
+    const editState = {
       ...promotion,
-      StartDate: new Date(promotion.StartDate).toISOString().split('T')[0],
-      EndDate: new Date(promotion.EndDate).toISOString().split('T')[0]
-    });
+      PromotionId: promotion.PromotionId,
+      Name: promotion.Name || promotion.PromotionName,
+      PromotionType: Number(promotion.PromotionType),
+      DiscountPercent: Number(promotion.DiscountPercent),
+      StartDate: promotion.StartDate,
+      EndDate: promotion.EndDate,
+      ApplicableProducts: promotion.ApplicableProducts || []
+    };
+    
+    console.log('Opening edit modal with state:', editState);
+    setEditPromotion(editState);
     setIsEditModalOpen(true);
   };
 
   const handleEdit = async () => {
     if (!editPromotionState) return;
+    
+    // Log the current state for debugging
+    console.log('Editing promotion with state:', editPromotionState);
+    
     if (
-      !editPromotionState.PromotionName ||
+      !editPromotionState.Name ||
       !editPromotionState.StartDate ||
       !editPromotionState.EndDate ||
       !editPromotionState.PromotionType ||
@@ -200,12 +215,20 @@ const PromotionsTable = ({ promotions }) => {
       toast.error('Please fill in all required fields: Promotion Name, Start Date, End Date, Promotion Type, and Discount Percentage');
       return;
     }
+
     try {
-      const updated = await updatePromotion(editPromotionState.PromotionId, editPromotionState);
+      // Prepare the data for the API
+      const promotionData = {
+        ...editPromotionState,
+        PromotionName: editPromotionState.Name, // Map Name to PromotionName for API
+      };
+      
+      const updated = await updatePromotion(editPromotionState.PromotionId, promotionData);
       setLocalPromotions((prev) => prev.map((p) => (p.PromotionId === updated.PromotionId ? updated : p)));
       toast.success('Promotion updated successfully!');
       setIsEditModalOpen(false);
       setEditPromotion(null);
+      refetchPromotions();
     } catch (error) {
       console.error('Failed to update promotion:', error);
       toast.error(`Failed to update promotion: ${error.message || 'Unknown error'}`);
@@ -230,6 +253,7 @@ const PromotionsTable = ({ promotions }) => {
         ApplicableProducts: []
       });
       toast.success('New promotion added successfully!');
+      refetchPromotions();
     } catch (error) {
       toast.error('Failed to add promotion:', error);
     }
@@ -313,11 +337,11 @@ const PromotionsTable = ({ promotions }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-black">Promotions</h2>
         <div className="flex gap-4">
-          <div className="relative">
+          <div className="relative w-96">
             <input
               type="text"
               placeholder="Search by name or description..."
-              className="bg-gray-100 text-black placeholder-gray-500 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-100 text-black placeholder-gray-500 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setSearchTerm(e.target.value)}
               value={searchTerm}
             />
@@ -428,7 +452,7 @@ const PromotionsTable = ({ promotions }) => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                   <button
                     className="text-indigo-600 hover:text-indigo-500 mr-2"
-                    onClick={() => handleOpenEditModal(promotion)}
+                    onClick={() => handleEditClick(promotion)}
                     title="Edit promotion"
                   >
                     <Edit size={18} />
@@ -440,13 +464,13 @@ const PromotionsTable = ({ promotions }) => {
                   >
                     <Power size={18} />
                   </button>
-                  <button
+                  {/* <button
                     className="text-red-600 hover:text-red-500"
                     onClick={() => handleDelete(promotion.PromotionId)}
                     title="Delete promotion"
                   >
                     <Trash2 size={18} />
-                  </button>
+                  </button> */}
                 </td>
               </motion.tr>
             ))}

@@ -27,7 +27,6 @@ const SkinTypesPage = () => {
   if (skinTypesLoading) return <div>Loading...</div>;
   if (skinTypesError) return <div>Error fetching data</div>;
 
-  // Filter skin types based on status
   const filteredSkinTypes = filterStatus === "all" 
     ? skinTypes 
     : skinTypes.filter(skinType => 
@@ -65,7 +64,7 @@ const SkinTypesPage = () => {
             <button
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filterStatus === "all"
-                  ? "bg-purple-600 text-black"
+                  ? "bg-purple-300 text-black"
                   : "bg-gray-300 text-black hover:bg-gray-100"
               }`}
               onClick={() => setFilterStatus("all")}
@@ -85,7 +84,7 @@ const SkinTypesPage = () => {
             <button
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filterStatus === "inactive"
-                  ? "bg-yellow-600 text-white"
+                  ? "bg-red-100 text-red-800"
                   : "bg-gray-300 text-black hover:bg-gray-100"
               }`}
               onClick={() => setFilterStatus("inactive")}

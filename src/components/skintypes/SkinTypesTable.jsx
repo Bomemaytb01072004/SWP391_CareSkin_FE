@@ -282,7 +282,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
           <input
             type="text"
             placeholder="Search skin types..."
-            className="w-full bg-gray-300 text-black pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full bg-gray-100 text-black pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -372,7 +372,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                       <div className="flex justify-center">
                         <span 
                           className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            skinType.IsActive ? 'bg-green-800 text-green-100' : 'bg-yellow-800 text-yellow-100'
+                            skinType.IsActive ? 'bg-green-800 text-green-100' : 'bg-red-100 text-red-800'
                           }`}
                         >
                           {skinType.IsActive ? 'Active' : 'Inactive'}

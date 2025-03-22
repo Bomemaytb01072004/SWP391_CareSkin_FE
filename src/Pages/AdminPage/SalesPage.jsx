@@ -9,12 +9,14 @@ import DailySalesTrend from "../../components/sales/DailySalesTrend";
 import { calculateSalesStats } from "../../utils/apiSales";
 
 const SalesPage = () => {
+	
 	const [salesStats, setSalesStats] = useState({
 		totalRevenue: 0,
 		averageOrderValue: 0,
 		conversionRate: 0,
 		completedOrders: 0,
 	});
+
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {

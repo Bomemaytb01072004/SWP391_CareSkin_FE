@@ -1,4 +1,3 @@
-
 // api.js
 const apiBaseURL = 'http://careskinbeauty.shop:4456';
 const apiURLcustomers = `${apiBaseURL}/api/Customer`;
@@ -908,11 +907,15 @@ export async function getProductDiscounts() {
 export async function updateProductDiscountStatus(statusData) {
   try {
     const response = await fetch(
-      `${apiURLPromotions}/product-discount-status`,
+      `${apiBaseURL}/api/Promotion/product-discount-status`,
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(statusData),
+        body: JSON.stringify({
+          ProductId: statusData.ProductId,
+          PromotionId: statusData.PromotionId,
+          IsActive: statusData.IsActive
+        }),
       }
     );
     if (!response.ok) throw new Error('Error updating product discount status');
@@ -1259,6 +1262,96 @@ export async function deleteSkinType(id) {
   }
 }
 
+/* ===============================
+        USERS API
+================================== */
+
+// Fetch all users
+export async function fetchUsers() {
+  try {
+    const response = await fetch(apiURLcustomers);
+    if (!response.ok) throw new Error('Error fetching users');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+}
+
+// Fetch user by ID
+export async function fetchUserById(id) {
+  try {
+    const response = await fetch(`${apiURLcustomers}/${id}`);
+    if (!response.ok) throw new Error('Error fetching user');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    throw error;
+  }
+}
+
+// Create new user
+export async function createUser(userData) {
+  try {
+    const response = await fetch(apiURLcustomers, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    if (!response.ok) throw new Error('Error creating user');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+}
+
+// Update user
+export async function updateUser(id, userData) {
+  try {
+    const response = await fetch(`${apiURLcustomers}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    if (!response.ok) throw new Error('Error updating user');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
+
+// Delete user
+export async function deleteUser(id) {
+  try {
+    const response = await fetch(`${apiURLcustomers}/${id}`, {
+      method: 'DELETE'
+    });
+    if (!response.ok) throw new Error('Error deleting user');
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+}
+
+// Toggle user status (active/inactive)
+export async function toggleUserStatus(id, isActive) {
+  try {
+    const response = await fetch(`${apiURLcustomers}/toggle-status/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive })
+    });
+    if (!response.ok) throw new Error('Error toggling user status');
+    return await response.json();
+  } catch (error) {
+    console.error('Error toggling user status:', error);
+    throw error;
+  }
+}
+
 export default {
   fetchCustomers,
   fetchCustomerById,
@@ -1316,4 +1409,10 @@ export default {
   deleteSkinType,
   fetchCategoriesFromActiveProducts,
   fetchActiveProductsWithDetails,
+  fetchUsers,
+  fetchUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserStatus,
 };

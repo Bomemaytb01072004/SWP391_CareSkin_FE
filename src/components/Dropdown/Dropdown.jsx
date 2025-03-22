@@ -51,6 +51,15 @@ export default function Dropdown({ onSortChange, sortOption }) {
               Price: High to Low
             </button>
           </li>
+          <li>
+            <button
+              className={styles.dropdownItem}
+              type="button"
+              onClick={() => handleMenuClick('Popular')}
+            >
+              Popular
+            </button>
+          </li>
         </ul>
       )}
     </div>
