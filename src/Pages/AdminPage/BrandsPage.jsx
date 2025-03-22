@@ -23,23 +23,24 @@ const BrandsPage = () => {
 
 	// Modal state
 	const [isModalBrand, setIsModalBrand] = useState(false);
+
 	// Brand state
 	const [newBrand, setNewBrand] = useState({
 		Name: '',
 		PictureFile: '',
 	});
 	const [previewUrlNewUploadBrand, setPreviewUrlNewUploadBrand] = useState(null);
-	
+
 	// Active/Inactive filter state
 	const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'active', 'inactive'
 	const [filteredBrands, setFilteredBrands] = useState([]);
-	
+
 	useEffect(() => {
 		if (!brands) return;
-		
+
 		// First sort brands by BrandId in descending order (newest first)
 		const sortedBrands = [...brands].sort((a, b) => b.BrandId - a.BrandId);
-		
+
 		// Then apply the active filter
 		if (activeFilter === 'all') {
 			setFilteredBrands(sortedBrands);
@@ -73,33 +74,33 @@ const BrandsPage = () => {
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ duration: 1 }}
 					>
-						<StatCard 
-							name='Total Brands' 
-							icon={Tag} 
-							value={totalBrands} 
-							color='#6366F1' 
+						<StatCard
+							name='Total Brands'
+							icon={Tag}
+							value={totalBrands}
+							color='#6366F1'
 							onClick={() => setActiveFilter('all')}
 							isActive={activeFilter === 'all'}
 						/>
-						
-						<StatCard 
-							name='Active Brands' 
-							icon={CheckCircle} 
-							value={activeBrands} 
-							color='#10B981' 
+
+						<StatCard
+							name='Active Brands'
+							icon={CheckCircle}
+							value={activeBrands}
+							color='#10B981'
 							onClick={() => setActiveFilter('active')}
 							isActive={activeFilter === 'active'}
 						/>
-						
-						<StatCard 
-							name='Inactive Brands' 
-							icon={XCircle} 
-							value={inactiveBrands} 
-							color='#EF4444' 
+
+						<StatCard
+							name='Inactive Brands'
+							icon={XCircle}
+							value={inactiveBrands}
+							color='#EF4444'
 							onClick={() => setActiveFilter('inactive')}
 							isActive={activeFilter === 'inactive'}
 						/>
-						
+
 						{/* Add new brand button */}
 						<div className="flex items-center justify-center w-full h-full">
 							<button
@@ -111,38 +112,44 @@ const BrandsPage = () => {
 							</button>
 						</div>
 					</motion.div>
-					
+
 					{/* Filter Status Bar */}
-					<div className="mb-6 flex items-center">
-						<span className="text-gray-700 mr-3 font-medium">Status Filter:</span>
-						<div className="flex space-x-2">
-							<button 
-								className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-gray-300 text-black' : 'bg-gray-500 text-gray-700 hover:bg-blue-400'}`}
-								onClick={() => setActiveFilter('all')}
-							>
-								All
-							</button>
-							<button 
-								className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-								onClick={() => setActiveFilter('active')}
-							>
-								Active
-							</button>
-							<button 
-								className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === 'inactive' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-								onClick={() => setActiveFilter('inactive')}
-							>
-								Inactive
-							</button>
-						</div>
+					<div className="flex space-x-4 mb-6">
+						<button
+							className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === "all"
+									? "bg-purple-300 text-black"
+									: "bg-gray-300 text-black hover:bg-gray-100"
+								}`}
+							onClick={() => setActiveFilter('all')}
+						>
+							All Brands
+						</button>
+						<button
+							className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === "active"
+									? "bg-green-600 text-white"
+									: "bg-gray-300 text-black hover:bg-gray-100"
+								}`}
+							onClick={() => setActiveFilter('active')}
+						>
+							Active
+						</button>
+						<button
+							className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === "inactive"
+									? "bg-yellow-600 text-white"
+									: "bg-gray-300 text-black hover:bg-gray-100"
+								}`}
+							onClick={() => setActiveFilter('inactive')}
+						>
+							Inactive
+						</button>
 					</div>
 
 					{/* Brands Table */}
-					<BrandsTable 
-						brands={filteredBrands} 
-						refetchBrands={refetchBrands} 
-						updateBrand={updateBrand} 
-						deleteBrand={deleteBrand} 
+					<BrandsTable
+						brands={filteredBrands}
+						refetchBrands={refetchBrands}
+						updateBrand={updateBrand}
+						deleteBrand={deleteBrand}
 					/>
 
 					{/* Create Brand Modal */}

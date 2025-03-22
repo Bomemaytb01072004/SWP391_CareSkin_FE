@@ -4,8 +4,8 @@ import { Search } from "lucide-react";
 import { fetchCustomers } from "../../utils/api";
 import EditUserForm from "./EditUserForm";
 
-const UsersTable = () => {
-    const [customers, setCustomers] = useState([]);
+const UsersTable = ({ customers }) => {
+    const [localCustomers, setLocalCustomers] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
     const [searchTerm, setSearchTerm] = useState("");
@@ -13,10 +13,14 @@ const UsersTable = () => {
     const [editingUser, setEditingUser] = useState(null);
 
     useEffect(() => {
+        setLocalCustomers(customers);
+      }, [customers]);
+
+    useEffect(() => {
         (async () => {
             try {
                 const data = await fetchCustomers();
-                setCustomers(data);
+                setLocalCustomers(data);
             } catch (error) {
                 console.error("Error fetching Customers:", error);
             }
@@ -26,7 +30,7 @@ const UsersTable = () => {
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-        const filtered = customers.filter(
+        const filtered = localCustomers.filter(
             (customer) =>
                 customer.FullName.toLowerCase().includes(term) ||
                 customer.Email.toLowerCase().includes(term)
@@ -44,7 +48,7 @@ const UsersTable = () => {
     };
 
     const handleUpdateCustomer = (updatedCustomer) => {
-        setCustomers((prevCustomers) =>
+        setLocalCustomers((prevCustomers) =>
             prevCustomers.map((customer) =>
                 customer.CustomerId === updatedCustomer.CustomerId
                     ? updatedCustomer
@@ -76,10 +80,10 @@ const UsersTable = () => {
                 throw new Error("Failed to delete user");
             }
 
-            setCustomers((prev) =>
+            setLocalCustomers((prev) =>
                 prev.filter((customer) => customer.CustomerId !== customerId)
             );
-            setFilteredUsers((prev) =>
+            setFilteredUsers((prev) =
                 prev.filter((customer) => customer.CustomerId !== customerId)
             );
         } catch (error) {
@@ -89,11 +93,11 @@ const UsersTable = () => {
     };
 
     const totalPages = Math.ceil(
-        (searchTerm ? filteredUsers : customers).length / usersPerPage
+        (searchTerm ? filteredUsers : localCustomers).length / usersPerPage
     );
     const indexOfLastUser = currentPage * usersPerPage;
     const indexOfFirstUser = indexOfLastUser - usersPerPage;
-    const dataToDisplay = searchTerm ? filteredUsers : customers;
+    const dataToDisplay = searchTerm ? filteredUsers : localCustomers;
     const currentUsers = dataToDisplay.slice(indexOfFirstUser, indexOfLastUser);
 
     const handlePageChange = (page) => {
@@ -155,7 +159,7 @@ const UsersTable = () => {
                                     DOB
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                                    Role
+                                    Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
                                     Actions
@@ -174,7 +178,7 @@ const UsersTable = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold">
                                             {customer.PictureUrl ? (
-                                            	<img
+                                                <img
                                                     src={customer.PictureUrl}
                                                     alt={customer.FullName}
                                                     className="h-10 w-10 rounded-full object-cover"
@@ -209,8 +213,11 @@ const UsersTable = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="text-sm text-gray-700">
-                                            {customer.Role ? customer.Role : "Not Assigned"}
+                                        <span
+                                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${customer.IsActive ? 'bg-green-800 text-green-100' : 'bg-red-100 text-red-800'
+                                                }`}
+                                        >
+                                            {customer.IsActive ? 'Active' : 'Inactive'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -238,11 +245,10 @@ const UsersTable = () => {
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className={`px-4 py-2 mx-2 rounded-lg ${
-                            currentPage === 1
+                        className={`px-4 py-2 mx-2 rounded-lg ${currentPage === 1
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-gray-200 text-black"
-                        }`}
+                            }`}
                     >
                         Previous
                     </button>
@@ -251,11 +257,10 @@ const UsersTable = () => {
                         <button
                             key={i + 1}
                             onClick={() => handlePageChange(i + 1)}
-                            className={`px-4 py-2 rounded-lg ${
-                                currentPage === i + 1
+                            className={`px-4 py-2 rounded-lg ${currentPage === i + 1
                                     ? "bg-blue-600 text-white"
                                     : "bg-gray-200 text-black"
-                            }`}
+                                }`}
                         >
                             {i + 1}
                         </button>
@@ -264,11 +269,10 @@ const UsersTable = () => {
                     <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className={`px-4 py-2 mx-2 rounded-lg ${
-                            currentPage === totalPages
+                        className={`px-4 py-2 mx-2 rounded-lg ${currentPage === totalPages
                                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-gray-200 text-black"
-                        }`}
+                            }`}
                     >
                         Next
                     </button>

@@ -40,23 +40,32 @@ function CardProduct({ product, addToCart, addToCompare }) {
 
           <div className="my-3 mx-1 flex items-center justify-between">
             <p>
-              {product.Variations[0].SalePrice !== 0 && (
-                <span className="text-xl font-bold text-slate-900">
-                  ${product.Variations[0].SalePrice.toFixed(2)}
-                </span>
-              )}
-              {product.Variations[0].SalePrice !== 0 && (
-                <span className="text-sm text-slate-900 line-through ml-2">
-                  ${product.Variations[0].Price.toFixed(2)}
-                </span>
-              )}
-              {product.Variations[0].SalePrice === 0 && (
-                <span className="text-xl font-bold text-slate-900">
-                  ${product.Variations[0].Price.toFixed(2)}
-                </span>
-              )}
-              
+              {(() => {
+                // Get min price from all variations
+                const prices = product.Variations.map(variation => 
+                  (variation.SalePrice && variation.SalePrice > 0) ? variation.SalePrice : variation.Price
+                );
+                const minPrice = Math.min(...prices);
 
+                // Get original price (before sale) for the variation with min price
+                const minPriceVariation = product.Variations.find(variation => {
+                  const price = (variation.SalePrice && variation.SalePrice > 0) ? variation.SalePrice : variation.Price;
+                  return price === minPrice;
+                });
+
+                return (
+                  <>
+                    <span className="text-xl font-bold text-slate-900">
+                      ${minPrice.toFixed(2)}
+                    </span>
+                    {minPriceVariation.SalePrice > 0 && (
+                      <span className="text-sm text-slate-900 line-through ml-2">
+                        ${minPriceVariation.Price.toFixed(2)}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </p>
             <div className="flex items-center">
               <span className="flex items-center gap-1 text-yellow-500 font-semibold">

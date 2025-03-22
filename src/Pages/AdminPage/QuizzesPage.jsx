@@ -13,7 +13,7 @@ import { fetchQuizzes } from "../../utils/apiQ_A";
 
 const QuizzesPage = () => {
   const [filterStatus, setFilterStatus] = useState("all");
-  
+
   const {
     data: quizzes,
     isLoading: quizzesLoading,
@@ -28,11 +28,11 @@ const QuizzesPage = () => {
   if (quizzesError) return <div>Error fetching data</div>;
 
   // Filter quizzes based on status
-  const filteredQuizzes = filterStatus === "all" 
-    ? quizzes 
-    : quizzes.filter(quiz => 
-        filterStatus === "active" ? quiz.IsActive : !quiz.IsActive
-      );
+  const filteredQuizzes = filterStatus === "all"
+    ? quizzes
+    : quizzes.filter(quiz =>
+      filterStatus === "active" ? quiz.IsActive : !quiz.IsActive
+    );
 
   // Calculate stats for the cards
   const totalQuizzes = quizzes.length;
@@ -61,21 +61,30 @@ const QuizzesPage = () => {
           </motion.div>
 
           {/* Filter Controls */}
-          <div className="flex space-x-4 mb-6 ">
+          <div className="flex space-x-4 mb-6">
             <button
-              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
+              className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "all"
+                  ? "bg-purple-300 text-black"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+                }`}
               onClick={() => setFilterStatus("all")}
             >
-              All Quizzes
+              All Skin Types
             </button>
             <button
-              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
+              className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "active"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+                }`}
               onClick={() => setFilterStatus("active")}
             >
               Active
             </button>
             <button
-              className="px-4 py-2 rounded-lg transition-colors bg-white text-black hover:bg-gray-200 border border-gray-300"
+              className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "inactive"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+                }`}
               onClick={() => setFilterStatus("inactive")}
             >
               Inactive
@@ -83,7 +92,7 @@ const QuizzesPage = () => {
           </div>
 
           <div className="bg-white shadow-lg rounded-xl p-2 border border-gray-300">
-          <QuizzesTable quizzes={filteredQuizzes} refetchQuizzes={refetchQuizzes} />
+            <QuizzesTable quizzes={filteredQuizzes} refetchQuizzes={refetchQuizzes} />
           </div>
         </main>
       </div>

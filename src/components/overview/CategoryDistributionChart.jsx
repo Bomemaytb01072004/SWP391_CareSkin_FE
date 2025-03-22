@@ -15,12 +15,14 @@ const CategoryDistributionChart = ({ products }) => {
   const categoryData = useMemo(() => {
     if (!products) return [];
 
+    // Chỉ lấy những sản phẩm có IsActive === true
+    const activeProducts = products.filter(product => product.IsActive);
+
     const categoryMap = {};
-    products.forEach((product) => {
+    activeProducts.forEach((product) => {
       if (!product.Category || typeof product.Category !== 'string') return;
 
       const categories = product.Category.split(',').map((cat) => cat.trim());
-
       categories.forEach((cat) => {
         if (cat) {
           categoryMap[cat] = (categoryMap[cat] || 0) + 1;

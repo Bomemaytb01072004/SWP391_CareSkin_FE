@@ -58,6 +58,26 @@ const RoutinesPage = () => {
     setSelectedRoutineId(null);
   };
 
+
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'active', 'inactive'
+	const [filteredRoutines, setFilteredRoutines] = useState([]);
+
+	useEffect(() => {
+		if (!routines) return;
+
+		// First sort brands by BrandId in descending order (newest first)
+		const sortedBrands = [...routines].sort((a, b) => b.RoutineId - a.RoutineId);
+
+		// Then apply the active filter
+		if (activeFilter === 'all') {
+			setFilteredRoutines(sortedBrands);
+		} else if (activeFilter === 'active') {
+			setFilteredRoutines(sortedBrands.filter(routine => routine.IsActive));
+		} else if (activeFilter === 'inactive') {
+			setFilteredRoutines(sortedBrands.filter(routine => !routine.IsActive));
+		}
+	}, [routines, activeFilter]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-white">
@@ -86,15 +106,47 @@ const RoutinesPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1 }}
           >
-            <StatCard name="Total Routines" icon={Layers} value={totalRoutines} color="#6366F1" />
-            <StatCard name="Active Routines" icon={CheckCircle} value={activeRoutines} color="#10B981" />
-            <StatCard name="Inactive Routines" icon={XCircle} value={inactiveRoutines} color="#EF4444" />
+            <StatCard name="Total Routines" icon={Layers} value={totalRoutines} color="#6366F1"  onClick={() => setActiveFilter('all')}/>
+            <StatCard name="Active Routines" icon={CheckCircle} value={activeRoutines} color="#10B981" onClick={() => setActiveFilter('active')}/>
+            <StatCard name="Inactive Routines" icon={XCircle} value={inactiveRoutines} color="#EF4444" onClick={() => setActiveFilter('inactive')}/>
             <StatCard name="Routines with Steps" icon={Calendar} value={routinesWithSteps} color="#F59E0B" />
           </motion.div>
+          <div className="flex space-x-4 mb-6">
+            <button
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === "all"
+                  ? "bg-purple-300 text-black"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveFilter("all")}
+            >
+              All Routines
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === "active"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveFilter("active")}
+            >
+              Active
+            </button>
+            <button
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                activeFilter === "inactive"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-300 text-black hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveFilter("inactive")}
+            >
+              Inactive
+            </button>
+          </div>
 
           {/* Routines Table */}
           <RoutinesTable
-            routines={routines}
+            routines={filteredRoutines}
             onCreate={handleCreateRoutine}
             onEdit={handleEditRoutine}
             onView={handleViewRoutine}

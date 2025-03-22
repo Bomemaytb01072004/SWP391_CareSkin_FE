@@ -154,8 +154,8 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
               >
                 <option value="">Select Period</option>
                 <option value="morning">Morning</option>
-                <option value="night">Night</option>
-                <option value="all-day">All Day</option>
+                <option value="evening">Night</option>
+                {/* <option value="all-day">All Day</option> */}
               </select>
             </div>
 
