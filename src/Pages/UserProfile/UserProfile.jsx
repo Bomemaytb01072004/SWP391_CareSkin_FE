@@ -30,6 +30,8 @@ import {
   faAngleRight,
   faAngleDoubleLeft,
   faAngleDoubleRight,
+  faEye,
+  faEyeSlash,
 } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -72,6 +74,16 @@ const UserProfile = () => {
   // Add these pagination state variables near your other state variables
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(4);
+
+  // Add these state variables at the top of your component, near other state variables
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetStep, setResetStep] = useState(0); // 0: initial, 1: OTP sent, 2: OTP verified
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetOTP, setResetOTP] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Add this effect at the top level (not inside renderOrderHistory)
   useEffect(() => {
@@ -272,10 +284,12 @@ const UserProfile = () => {
   // Filter orders based on search and filter status
   const filteredOrders = orderHistory
     .filter((order) => {
+      // Status filtering
       if (filterStatus === 'all') return true;
       return order.OrderStatusId === parseInt(filterStatus);
     })
     .filter((order) => {
+      // Search term filtering
       if (!searchTerm) return true;
       const term = searchTerm.toLowerCase();
       return (
@@ -289,6 +303,34 @@ const UserProfile = () => {
             product.ProductName.toLowerCase().includes(term)
           ))
       );
+    })
+    // Add date filtering
+    .filter((order) => {
+      // If no dates are selected, return all orders
+      if (!startDate && !endDate) return true;
+
+      // Parse the order date
+      const orderDate = new Date(order.OrderDate);
+
+      // If we just have a start date, filter orders after that date
+      if (startDate && !endDate) {
+        return orderDate >= new Date(startDate);
+      }
+
+      // If we just have an end date, filter orders before that date
+      if (!startDate && endDate) {
+        // Set to end of day for the end date
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        return orderDate <= endOfDay;
+      }
+
+      // If we have both dates, filter orders between those dates
+      const startDateTime = new Date(startDate);
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999); // Include the entire end day
+
+      return orderDate >= startDateTime && orderDate <= endDateTime;
     })
     // Sort orders by OrderId in descending order (highest to lowest)
     .sort((a, b) => b.OrderId - a.OrderId);
@@ -402,7 +444,10 @@ const UserProfile = () => {
               onClick={() => {
                 setStartDate('');
                 setEndDate('');
-                fetchOrderHistory;
+                setFilterStatus('all');
+                setSearchTerm('');
+                // Fetch the order history again
+                fetchOrderHistory();
               }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition duration-200"
             >
@@ -908,15 +953,22 @@ const UserProfile = () => {
                   Email
                 </label>
                 <input
-                  type="Email"
+                  type="email"
                   name="Email"
                   value={user.Email}
-                  disabled
-                  className="mt-1 w-full border p-3 rounded-md bg-gray-50 cursor-not-allowed"
+                  onChange={handleChange}
+                  disabled={!editMode}
+                  className={`mt-1 w-full border p-3 rounded-md focus:ring ${
+                    editMode
+                      ? 'focus:ring-blue-200 border-blue-300'
+                      : 'bg-gray-50'
+                  }`}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Email cannot be changed
-                </p>
+                {editMode && (
+                  <p className="text-xs text-amber-500 mt-1">
+                    Note: Changing your email will require verification
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-gray-600 text-sm font-medium">
@@ -1031,13 +1083,314 @@ const UserProfile = () => {
 
       case 'Password':
         return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          <div className="py-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
               Password Management
             </h2>
-            <p className="text-gray-600">
-              Password change functionality coming soon!
-            </p>
+
+            <div className="max-w-md mx-auto bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              {resetStep === 0 && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Reset Your Password
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    We'll send a one-time password (OTP) to your email to verify
+                    your identity.
+                  </p>
+
+                  {resetError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md mb-4">
+                      <div className="flex">
+                        <FontAwesomeIcon
+                          icon={faExclamationTriangle}
+                          className="text-red-500 mt-0.5 mr-2"
+                        />
+                        <p>{resetError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendResetOTP();
+                    }}
+                  >
+                    <div className="mb-4">
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        value={resetEmail || user.Email}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        disabled={resetLoading}
+                        placeholder="Enter your email address"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-md transition duration-200 flex justify-center items-center"
+                      disabled={resetLoading}
+                    >
+                      {resetLoading ? (
+                        <>
+                          <FontAwesomeIcon
+                            icon={faSpinner}
+                            className="animate-spin mr-2"
+                          />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Reset Code'
+                      )}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {resetStep === 1 && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Verify OTP Code
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Please enter the 6-digit code we sent to{' '}
+                    <strong>{resetEmail || user.Email}</strong>
+                  </p>
+
+                  {resetError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md mb-4">
+                      <div className="flex">
+                        <FontAwesomeIcon
+                          icon={faExclamationTriangle}
+                          className="text-red-500 mt-0.5 mr-2"
+                        />
+                        <p>{resetError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleVerifyOTP();
+                    }}
+                  >
+                    <div className="mb-4">
+                      <label
+                        htmlFor="otp"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Verification Code
+                      </label>
+                      <input
+                        id="otp"
+                        type="text"
+                        value={resetOTP}
+                        onChange={(e) =>
+                          setResetOTP(e.target.value.replace(/[^0-9]/g, ''))
+                        }
+                        className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-center tracking-widest"
+                        disabled={resetLoading}
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-md transition duration-200 flex justify-center items-center"
+                        disabled={resetLoading}
+                      >
+                        {resetLoading ? (
+                          <>
+                            <FontAwesomeIcon
+                              icon={faSpinner}
+                              className="animate-spin mr-2"
+                            />
+                            Verifying...
+                          </>
+                        ) : (
+                          'Verify Code'
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResetStep(0);
+                          setResetOTP('');
+                          setResetError('');
+                        }}
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-md transition duration-200"
+                        disabled={resetLoading}
+                      >
+                        Back
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleSendResetOTP()}
+                        className="text-emerald-600 text-sm hover:underline"
+                        disabled={resetLoading}
+                      >
+                        Didn't receive a code? Send again
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {resetStep === 2 && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Set New Password
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Create a new password for your account.
+                  </p>
+
+                  {resetError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md mb-4">
+                      <div className="flex">
+                        <FontAwesomeIcon
+                          icon={faExclamationTriangle}
+                          className="text-red-500 mt-0.5 mr-2"
+                        />
+                        <p>{resetError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleResetPassword();
+                    }}
+                  >
+                    <div className="mb-4">
+                      <label
+                        htmlFor="new-password"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="new-password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md p-2.5 pr-10 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          disabled={resetLoading}
+                          placeholder="Enter new password"
+                          required
+                          minLength={6}
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          <FontAwesomeIcon
+                            icon={showPassword ? faEyeSlash : faEye}
+                            className="text-gray-400 hover:text-gray-600"
+                          />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Password must be at least 6 characters
+                      </p>
+                    </div>
+
+                    <div className="mb-4">
+                      <label
+                        htmlFor="confirm-password"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirm-password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={confirmNewPassword}
+                          onChange={(e) =>
+                            setConfirmNewPassword(e.target.value)
+                          }
+                          className="w-full border border-gray-300 rounded-md p-2.5 pr-10 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                          disabled={resetLoading}
+                          placeholder="Confirm new password"
+                          required
+                        />
+                      </div>
+                      {confirmNewPassword &&
+                        newPassword !== confirmNewPassword && (
+                          <p className="text-xs text-red-500 mt-1">
+                            Passwords do not match
+                          </p>
+                        )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-md transition duration-200 flex justify-center items-center"
+                      disabled={
+                        resetLoading || newPassword !== confirmNewPassword
+                      }
+                    >
+                      {resetLoading ? (
+                        <>
+                          <FontAwesomeIcon
+                            icon={faSpinner}
+                            className="animate-spin mr-2"
+                          />
+                          Updating...
+                        </>
+                      ) : (
+                        'Update Password'
+                      )}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {resetStep === 3 && (
+                <div className="text-center">
+                  <div className="w-20 h-20 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                    <FontAwesomeIcon
+                      icon={faCheckCircle}
+                      className="text-emerald-600 text-3xl"
+                    />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Password Changed!
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Your password has been updated successfully.
+                  </p>
+                  <button
+                    onClick={() => setResetStep(0)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-6 rounded-md transition duration-200"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
 
@@ -1075,6 +1428,138 @@ const UserProfile = () => {
       setActiveTab(tabParam);
     }
   }, [location.search]);
+
+  // Add these functions within your component
+  const handleSendResetOTP = async () => {
+    setResetLoading(true);
+    setResetError('');
+
+    const email = resetEmail || user.Email;
+
+    try {
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/forgot-password',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            Email: email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send reset code');
+      }
+
+      setResetStep(1); // Move to OTP verification step
+    } catch (error) {
+      console.error('Password reset error:', error);
+      setResetError(
+        error.message || 'Failed to send reset code. Please try again.'
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (resetOTP.length !== 6) {
+      setResetError('Please enter a valid 6-digit code');
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError('');
+
+    try {
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/verify-reset-pin',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ResetPin: resetOTP,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid verification code');
+      }
+
+      setResetStep(2); // Move to password reset step
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      setResetError(
+        error.message || 'Invalid verification code. Please try again.'
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setResetError('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setResetError('Password must be at least 6 characters');
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError('');
+
+    const email = resetEmail || user.Email;
+
+    try {
+      const response = await fetch(
+        'http://careskinbeauty.shop:4456/api/Customer/reset-password',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            Email: email,
+            NewPassword: newPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to reset password');
+      }
+
+      // Reset all form fields
+      setNewPassword('');
+      setConfirmNewPassword('');
+      setResetOTP('');
+
+      // Show success message
+      setResetStep(3);
+    } catch (error) {
+      console.error('Password change error:', error);
+      setResetError(
+        error.message || 'Failed to reset password. Please try again.'
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // Rest of the component remains the same...
   return (

@@ -370,24 +370,59 @@ const LoginPage = () => {
               <h1 className={styles.formTitle}>Sign In</h1>
 
               <div className={styles.socialButtonsContainer}>
-                <div className="google-button-container">
+                {/* Google Login Button */}
+                <div className={styles.socialButtonWrapper}>
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={handleGoogleLoginFailure}
+                    theme="filled_blue"
+                    size="large"
+                    text="continue_with"
+                    shape="rectangular"
+                    logo_alignment="left"
+                    width="100%"
                   />
                 </div>
 
-                <FacebookLogin
-                  appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                  onSuccess={(response) => {
-                    console.log('Facebook Response:', response);
-                    if (response.authResponse) {
-                      handleFacebookLoginSuccess(response);
-                    } else {
-                      handleFacebookLoginFailure();
-                    }
-                  }}
-                />
+                {/* Facebook Login Button */}
+                <div className={styles.facebookButtonWrapper}>
+                  <button
+                    type="button"
+                    className={styles.facebookButton}
+                    onClick={() => {
+                      // The FacebookLogin component will handle this behind the scenes
+                      document.querySelector('.facebook-login-button')?.click();
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 320 512"
+                      className={styles.facebookIcon}
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"
+                      />
+                    </svg>
+                    <span>Continue with Facebook</span>
+                  </button>
+
+                  {/* Keep the original FacebookLogin component but hide it */}
+                  <div style={{ display: 'none' }}>
+                    <FacebookLogin
+                      appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                      onSuccess={(response) => {
+                        console.log('Facebook Response:', response);
+                        if (response.authResponse) {
+                          handleFacebookLoginSuccess(response);
+                        } else {
+                          handleFacebookLoginFailure();
+                        }
+                      }}
+                      className="facebook-login-button"
+                    />
+                  </div>
+                </div>
               </div>
 
               <span className={styles.divider}>or use your account</span>
@@ -435,7 +470,7 @@ const LoginPage = () => {
                 </div>
               )}
 
-              <a href="#forgot-password" className={styles.forgotPassword}>
+              <a href="/reset-password" className={styles.forgotPassword}>
                 Forgot your password?
               </a>
 
@@ -474,24 +509,59 @@ const LoginPage = () => {
               <h1 className={styles.formTitle}>Create Account</h1>
 
               <div className={styles.socialButtonsContainer}>
-                <div className="google-button-container">
+                {/* Google Login Button */}
+                <div className={styles.socialButtonWrapper}>
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={handleGoogleLoginFailure}
+                    theme="filled_blue"
+                    size="large"
+                    text="continue_with"
+                    shape="rectangular"
+                    logo_alignment="left"
+                    width="100%"
                   />
                 </div>
 
-                <FacebookLogin
-                  appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                  onSuccess={(response) => {
-                    console.log('Facebook Response:', response);
-                    if (response.authResponse) {
-                      handleFacebookLoginSuccess(response);
-                    } else {
-                      handleFacebookLoginFailure();
-                    }
-                  }}
-                />
+                {/* Facebook Login Button */}
+                <div className={styles.facebookButtonWrapper}>
+                  <button
+                    type="button"
+                    className={styles.facebookButton}
+                    onClick={() => {
+                      // The FacebookLogin component will handle this behind the scenes
+                      document.querySelector('.facebook-login-button')?.click();
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 320 512"
+                      className={styles.facebookIcon}
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"
+                      />
+                    </svg>
+                    <span>Continue with Facebook</span>
+                  </button>
+
+                  {/* Keep the original FacebookLogin component but hide it */}
+                  <div style={{ display: 'none' }}>
+                    <FacebookLogin
+                      appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                      onSuccess={(response) => {
+                        console.log('Facebook Response:', response);
+                        if (response.authResponse) {
+                          handleFacebookLoginSuccess(response);
+                        } else {
+                          handleFacebookLoginFailure();
+                        }
+                      }}
+                      className="facebook-login-button"
+                    />
+                  </div>
+                </div>
               </div>
 
               <span className={styles.divider}>

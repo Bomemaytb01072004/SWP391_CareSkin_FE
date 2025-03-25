@@ -18,6 +18,7 @@ import BlogDetails from './Pages/Blog/BlogDetails';
 import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import ResetPasswordPage from './Pages/UserProfile/ResetPasswordPage';
 
 import AboutPage from './Pages/About/AboutPage';
 import GuestUnauthorizedPage from './Pages/Unauthorized/GuestUnauthorizedPage';
@@ -44,6 +45,7 @@ export default function App() {
             element={<OrderConfirmationMoMo />}
           />
           <Route path="/blog/:blogId" element={<BlogDetails />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route
             path="/compare/:product1/:product2"

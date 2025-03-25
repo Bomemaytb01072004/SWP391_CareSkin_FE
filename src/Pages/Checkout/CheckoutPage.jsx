@@ -13,6 +13,8 @@ const CheckoutPage = () => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [isRedirecting, setIsRedirecting] = useState(false); // Add this state to handle redirection UI
   const [user, setUser] = useState(null); // Add this state near your other state declarations at the top of the Navbar component
+  const [exchangeRate, setExchangeRate] = useState(24000); // Default fallback rate
+  const [isLoadingRate, setIsLoadingRate] = useState(true);
 
   const navigate = useNavigate();
 
@@ -108,6 +110,56 @@ const CheckoutPage = () => {
     };
 
     fetchUserData();
+  }, []);
+
+  // Add this useEffect to fetch the exchange rate when component mounts
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        // Check if we have a cached rate that's less than 24 hours old
+        const cachedRate = localStorage.getItem('exchangeRate');
+        const cachedTimestamp = localStorage.getItem('exchangeRateTimestamp');
+        const now = new Date().getTime();
+
+        if (
+          cachedRate &&
+          cachedTimestamp &&
+          now - parseInt(cachedTimestamp) < 24 * 60 * 60 * 1000
+        ) {
+          // Use cached rate if less than 24 hours old
+          setExchangeRate(parseFloat(cachedRate));
+          setIsLoadingRate(false);
+          console.log('Using cached exchange rate:', cachedRate);
+          return;
+        }
+
+        // Otherwise fetch fresh rate
+        setIsLoadingRate(true);
+        const response = await fetch(
+          'https://api.currencyfreaks.com/v2.0/rates/latest?apikey=63f1844bc970440b88c348d8f6442058&symbols=VND'
+        );
+
+        if (!response.ok) throw new Error('Failed to fetch exchange rate');
+
+        const data = await response.json();
+        if (data.rates && data.rates.VND) {
+          const rate = parseFloat(data.rates.VND);
+          console.log('📊 Fresh exchange rate USD to VND:', rate);
+          setExchangeRate(rate);
+
+          // Cache the rate with timestamp
+          localStorage.setItem('exchangeRate', rate.toString());
+          localStorage.setItem('exchangeRateTimestamp', now.toString());
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        // Keep using fallback rate
+      } finally {
+        setIsLoadingRate(false);
+      }
+    };
+
+    fetchExchangeRate();
   }, []);
 
   // Calculate totals using SalePrice if available
@@ -314,7 +366,7 @@ const CheckoutPage = () => {
       // Step 2: Get VNPay Payment URL
       const paymentPayload = {
         OrderId,
-        Amount: totalOrder * 100 * 240, // Convert to VND smallest unit
+        Amount: totalOrder * 100 * (exchangeRate / 100), // Convert to VND smallest unit
         OrderDescription: `Payment for Order #${OrderId}`,
         OrderType: 'other',
         CustomerName: values.name,
@@ -406,9 +458,8 @@ const CheckoutPage = () => {
       // Step 2: Get MoMo Payment URL using the fetched OrderId
       const paymentPayload = {
         OrderId,
-        Amount: Math.round(totalOrder * 24000), // Convert to VND smallest unit and ensure it's an integer
+        Amount: Math.round(totalOrder * exchangeRate), // Use dynamic exchange rate
       };
-
       console.log('🔹 Sending MoMo Payment Payload:', paymentPayload);
 
       const paymentResponse = await fetch(
@@ -499,8 +550,10 @@ const CheckoutPage = () => {
 
       // Step 2: Get ZaloPay Payment URL with correct data types
       // Convert to VND (minimum 10000 VND ~ 0.40 USD)
-      const amountInVND = Math.max(Math.round(totalOrder * 24000), 10000);
-
+      const amountInVND = Math.max(
+        Math.round(totalOrder * exchangeRate),
+        10000
+      );
       const paymentPayload = {
         OrderId: OrderId, // Integer
         Amount: amountInVND, // Long
@@ -532,15 +585,69 @@ const CheckoutPage = () => {
           return;
         }
 
+        // Update this section in your handleZaloPayPayment function
         const paymentData = await paymentResponse.json();
 
-        if (paymentData.ordersUrl) {
-          console.log('✅ Redirecting to ZaloPay:', paymentData.ordersUrl);
-          window.location.href = paymentData.ordersUrl; // Redirect user to ZaloPay
-        } else {
-          console.error('❌ Invalid payment response format:', paymentData);
-          alert('The payment gateway returned an invalid response format.');
+        // Log entire response for debugging
+        console.log('ZaloPay API Response:', paymentData);
+        console.log('URL Property Value:', paymentData.order_url);
+        console.log('Response Object Keys:', Object.keys(paymentData));
+        console.log(
+          'Response has order_url:',
+          Object.hasOwnProperty.call(paymentData, 'order_url')
+        );
+
+        // Try direct property access first
+        if (paymentData.order_url) {
+          console.log(
+            '✅ URL found via direct property access:',
+            paymentData.order_url
+          );
+          window.location.href = paymentData.order_url;
+          return;
         }
+
+        // If direct access fails, try bracket notation
+        if (paymentData['order_url']) {
+          console.log(
+            '✅ URL found via bracket notation:',
+            paymentData['order_url']
+          );
+          window.location.href = paymentData['order_url'];
+          return;
+        }
+
+        // Fallback to searching for any URL-containing property
+        const possibleUrlProps = Object.keys(paymentData).filter(
+          (key) =>
+            typeof paymentData[key] === 'string' &&
+            paymentData[key].includes('https://')
+        );
+
+        if (possibleUrlProps.length > 0) {
+          const urlProp = possibleUrlProps[0];
+          console.log(
+            `✅ Found URL in property '${urlProp}':`,
+            paymentData[urlProp]
+          );
+          window.location.href = paymentData[urlProp];
+          return;
+        }
+
+        // Last resort - try to extract URL from the response as a string
+        const responseStr = JSON.stringify(paymentData);
+        const urlMatch = responseStr.match(/(https:\/\/[^"]+)/);
+        if (urlMatch && urlMatch[0]) {
+          console.log('✅ Extracted URL from response string:', urlMatch[0]);
+          window.location.href = urlMatch[0];
+          return;
+        }
+
+        // If all attempts fail
+        console.error('❌ Could not find any valid URL in the response');
+        alert(
+          'Payment initiated but redirect link is missing. Please try again.'
+        );
       } catch (parseError) {
         console.error('❌ Error parsing ZaloPay response:', parseError);
         alert(
@@ -1040,7 +1147,7 @@ const CheckoutPage = () => {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414-1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
                           clipRule="evenodd"
                         />
                       </svg>
@@ -1056,7 +1163,7 @@ const CheckoutPage = () => {
                       >
                         <path
                           fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414-1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
                           clipRule="evenodd"
                         />
                       </svg>
@@ -1100,6 +1207,14 @@ const CheckoutPage = () => {
                   </div>
                   <div className="text-xs text-gray-500 text-right mt-1">
                     (Including taxes and fees)
+                    {isLoadingRate ? (
+                      <span> • Loading exchange rate...</span>
+                    ) : (
+                      <span>
+                        {' '}
+                        • 1 USD = {exchangeRate.toLocaleString()} VND
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
