@@ -71,8 +71,6 @@ function HomePage() {
     default: { icon: faJar, description: 'Specialized skincare' },
   };
 
-
-
   // Values/ethos data
   const companyValues = [
     {
@@ -377,22 +375,28 @@ function HomePage() {
               and hello to results.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <motion.a
-                href="/skinquiz"
-                className="px-6 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-base font-medium"
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Take Skin Quiz
-              </motion.a>
-              <motion.a
-                href="/shop"
-                className="px-6 py-4 border-2 border-emerald-600 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium"
+                <Link
+                  to="/skinquiz"
+                  className="px-6 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-base font-medium inline-block"
+                >
+                  Take Skin Quiz
+                </Link>
+              </motion.div>
+              <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Shop Products
-              </motion.a>
+                <Link
+                  to="/products"
+                  className="px-6 py-4 border-2 border-emerald-600 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium inline-block"
+                >
+                  Shop Products
+                </Link>
+              </motion.div>
             </div>
             <div className="mt-8 flex items-center">
               <div className="flex -space-x-2">
@@ -458,14 +462,14 @@ function HomePage() {
           formulations, personalized recommendations, and honest education — all
           at prices that make sense.
         </p>
-        <motion.a
-          href="/about"
-          className="inline-block px-6 py-3 text-emerald-600 font-medium border-b-2 border-emerald-600 hover:text-emerald-700 hover:border-emerald-700 transition"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Learn More About Our Story →
-        </motion.a>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Link
+            to="/about"
+            className="inline-block px-6 py-3 text-emerald-600 font-medium border-b-2 border-emerald-600 hover:text-emerald-700 hover:border-emerald-700 transition"
+          >
+            Learn More About Our Story →
+          </Link>
+        </motion.div>
       </motion.div>
       {/* Shop by Skin Type Section */}
       <motion.div
@@ -595,11 +599,12 @@ function HomePage() {
                 }).map((_, index) => (
                   <button
                     key={index}
-                    className={`h-2 rounded-full transition-all ${index ===
+                    className={`h-2 rounded-full transition-all ${
+                      index ===
                       Math.floor(currentSkinTypeIndex / skinTypesPerPage)
-                      ? 'w-6 bg-emerald-600'
-                      : 'w-2 bg-emerald-200'
-                      }`}
+                        ? 'w-6 bg-emerald-600'
+                        : 'w-2 bg-emerald-200'
+                    }`}
                     onClick={() =>
                       setCurrentSkinTypeIndex(index * skinTypesPerPage)
                     }
@@ -610,16 +615,18 @@ function HomePage() {
           </div>
         )}
 
-        <div className="text-center mt-12">
-          <motion.a
-            href="/products"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="text-center mt-12"
+        >
+          <Link
+            to="/products"
             className="inline-block px-8 py-3 border-2 border-emerald-600 text-emerald-600 rounded-full hover:bg-emerald-50 transition font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             View All Products
-          </motion.a>
-        </div>
+          </Link>
+        </motion.div>
       </motion.div>
       {/* Shop by Category Section */}
       <motion.div
@@ -745,11 +752,12 @@ function HomePage() {
                 }).map((_, index) => (
                   <button
                     key={index}
-                    className={`h-2 rounded-full transition-all ${index ===
+                    className={`h-2 rounded-full transition-all ${
+                      index ===
                       Math.floor(currentCategoryIndex / categoriesPerPage)
-                      ? 'w-6 bg-emerald-600'
-                      : 'w-2 bg-emerald-200'
-                      }`}
+                        ? 'w-6 bg-emerald-600'
+                        : 'w-2 bg-emerald-200'
+                    }`}
                     onClick={() =>
                       setCurrentCategoryIndex(index * categoriesPerPage)
                     }
@@ -760,16 +768,18 @@ function HomePage() {
           </div>
         )}
 
-        <div className="text-center mt-12">
-          <motion.a
-            href="/shop"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="text-center mt-12"
+        >
+          <Link
+            to="/products"
             className="inline-block px-8 py-3 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             View All Categories
-          </motion.a>
-        </div>
+          </Link>
+        </motion.div>
       </motion.div>
       {/* Best Sellers Section */}
       <motion.div
@@ -895,27 +905,28 @@ function HomePage() {
               Expert advice, tips, and education for your skin health journey
             </p>
           </div>
-          <motion.a
-            href="/blogs"
-            className="mt-4 sm:mt-0 text-emerald-600 font-medium hover:text-emerald-700 transition flex items-center"
-            whileHover={{ x: 5 }}
-          >
-            View all articles
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 ml-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <motion.div whileHover={{ x: 5 }}>
+            <Link
+              to="/blogs"
+              className="mt-4 sm:mt-0 text-emerald-600 font-medium hover:text-emerald-700 transition flex items-center"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
-          </motion.a>
+              View all articles
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 ml-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+            </Link>
+          </motion.div>
         </div>
 
         {loadingBlogs ? (
@@ -1095,22 +1106,22 @@ function HomePage() {
           that will work for you.
         </p>
         <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-6">
-          <motion.a
-            href="/skinquiz"
-            className="px-4 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-lg font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Start Quiz Now
-          </motion.a>
-          <motion.a
-            href="/consultation"
-            className="px-4 py-4 bg-white border-2 border-emerald-600 text-emerald-600 rounded-full shadow-md hover:bg-emerald-50 transition text-lg font-medium"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Book Free Consultation
-          </motion.a>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/skinquiz"
+              className="px-4 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-lg font-medium inline-block"
+            >
+              Start Quiz Now
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/consultation"
+              className="px-4 py-4 bg-white border-2 border-emerald-600 text-emerald-600 rounded-full shadow-md hover:bg-emerald-50 transition text-lg font-medium inline-block"
+            >
+              Book Free Consultation
+            </Link>
+          </motion.div>
         </div>
       </motion.div>
 
