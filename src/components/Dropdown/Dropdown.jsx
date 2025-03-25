@@ -6,9 +6,9 @@ export default function Dropdown({ onSortChange, sortOption }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleMenuClick = (option) => {
-    // Đóng menu
+    // Close menu
     setIsOpen(false);
-    // Gọi callback lên cha
+    // Call callback to parent
     if (onSortChange) {
       onSortChange(option);
     }
@@ -37,7 +37,7 @@ export default function Dropdown({ onSortChange, sortOption }) {
             <button
               className={styles.dropdownItem}
               type="button"
-              onClick={() => handleMenuClick('Price Low to High')}
+              onClick={() => handleMenuClick('Price: Low to High')}
             >
               Price: Low to High
             </button>
@@ -46,7 +46,7 @@ export default function Dropdown({ onSortChange, sortOption }) {
             <button
               className={styles.dropdownItem}
               type="button"
-              onClick={() => handleMenuClick('Price High to Low')}
+              onClick={() => handleMenuClick('Price: High to Low')}
             >
               Price: High to Low
             </button>

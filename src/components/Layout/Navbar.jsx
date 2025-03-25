@@ -11,6 +11,9 @@ import {
   faBars,
   faTimes,
   faTrash,
+  faShoppingBag,
+  faHeart,
+  faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
 
 function Navbar() {
@@ -31,6 +34,13 @@ function Navbar() {
   const sidebarRef = useRef(null);
   const lastUserId = useRef(null);
   let closeTimeout = null;
+
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef(null);
+  const [user, setUser] = useState(null);
+  const [cartMergedFlag, setCartMergedFlag] = useState(
+    localStorage.getItem('cartMerged') === 'true'
+  );
 
   useEffect(() => {
     // Check if user session exists
@@ -215,6 +225,10 @@ function Navbar() {
     localStorage.removeItem('cart');
     localStorage.removeItem('checkoutItems');
 
+    // Reset cart merge flag when logging out
+    localStorage.removeItem('cartMerged');
+    setCartMergedFlag(false);
+
     setIsLoggedIn(false);
     setCart([]);
     window.dispatchEvent(new Event('storage'));
@@ -259,7 +273,7 @@ function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
   useEffect(() => {
-    const fetchUserName = async () => {
+    const fetchUserData = async () => {
       if (CustomerId && token) {
         try {
           const response = await fetch(
@@ -272,51 +286,92 @@ function Navbar() {
           if (!response.ok) throw new Error(`Error: ${response.status}`);
 
           const userData = await response.json();
-          setUserName(userData.FullName || 'Unknown User');
+          setUserName(userData.FullName || userData.UserName || 'Unknown User');
+
+          // Store the complete user data object
+          setUser(userData);
+
+          // Also cache in localStorage for faster loading on refresh
+          localStorage.setItem('user', JSON.stringify(userData));
         } catch (error) {
-          console.error('Error fetching user name:', error);
+          console.error('Error fetching user data:', error);
           setUserName('Unknown User');
-        }
-      }
-    };
 
-    fetchUserName();
-  }, [CustomerId, token]);
-  useEffect(() => {
-    const fetchCart = async () => {
-      if (CustomerId) {
-        try {
-          const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          if (!response.ok)
-            throw new Error(`Error fetching cart: ${response.status}`);
-
-          const cartData = await response.json();
-
-          const updatedCart = cartData.map((item) => ({
-            ...item,
-            ProductVariationId: item.ProductVariationId,
-            ProductVariations: Array.isArray(item.ProductVariations)
-              ? item.ProductVariations
-              : [],
-          }));
-
-          setCart(updatedCart);
-        } catch (error) {
-          console.error('Error fetching cart from server:', error);
-          setCart([]);
+          // Try to load from cache if API fails
+          const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+          if (cachedUser && Object.keys(cachedUser).length > 0) {
+            setUser(cachedUser);
+          }
         }
       } else {
-        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-        setCart(storedCart);
+        // Clear user state if not logged in
+        setUser(null);
+        setUserName(null);
       }
     };
 
+    fetchUserData();
+  }, [CustomerId, token]);
+
+  // Create a custom event for notifying other components about cart updates
+  const notifyCartUpdated = (updatedCart) => {
+    window.dispatchEvent(
+      new CustomEvent('navbarCartUpdated', { detail: { cart: updatedCart } })
+    );
+  };
+
+  // Replace your existing fetchCart function
+  const fetchCart = async () => {
+    try {
+      if (CustomerId && token) {
+        // For logged in users, fetch from API
+        const response = await fetch(
+          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!response.ok)
+          throw new Error(`Error fetching cart: ${response.status}`);
+
+        const cartData = await response.json();
+
+        const updatedCart = cartData.map((item) => ({
+          ...item,
+          ProductVariationId: item.ProductVariationId,
+          ProductVariations: Array.isArray(item.ProductVariations)
+            ? item.ProductVariations
+            : [],
+          SalePrice:
+            item.ProductVariations?.find(
+              (v) => v.ProductVariationId === item.ProductVariationId
+            )?.SalePrice ?? item.Price,
+        }));
+
+        setCart(updatedCart);
+
+        // Notify other components about the updated cart
+        notifyCartUpdated(updatedCart);
+
+        return updatedCart;
+      } else {
+        // For guest users, use localStorage
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCart(storedCart);
+        notifyCartUpdated(storedCart);
+        return storedCart;
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCart(storedCart);
+      notifyCartUpdated(storedCart);
+      return storedCart;
+    }
+  };
+
+  useEffect(() => {
     fetchCart();
   }, [CustomerId, token]);
 
@@ -328,6 +383,30 @@ function Navbar() {
 
     window.addEventListener('storage', updateCart);
     return () => window.removeEventListener('storage', updateCart);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setIsProfileDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      // Re-fetch cart data when cart is updated elsewhere
+      fetchCart();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdated);
   }, []);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -531,56 +610,75 @@ function Navbar() {
     );
   }, 0);
 
-  // Add this function to your Navbar component
+  // Replace mergeCartsAfterLogin function
   const mergeCartsAfterLogin = async (customerId, authToken) => {
+    if (localStorage.getItem('cartMerged') === 'true') return;
+
     try {
-      // Check if there's a local cart to merge
       const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-
-      if (localCart.length === 0) return;
-
-      console.log(
-        'Merging local cart with server cart:',
-        localCart.length,
-        'items'
-      );
-
-      // Add each local item to the server cart
-      for (const item of localCart) {
-        await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            CustomerId: parseInt(customerId),
-            ProductId: item.ProductId,
-            ProductVariationId:
-              item.ProductVariationId ||
-              item.ProductVariations?.[0]?.ProductVariationId ||
-              null,
-            Quantity: item.Quantity || 1,
-          }),
-        });
+      if (localCart.length === 0) {
+        localStorage.setItem('cartMerged', 'true');
+        setCartMergedFlag(true);
+        return;
       }
 
-      // Clear local cart after successful merge
-      localStorage.removeItem('cart');
-      console.log('Local cart merged and cleared');
-
-      // Refresh cart data from server
-      const response = await fetch(
+      // Fetch current server cart
+      const currentCartRes = await fetch(
         `http://careskinbeauty.shop:4456/api/Cart/customer/${customerId}`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         }
       );
+      const currentCart = (await currentCartRes.json()) || [];
 
-      if (response.ok) {
-        const cartData = await response.json();
-        setCart(cartData);
+      // For each local item, either update quantity if it exists or add if not
+      for (const localItem of localCart) {
+        const match = currentCart.find(
+          (serverItem) =>
+            serverItem.ProductId === localItem.ProductId &&
+            serverItem.ProductVariationId === localItem.ProductVariationId
+        );
+
+        if (match) {
+          // Update existing item with new total quantity
+          const updatedQty = (match.Quantity || 1) + (localItem.Quantity || 1);
+          await fetch(`http://careskinbeauty.shop:4456/api/Cart/update`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              CustomerId: parseInt(customerId),
+              ProductId: match.ProductId,
+              ProductVariationId: match.ProductVariationId,
+              Quantity: updatedQty,
+            }),
+          });
+        } else {
+          // Add item to the server cart
+          await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+              CustomerId: parseInt(customerId),
+              ProductId: localItem.ProductId,
+              ProductVariationId: localItem.ProductVariationId,
+              Quantity: localItem.Quantity || 1,
+            }),
+          });
+        }
       }
+
+      localStorage.setItem('cartMerged', 'true');
+      setCartMergedFlag(true);
+      localStorage.removeItem('cart'); // Clear local cart
+
+      // Refresh the server cart
+      fetchCart();
     } catch (error) {
       console.error('Error merging carts:', error);
     }
@@ -596,6 +694,18 @@ function Navbar() {
       return () => clearTimeout(timer);
     }
   }, [isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (CustomerId && token) {
+      const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      const alreadyMerged = localStorage.getItem('cartMerged') === 'true';
+
+      if (localCart.length > 0 && !alreadyMerged) {
+        console.log('Merging local cart with API cart from Navbar...');
+        mergeCartsAfterLogin(CustomerId, token);
+      }
+    }
+  }, [CustomerId, token]);
 
   return (
     <>
@@ -644,15 +754,132 @@ function Navbar() {
           <div className="lg:flex md:flex space-x-5 items-center">
             <div className="lg:flex md:flex hidden space-x-6 items-center">
               {/* Profile Icon */}
-              <button onClick={handleProfileClick} className="relative group">
-                <FontAwesomeIcon
-                  icon={faUser}
-                  className="text-gray-700 hover:text-emerald-600 text-xl transition-colors hover:scale-110 transition-transform"
-                />
-                <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {isLoggedIn ? 'My Profile' : 'Sign In'}
-                </span>
-              </button>
+              <div className="relative group" ref={profileDropdownRef}>
+                {isLoggedIn ? (
+                  // Logged in state - show avatar with dropdown
+                  <div
+                    onClick={() =>
+                      setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                    }
+                    className="cursor-pointer flex items-center"
+                  >
+                    <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-emerald-200 hover:border-emerald-500 transition-all">
+                      <img
+                        src={
+                          user?.PictureUrl || 'https://via.placeholder.com/150'
+                        }
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/150';
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // Not logged in - show icon
+                  <button onClick={handleProfileClick} className="relative">
+                    <FontAwesomeIcon
+                      icon={faUser}
+                      className="text-gray-700 hover:text-emerald-600 text-xl transition-colors hover:scale-110 transition-transform"
+                    />
+                    <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Sign In
+                    </span>
+                  </button>
+                )}
+
+                {/* Profile Dropdown Menu */}
+                <AnimatePresence>
+                  {isLoggedIn && isProfileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 top-11 w-64 bg-white shadow-xl border border-gray-200 rounded-lg p-4 z-50"
+                    >
+                      <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-200">
+                          <img
+                            src={
+                              user?.PictureUrl ||
+                              'https://via.placeholder.com/150'
+                            }
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/150';
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">
+                            {userName || 'User'}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user?.Email || 'loading@email.com'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5">
+                        <Link
+                          to="/profile"
+                          className="flex items-center gap-3 p-2 hover:bg-emerald-50 rounded-md transition-colors text-gray-700"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FontAwesomeIcon
+                            icon={faUser}
+                            className="text-emerald-600 w-4"
+                          />
+                          <span>View Profile</span>
+                        </Link>
+
+                        <Link
+                          to="/profile?tab=Order%20History"
+                          className="flex items-center gap-3 p-2 hover:bg-emerald-50 rounded-md transition-colors text-gray-700"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FontAwesomeIcon
+                            icon={faShoppingBag}
+                            className="text-emerald-600 w-4"
+                          />
+                          <span>Order History</span>
+                        </Link>
+
+                        {/* <Link
+                          to="/wishlist"
+                          className="flex items-center gap-3 p-2 hover:bg-emerald-50 rounded-md transition-colors text-gray-700"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <FontAwesomeIcon
+                            icon={faHeart}
+                            className="text-emerald-600 w-4"
+                          />
+                          <span>Wishlist</span>
+                        </Link> */}
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <button
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            handleLogout();
+                          }}
+                          className="flex w-full items-center gap-3 p-2 hover:bg-red-50 rounded-md transition-colors text-red-600"
+                        >
+                          <FontAwesomeIcon
+                            icon={faSignOutAlt}
+                            className="w-4"
+                          />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* notifications Icon */}
               <Link to="/notifications" className="relative group">

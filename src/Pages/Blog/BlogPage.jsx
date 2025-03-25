@@ -120,8 +120,6 @@ function BlogPage() {
     },
   };
 
-  // Add these two functions near your other formatting functions
-
   // Function to format just the date part
   const formatDateOnly = (dateString) => {
     if (!dateString || dateString === 'string') return 'No date';
@@ -186,14 +184,19 @@ function BlogPage() {
   return (
     <>
       <Navbar />
-      {/* Hero section with background image */}
+      {/* Enhanced Hero Section with Animated Background */}
       <motion.div
-        className="relative w-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 py-24 md:py-32"
+        className="relative w-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 py-24 md:py-32 overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="absolute inset-0 bg-pattern opacity-30"></div>
+        {/* Animated circles in the background */}
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-0 -right-24 w-72 h-72 bg-teal-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-32 left-20 w-80 h-80 bg-emerald-50 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+
+        <div className="absolute inset-0 bg-pattern opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/30"></div>
 
         <motion.div
@@ -202,23 +205,45 @@ function BlogPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <span className="bg-emerald-100 text-emerald-800 text-xs font-medium px-4 py-1.5 rounded-full mb-5 shadow-sm">
+          <motion.span
+            className="bg-emerald-100 text-emerald-800 text-xs font-medium px-4 py-1.5 rounded-full mb-5 shadow-sm"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
             Our Skincare Journal
-          </span>
-          <h1 className="font-bold leading-tight mb-6 text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-teal-600">
-            Skincare Blog & News
-          </h1>
-          <p className="text-sm md:text-base lg:text-lg text-gray-600 mb-8 max-w-2xl">
+          </motion.span>
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+          >
+            <h1 className="font-bold leading-tight text-4xl md:text-5xl lg:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-teal-600 inline-block pb-3">
+              Skincare Blog & News
+            </h1>
+          </motion.div>
+          <motion.p
+            className="text-sm md:text-base lg:text-lg text-gray-600 mb-8 max-w-2xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+          >
             Stay up to date with the latest trends, tips, and insights for
             healthier, happier skin. Discover expert advice and beauty secrets.
-          </p>
+          </motion.p>
 
-          {/* Enhanced Search bar */}
-          <div className="w-full max-w-md mt-4">
+          {/* Enhanced Floating Search bar */}
+          <motion.div
+            className="w-full max-w-md mt-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
+          >
             <div className="relative flex items-center w-full group">
               <input
                 type="text"
-                className="w-full px-5 py-3.5 pl-12 pr-12 text-center rounded-full border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-sm transition-all duration-300 group-hover:shadow-md"
+                className="w-full px-5 py-3.5 pl-12 pr-12 text-center rounded-full border border-gray-200 bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent shadow-md transition-all duration-300 group-hover:shadow-lg"
                 placeholder="Search articles..."
                 value={searchTerm}
                 onChange={(e) => {
@@ -267,18 +292,19 @@ function BlogPage() {
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </motion.div>
 
-      {/* Blog Cards Container */}
+      {/* Blog Cards Container with Enhanced Styling */}
       <div className="container mx-auto px-4 py-12 mb-16">
-        {/* Enhanced Loading State */}
+        {/* Enhanced Loading State with Pulsing Effect */}
         {loading && (
           <div className="flex flex-col justify-center items-center py-20">
             <div className="w-16 h-16 relative">
               <div className="absolute inset-0 rounded-full border-t-4 border-emerald-400 animate-spin"></div>
-              <div className="absolute inset-1 rounded-full border-2 border-emerald-100"></div>
+              <div className="absolute inset-1 rounded-full border-2 border-emerald-100 animate-pulse"></div>
+              <div className="absolute inset-4 rounded-full bg-emerald-50 animate-pulse"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg
                   className="w-6 h-6 text-emerald-500"
@@ -302,12 +328,12 @@ function BlogPage() {
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Enhanced Error Message */}
         {errorMessage && !loading && (
-          <div className="text-center bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg mb-8">
+          <div className="text-center bg-red-50 border border-red-200 text-red-600 p-6 rounded-xl mb-8 shadow-sm max-w-2xl mx-auto">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 mx-auto mb-2"
+              className="h-8 w-8 mx-auto mb-3 text-red-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -315,24 +341,58 @@ function BlogPage() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {errorMessage}
+            <p className="font-medium mb-1">Something went wrong</p>
+            <p className="text-sm">{errorMessage}</p>
           </div>
         )}
 
-        {/* Search Results Count */}
+        {/* Enhanced Search Results Count with Badge */}
         {!loading && searchTerm && (
-          <div className="mb-6 text-gray-600">
-            Found {filteredBlogs.length}{' '}
-            {filteredBlogs.length === 1 ? 'result' : 'results'} for "
-            {searchTerm}"
-          </div>
+          <motion.div
+            className="mb-8 flex flex-col sm:flex-row items-center justify-between"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="flex items-center mb-4 sm:mb-0">
+              <span className="bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1 rounded-full mr-3">
+                {filteredBlogs.length}
+              </span>
+              <p className="text-gray-700">
+                Found {filteredBlogs.length === 1 ? 'result' : 'results'} for "
+                <span className="font-medium">{searchTerm}</span>"
+              </p>
+            </div>
+            {filteredBlogs.length > 0 && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="text-emerald-600 hover:text-emerald-700 text-sm font-medium flex items-center group"
+              >
+                Clear search
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 ml-1 group-hover:ml-2 transition-all"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          </motion.div>
         )}
 
-        {/* Blog List */}
+        {/* Enhanced Blog Grid with Improved Cards */}
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
           variants={containerVariants}
@@ -348,7 +408,7 @@ function BlogPage() {
               >
                 {/* Blog Image with enhanced hover effect */}
                 <div className="relative h-56 overflow-hidden group">
-                  <Link to={`/blog/${blog.BlogId}`}>
+                  <Link to={`/blog/${blog.BlogId}`} className="block h-full">
                     {blog.PictureUrl ? (
                       <img
                         src={blog.PictureUrl}
@@ -373,18 +433,27 @@ function BlogPage() {
                         </svg>
                       </div>
                     )}
-                    {/* Enhanced overlay gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* Enhanced overlay gradient with content peek on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end">
+                      <div className="p-4 w-full transform translate-y-3 group-hover:translate-y-0 transition-transform duration-300">
+                        <h3 className="text-white font-medium text-lg line-clamp-1">
+                          {blog.Title}
+                        </h3>
+                        <p className="text-white/80 text-xs line-clamp-1 mt-1">
+                          {truncateText(blog.Content, 60)}
+                        </p>
+                      </div>
+                    </div>
                   </Link>
 
-                  {/* Enhanced Category Badge */}
+                  {/* Enhanced Category Badge with Blur Effect */}
                   <div className="absolute top-4 left-4 z-10">
-                    <span className="bg-white/90 backdrop-blur-sm text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
+                    <span className="bg-white/90 backdrop-blur-sm text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm border border-white/40">
                       Skincare
                     </span>
                   </div>
 
-                  {/* Add reading time badge to the image area */}
+                  {/* Redesigned Reading Time Badge */}
                   <div className="absolute bottom-4 right-4 z-10">
                     <span className="bg-black/70 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center">
                       <svg
@@ -406,7 +475,7 @@ function BlogPage() {
                   </div>
                 </div>
 
-                {/* Blog Content */}
+                {/* Blog Content with Enhanced Styling */}
                 <div className="p-6 flex-grow flex flex-col">
                   {/* Date with icon */}
                   <div className="flex items-center text-xs text-gray-500 mb-4">
@@ -429,21 +498,21 @@ function BlogPage() {
                     </time>
                   </div>
 
-                  {/* Title with link */}
-                  <Link to={`/blog/${blog.BlogId}`}>
-                    <h2 className="text-xl font-semibold mb-3 line-clamp-2 text-gray-800 hover:text-emerald-600 transition-colors">
+                  {/* Title with link - Enhanced hover */}
+                  <Link to={`/blog/${blog.BlogId}`} className="group">
+                    <h2 className="text-xl font-semibold mb-3 line-clamp-2 text-gray-800 group-hover:text-emerald-600 transition-colors">
                       {blog.Title !== 'string' ? blog.Title : 'Untitled Blog'}
                     </h2>
                   </Link>
 
-                  {/* Excerpt */}
-                  <p className="text-gray-600 mb-5 flex-grow line-clamp-3 text-sm">
+                  {/* Excerpt with Better Typography */}
+                  <p className="text-gray-600 mb-5 flex-grow line-clamp-3 text-sm leading-relaxed">
                     {blog.Content !== 'string'
                       ? truncateText(blog.Content, 150)
                       : 'No content available'}
                   </p>
 
-                  {/* Bottom section with Read More link and time */}
+                  {/* Bottom section with Enhanced Read More Button */}
                   <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
                     <Link
                       to={`/blog/${blog.BlogId}`}
@@ -452,7 +521,7 @@ function BlogPage() {
                       Read More
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 ml-1 group-hover:translate-x-1.5 transition-transform"
+                        className="h-4 w-4 ml-1 transform transition-transform duration-300 group-hover:translate-x-1.5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -466,7 +535,7 @@ function BlogPage() {
                       </svg>
                     </Link>
 
-                    {/* Time display with icon */}
+                    {/* Time display with enhanced icon */}
                     <span className="text-xs text-gray-500 flex items-center">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -490,48 +559,72 @@ function BlogPage() {
             ))}
         </motion.div>
 
-        {/* No blogs found message */}
+        {/* No blogs found message with Enhanced UI */}
         {!loading && filteredBlogs.length === 0 && !errorMessage && (
-          <div className="text-center py-16">
-            <div className="bg-gray-50 rounded-xl p-8 max-w-lg mx-auto">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 mx-auto text-gray-400 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <p className="text-gray-600 text-lg mb-2">
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl p-8 max-w-lg mx-auto shadow-sm border border-gray-100">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-gray-800 text-xl font-bold mb-2">
+                {searchTerm ? 'No Matches Found' : 'No Blog Posts Available'}
+              </h3>
+              <p className="text-gray-600 mb-4">
                 {searchTerm
-                  ? `No results found for "${searchTerm}"`
-                  : 'No blog posts available at the moment.'}
+                  ? `We couldn't find any articles matching "${searchTerm}"`
+                  : 'There are no blog posts available at the moment.'}
               </p>
               {searchTerm && (
-                <p className="text-gray-500 text-sm mb-4">
-                  Try using different keywords or check back later for new
-                  content.
-                </p>
-              )}
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="text-emerald-600 hover:text-emerald-700 font-medium"
-                >
-                  Clear search
-                </button>
+                <div className="flex flex-col items-center">
+                  <p className="text-gray-500 text-sm mb-4">
+                    Try using different keywords or check back later for new
+                    content.
+                  </p>
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full hover:bg-emerald-200 transition-colors font-medium text-sm"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Clear search
+                  </button>
+                </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {/* Enhanced Pagination */}
+        {/* Enhanced Pagination with Page Numbers */}
         {!loading && filteredBlogs.length > blogsPerPage && (
           <div className="flex justify-center mt-16">
             <nav
@@ -545,7 +638,7 @@ function BlogPage() {
                   currentPage === 1
                     ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
                     : 'border-gray-200 bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-                }`}
+                } transition-colors duration-200`}
               >
                 <svg
                   className="h-5 w-5"
@@ -561,7 +654,59 @@ function BlogPage() {
                 </svg>
               </button>
 
-              {/* Pagination numbers - keep your existing code here */}
+              {/* Page Numbers - Added number display */}
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNum = index + 1;
+                // Only show current page, first, last, and 1 page before/after current
+                const showPageNum =
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  Math.abs(currentPage - pageNum) <= 1;
+
+                if (!showPageNum && pageNum === 2 && currentPage > 3) {
+                  // Show ellipsis for skipped pages at the beginning
+                  return (
+                    <span
+                      key={`ellipsis-start`}
+                      className="relative inline-flex items-center px-4 py-2.5 border border-gray-200 bg-white text-gray-700"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                if (
+                  !showPageNum &&
+                  pageNum === totalPages - 1 &&
+                  currentPage < totalPages - 2
+                ) {
+                  // Show ellipsis for skipped pages at the end
+                  return (
+                    <span
+                      key={`ellipsis-end`}
+                      className="relative inline-flex items-center px-4 py-2.5 border border-gray-200 bg-white text-gray-700"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                if (!showPageNum) return null;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => paginate(pageNum)}
+                    className={`relative inline-flex items-center px-4 py-2.5 border ${
+                      currentPage === pageNum
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 z-10 font-medium'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'
+                    } transition-colors duration-200`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
 
               <button
                 onClick={nextPage}
@@ -570,7 +715,7 @@ function BlogPage() {
                   currentPage === totalPages
                     ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
                     : 'border-gray-200 bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
-                }`}
+                } transition-colors duration-200`}
               >
                 <svg
                   className="h-5 w-5"
@@ -591,6 +736,33 @@ function BlogPage() {
       </div>
 
       <Footer />
+
+      {/* Add this CSS to your global styles or in a style tag */}
+      <style jsx global>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </>
   );
 }

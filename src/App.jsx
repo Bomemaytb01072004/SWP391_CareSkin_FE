@@ -20,6 +20,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
 import AboutPage from './Pages/About/AboutPage';
+import GuestUnauthorizedPage from './Pages/Unauthorized/GuestUnauthorizedPage';
 export default function App() {
   return (
     <AuthProvider>
@@ -61,6 +62,7 @@ export default function App() {
 
           {/* Error Pages */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/guest" element={<GuestUnauthorizedPage />} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import SloganCarousel from '../../components/HomePage/Carousel/SloganCarousel';
@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BestSellers from '../../components/HomePage/BestSellers';
 import NewArrivals from '../../components/HomePage/NewArrivals';
 import IconSlider from '../../components/HomePage/Carousel/IconSlider';
-import ServiceFeedback from '../../components/HomePage/ServiceFeedback';
 import FacebookPosts from '../../components/HomePage/FacebookPosts';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -37,8 +36,6 @@ function HomePage() {
   // Add state for skin types
   const [skinTypes, setSkinTypes] = useState([]);
   const [loadingSkinTypes, setLoadingSkinTypes] = useState(true);
-  // Add new state for products
-  const [products, setProducts] = useState([]);
 
   // Add state for blog posts
   const [blogs, setBlogs] = useState([]);
@@ -74,73 +71,7 @@ function HomePage() {
     default: { icon: faJar, description: 'Specialized skincare' },
   };
 
-  // Featured articles data
-  const blogPosts = [
-    {
-      id: 1,
-      title: 'The Science Behind Hyaluronic Acid',
-      excerpt:
-        'Discover why this powerful ingredient is essential for maintaining skin hydration and elasticity.',
-      image:
-        'https://paulaschoice.vn/wp-content/uploads/2019/08/hyaluronic-acid-la-gi-cong-dung-cua-hyaluronic-acid.jpg',
-      date: 'March 8, 2025',
-      readTime: '5 min read',
-    },
-    {
-      id: 2,
-      title: 'Building Your Morning Skincare Routine',
-      excerpt:
-        'Step-by-step guide to creating an effective morning routine for glowing skin all day.',
-      image:
-        'https://www.behappier.com/cdn/shop/articles/Blog_1_1.jpg?v=1662199193&width=1100',
-      date: 'March 1, 2025',
-      readTime: '7 min read',
-    },
-    {
-      id: 3,
-      title: 'How to Choose the Right Sunscreen',
-      excerpt:
-        'Understanding SPF, broad-spectrum protection, and finding the perfect formula for your skin type.',
-      image:
-        'https://www.canada.ca/content/dam/hc-sc/images/services/publications/drugs-health-products/sunscreen-tips-poster/poster-sun_screen_tips-eng.jpg',
-      date: 'February 22, 2025',
-      readTime: '6 min read',
-    },
-  ];
 
-  // Skin concern data
-  const skinConcerns = [
-    {
-      id: 1,
-      title: 'Acne & Breakouts',
-      image: '/images/concerns/acne.jpg',
-      products: 24,
-    },
-    {
-      id: 2,
-      title: 'Aging & Fine Lines',
-      image: '/images/concerns/aging.jpg',
-      products: 31,
-    },
-    {
-      id: 3,
-      title: 'Dryness & Dehydration',
-      image: '/images/concerns/dryness.jpg',
-      products: 28,
-    },
-    {
-      id: 4,
-      title: 'Hyperpigmentation',
-      image: '/images/concerns/pigmentation.jpg',
-      products: 19,
-    },
-    {
-      id: 5,
-      title: 'Sensitivity & Redness',
-      image: '/images/concerns/sensitivity.jpg',
-      products: 22,
-    },
-  ];
 
   // Values/ethos data
   const companyValues = [
@@ -664,12 +595,11 @@ function HomePage() {
                 }).map((_, index) => (
                   <button
                     key={index}
-                    className={`h-2 rounded-full transition-all ${
-                      index ===
+                    className={`h-2 rounded-full transition-all ${index ===
                       Math.floor(currentSkinTypeIndex / skinTypesPerPage)
-                        ? 'w-6 bg-emerald-600'
-                        : 'w-2 bg-emerald-200'
-                    }`}
+                      ? 'w-6 bg-emerald-600'
+                      : 'w-2 bg-emerald-200'
+                      }`}
                     onClick={() =>
                       setCurrentSkinTypeIndex(index * skinTypesPerPage)
                     }
@@ -815,12 +745,11 @@ function HomePage() {
                 }).map((_, index) => (
                   <button
                     key={index}
-                    className={`h-2 rounded-full transition-all ${
-                      index ===
+                    className={`h-2 rounded-full transition-all ${index ===
                       Math.floor(currentCategoryIndex / categoriesPerPage)
-                        ? 'w-6 bg-emerald-600'
-                        : 'w-2 bg-emerald-200'
-                    }`}
+                      ? 'w-6 bg-emerald-600'
+                      : 'w-2 bg-emerald-200'
+                      }`}
                     onClick={() =>
                       setCurrentCategoryIndex(index * categoriesPerPage)
                     }
@@ -1225,10 +1154,6 @@ function HomePage() {
           </p>
         </div>
       </motion.div>
-
-      {/* ServiceFeedback - Customer Testimonials
-      <ServiceFeedback /> */}
-
       {/* Footer */}
       <Footer />
     </>

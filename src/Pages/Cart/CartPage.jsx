@@ -13,6 +13,9 @@ const CartPage = () => {
   const [selectedItems, setSelectedItems] = useState(() => {
     return JSON.parse(localStorage.getItem('selectedItems')) || [];
   });
+  const [cartMergedFlag, setCartMergedFlag] = useState(
+    localStorage.getItem('cartMerged') === 'true'
+  );
   useEffect(() => {
     setSelectedItems((prevSelected) =>
       prevSelected.filter((id) => cart.some((item) => item.ProductId === id))
@@ -24,45 +27,64 @@ const CartPage = () => {
   }, [cart]);
 
   useEffect(() => {
-    const fetchCart = async () => {
-      if (CustomerId) {
-        try {
-          const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          if (!response.ok)
-            throw new Error(`Error fetching cart: ${response.status}`);
-
-          const cartData = await response.json();
-
-          // Ensure that each item has a SalePrice properly set
-          const updatedCart = cartData.map((item) => ({
-            ...item,
-            ProductVariations: Array.isArray(item.ProductVariations)
-              ? item.ProductVariations
-              : [],
-            SalePrice:
-              item.ProductVariations?.find(
-                (v) => v.ProductVariationId === item.ProductVariationId
-              )?.SalePrice ?? item.Price, // If no sale price, use base price
-          }));
-
-          setCart(updatedCart);
-        } catch (error) {
-          console.error('Error fetching cart from server:', error);
-          setCart([]);
-        }
-      } else {
-        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-        setCart(storedCart);
+    // Listen for cart updates from Navbar (primary source)
+    const handleNavbarCartUpdate = (event) => {
+      if (event.detail && event.detail.cart) {
+        setCart(event.detail.cart);
+        console.log('Cart updated from Navbar:', event.detail.cart);
       }
     };
 
-    fetchCart();
+    // Attach event listener
+    window.addEventListener('navbarCartUpdated', handleNavbarCartUpdate);
+
+    // Initial cart fetch - only if not already received from Navbar
+    const fetchInitialCart = async () => {
+      if (cart.length === 0) {
+        if (CustomerId) {
+          try {
+            const response = await fetch(
+              `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
+            if (!response.ok)
+              throw new Error(`Error fetching cart: ${response.status}`);
+
+            const cartData = await response.json();
+
+            // Process cart data consistently with Navbar
+            const updatedCart = cartData.map((item) => ({
+              ...item,
+              ProductVariations: Array.isArray(item.ProductVariations)
+                ? item.ProductVariations
+                : [],
+              SalePrice:
+                item.ProductVariations?.find(
+                  (v) => v.ProductVariationId === item.ProductVariationId
+                )?.SalePrice ?? item.Price,
+            }));
+
+            setCart(updatedCart);
+          } catch (error) {
+            console.error('Error fetching cart from server:', error);
+            setCart([]);
+          }
+        } else {
+          const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+          setCart(storedCart);
+        }
+      }
+    };
+
+    fetchInitialCart();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('navbarCartUpdated', handleNavbarCartUpdate);
+    };
   }, [CustomerId, token]);
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
@@ -395,115 +417,53 @@ const CartPage = () => {
     );
 
     if (selectedProducts.length === 0) {
-      console.warn('No selected items for checkout.');
+      toast.warning('Please select items to checkout');
       return;
     }
 
+    // Store selected items for checkout, but don't remove them from cart yet
     localStorage.setItem('checkoutItems', JSON.stringify(selectedProducts));
+    localStorage.setItem(
+      'selectedCartItemIds',
+      JSON.stringify(
+        selectedProducts.map((item) => item.CartId).filter((id) => id != null)
+      )
+    );
 
-    // Remove selected items from cart API for logged-in users
-    if (CustomerId && token) {
-      try {
-        const cartIdsToRemove = selectedProducts.map((item) => item.CartId);
-
-        // Perform batch delete requests
-        const removeRequests = cartIdsToRemove.map((cartId) =>
-          fetch(`http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-          })
-        );
-
-        await Promise.all(removeRequests);
-      } catch (error) {
-        console.error('Error removing checkout items from cart:', error);
-      }
-    }
-
-    // Navigate to checkout page
+    // Navigate to checkout page without removing items from cart
     navigate('/checkout');
   };
 
-  // Add a function to merge local cart with API cart
-  const mergeLocalCartWithAPI = async () => {
-    const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+  // Comment out or remove mergeLocalCartWithAPI since Navbar handles merging
+  // const mergeLocalCartWithAPI = async () => {
+  //   // ...existing merge code...
+  // };
 
-    if (localCart.length === 0) return;
-
-    toast.info('Syncing your cart...', { autoClose: 2000 });
-
-    // For each item in local cart, add to API cart
-    const addPromises = localCart.map((item) => {
-      return fetch(`http://careskinbeauty.shop:4456/api/Cart/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          CustomerId: parseInt(CustomerId),
-          ProductId: item.ProductId,
-          ProductVariationId:
-            item.ProductVariationId ||
-            (item.ProductVariations && item.ProductVariations.length > 0
-              ? item.ProductVariations[0].ProductVariationId
-              : null),
-          Quantity: item.Quantity || 1,
-        }),
-      });
-    });
-
-    try {
-      await Promise.all(addPromises);
-      localStorage.removeItem('cart'); // Clear local cart after successful merge
-      toast.success('Your cart has been updated!');
-
-      // Refresh cart data from API
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.ok) {
-        const cartData = await response.json();
-        setCart(cartData);
-      }
-    } catch (error) {
-      console.error('Error merging carts:', error);
-      toast.error('There was a problem updating your cart');
-    }
-  };
-
-  // Add a useEffect to check for local cart when logged in
   useEffect(() => {
-    // Check if user is logged in and has local cart items
+    // Remove the local cart merging call; let Navbar handle it.
     if (CustomerId && token) {
-      const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      // const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      // if (localCart.length > 0) {
+      //   mergeLocalCartWithAPI();
+      // }
 
-      if (localCart.length > 0) {
-        // User has logged in and has items in local storage
-        mergeLocalCartWithAPI();
-      }
-
-      // Check if user just logged in with intent to checkout
       const pendingCheckout =
         localStorage.getItem('pendingCheckout') === 'true';
       if (pendingCheckout) {
-        localStorage.removeItem('pendingCheckout');
-
-        // Restore selected items if available
-        const savedSelectedItems = JSON.parse(
-          localStorage.getItem('selectedCartItems') || '[]'
-        );
-        if (savedSelectedItems.length > 0) {
-          setSelectedItems(savedSelectedItems);
-          localStorage.removeItem('selectedCartItems');
-        }
+        // ...existing code...
       }
     }
-  }, [CustomerId, token]); // Dependencies ensure this runs when login state changes
+  }, [CustomerId, token]);
+
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      // Re-fetch cart data when cart is updated elsewhere
+      fetchCart();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => window.removeEventListener('cartUpdated', handleCartUpdated);
+  }, []);
 
   const selectedProducts = cart.filter((item) =>
     selectedItems.includes(item.ProductId)

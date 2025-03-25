@@ -32,6 +32,7 @@ import {
   faAngleDoubleRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const UserProfile = () => {
   // Keep existing state variables
@@ -1056,6 +1057,24 @@ const UserProfile = () => {
         return null;
     }
   };
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Add this useEffect to handle URL parameters for tab selection
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+
+    if (
+      tabParam &&
+      ['Account', 'Order History', 'Password', 'Notification'].includes(
+        tabParam
+      )
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   // Rest of the component remains the same...
   return (

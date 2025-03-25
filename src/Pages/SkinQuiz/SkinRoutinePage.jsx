@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
+import { ToastContainer, toast } from 'react-toastify';
 import { motion } from 'framer-motion';
+import GuestUnauthorizedPage from '../../Pages/Unauthorized/GuestUnauthorizedPage';
+
 import {
   faUserEdit,
   faCartPlus,
@@ -20,6 +23,25 @@ const SkinRoutinePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]); // Add cart state
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
+  // Update the authentication useEffect
+  useEffect(() => {
+    // Authentication check - run this first
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token =
+      localStorage.getItem('Token') || localStorage.getItem('token');
+
+    if (!CustomerId || !token) {
+      setIsLoading(true);
+      setIsAuthenticated(false); // Set authentication state to false
+
+      // Save current URL to return after login
+      localStorage.setItem('redirectAfterLogin', '/skinroutine');
+    } else {
+      setIsAuthenticated(true); // Explicitly set to true when authenticated
+    }
+  }, [navigate]);
 
   // Update the getSkinTypeTips function to use includes() instead of strict equality
   const getSkinTypeTips = (skinType) => {
@@ -525,6 +547,17 @@ const SkinRoutinePage = () => {
 
     setTimeout(() => setAddedToCart([]), 2000);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <GuestUnauthorizedPage
+        pageName="the Skin Routine"
+        redirectPath="/login"
+        returnUrl="/skinroutine"
+        message="Please log in to view your personalized skincare recommendations"
+      />
+    );
+  }
 
   if (isLoading) {
     return (
