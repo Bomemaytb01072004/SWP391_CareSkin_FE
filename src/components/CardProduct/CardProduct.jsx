@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 
 function CardProduct({ product, addToCart, addToCompare }) {
-
   return (
     <div className="w-full">
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
@@ -27,7 +26,6 @@ function CardProduct({ product, addToCart, addToCompare }) {
             )}
         </Link>
 
-
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
           <Link to={`/product/${product.ProductId}`}>
             <h5 className="mt-3 mx-1 text-lg tracking-tight text-slate-900 truncate">
@@ -41,26 +39,23 @@ function CardProduct({ product, addToCart, addToCompare }) {
           <div className="my-3 mx-1 flex items-center justify-between">
             <p>
               {(() => {
-                // Get min price from all variations
-                const prices = product.Variations.map(variation => 
-                  (variation.SalePrice && variation.SalePrice > 0) ? variation.SalePrice : variation.Price
-                );
-                const minPrice = Math.min(...prices);
+                // Use the first variation instead of finding minimum price
+                const firstVariation = product.Variations[0];
 
-                // Get original price (before sale) for the variation with min price
-                const minPriceVariation = product.Variations.find(variation => {
-                  const price = (variation.SalePrice && variation.SalePrice > 0) ? variation.SalePrice : variation.Price;
-                  return price === minPrice;
-                });
+                // Get the display price (either sale price or regular price)
+                const displayPrice =
+                  firstVariation.SalePrice && firstVariation.SalePrice > 0
+                    ? firstVariation.SalePrice
+                    : firstVariation.Price;
 
                 return (
                   <>
                     <span className="text-xl font-bold text-slate-900">
-                      ${minPrice.toFixed(2)}
+                      ${displayPrice.toFixed(2)}
                     </span>
-                    {minPriceVariation.SalePrice > 0 && (
+                    {firstVariation.SalePrice > 0 && (
                       <span className="text-sm text-slate-900 line-through ml-2">
-                        ${minPriceVariation.Price.toFixed(2)}
+                        ${firstVariation.Price.toFixed(2)}
                       </span>
                     )}
                   </>
@@ -103,7 +98,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
 
