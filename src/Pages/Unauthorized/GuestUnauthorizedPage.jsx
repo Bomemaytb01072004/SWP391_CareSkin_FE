@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 
-const UnauthorizedPage = () => {
-  const { logout } = useAuth();
+const GuestUnauthorizedPage = ({ 
+  pageName = "this page", 
+  redirectPath = "/login",
+  returnUrl = "/",
+  message = "Please log in to access this feature"
+}) => {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(10);
 
   // Auto-redirect countdown
   useEffect(() => {
@@ -14,7 +17,12 @@ const UnauthorizedPage = () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate('/');
+          navigate(redirectPath, { 
+            state: { 
+              from: returnUrl.substring(1), 
+              message: message
+            } 
+          });
           return 0;
         }
         return prev - 1;
@@ -22,12 +30,7 @@ const UnauthorizedPage = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  }, [navigate, redirectPath, returnUrl, message]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-emerald-50 to-teal-50 px-4">
@@ -37,29 +40,23 @@ const UnauthorizedPage = () => {
         transition={{ duration: 0.5 }}
         className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full text-center"
       >
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-red-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            className="h-8 w-8 text-amber-600"
+            viewBox="0 0 20 20"
+            fill="currentColor"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-            />
+            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
           </svg>
         </div>
 
-        <h2 className="text-3xl font-bold text-red-600 mb-2">403</h2>
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h3>
+        <h2 className="text-3xl font-bold text-amber-600 mb-2">Login Required</h2>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Members Only Feature</h3>
 
         <p className="text-gray-600 mb-6">
-          You don't have permission to access this page. This area is restricted
-          to administrators only.
+          You need to be logged in to access {pageName}. 
+          Create an account or log in to access your personalized skin recommendations.
         </p>
 
         <div className="flex flex-col space-y-3 mb-6">
@@ -68,18 +65,34 @@ const UnauthorizedPage = () => {
               className="h-full bg-emerald-500 rounded-full"
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}
-              transition={{ duration: 30 }}
+              transition={{ duration: 10 }}
             />
           </div>
           <p className="text-sm text-gray-500">
-            Redirecting to home page in {countdown} seconds
+            Redirecting to login page in {countdown} seconds
           </p>
         </div>
 
         <div className="flex flex-col space-y-3">
           <Link
-            to="/"
+            to={redirectPath}
+            state={{ from: returnUrl.substring(1), message: message }}
             className="px-4 py-3 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 text-center font-medium flex items-center justify-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+            Login / Register
+          </Link>
+
+          <Link
+            to="/"
+            className="px-4 py-3 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 text-center font-medium flex items-center justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -91,27 +104,6 @@ const UnauthorizedPage = () => {
             </svg>
             Back to Home
           </Link>
-
-          <button
-            onClick={handleLogout}
-            className="px-4 py-3 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200 text-center font-medium flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            Logout
-          </button>
         </div>
       </motion.div>
 
@@ -127,4 +119,4 @@ const UnauthorizedPage = () => {
   );
 };
 
-export default UnauthorizedPage;
+export default GuestUnauthorizedPage;

@@ -12,6 +12,7 @@ const CheckoutPage = () => {
   const [promotions, setPromotions] = useState([]);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [isRedirecting, setIsRedirecting] = useState(false); // Add this state to handle redirection UI
+  const [user, setUser] = useState(null); // Add this state near your other state declarations at the top of the Navbar component
 
   const navigate = useNavigate();
 
@@ -48,6 +49,65 @@ const CheckoutPage = () => {
     fetchActivePromotions()
       .then(setPromotions)
       .catch((error) => console.error('Error fetching promotions:', error));
+  }, []);
+
+  // Simplified fetchUserData function that only uses the existing user state
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const CustomerId = localStorage.getItem('CustomerId');
+      const token =
+        localStorage.getItem('Token') || localStorage.getItem('token');
+
+      if (CustomerId && token) {
+        try {
+          const response = await fetch(
+            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (!response.ok) throw new Error(`Error: ${response.status}`);
+
+          const userData = await response.json();
+          setUser(userData);
+
+          // Pre-fill form fields with user data if available
+          formik.setValues({
+            ...formik.values,
+            name: userData.FullName || userData.UserName || '',
+            email: userData.Email || '',
+            phone: userData.Phone || '',
+            address: userData.Address || '',
+          });
+
+          // Cache in localStorage for faster loading on refresh
+          localStorage.setItem('user', JSON.stringify(userData));
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+
+          // Try to load from cache if API fails
+          const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+          if (cachedUser && Object.keys(cachedUser).length > 0) {
+            setUser(cachedUser);
+
+            // Pre-fill form with cached user data
+            formik.setValues({
+              ...formik.values,
+              name:
+                cachedUser.FullName ||
+                cachedUser.UserName ||
+                formik.values.name,
+              email: cachedUser.Email || formik.values.email,
+              phone: cachedUser.Phone || formik.values.phone,
+              address: cachedUser.Address || formik.values.address,
+            });
+          }
+        }
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   // Calculate totals using SalePrice if available
@@ -116,6 +176,8 @@ const CheckoutPage = () => {
         handleOnlinePayment(values);
       } else if (values.paymentMethod === 'momo') {
         handleMoMoPayment(values);
+      } else if (values.paymentMethod === 'zalopay') {
+        handleZaloPayPayment(values);
       }
     },
   });
@@ -372,6 +434,122 @@ const CheckoutPage = () => {
     } catch (error) {
       console.error('❌ Payment API Error:', error);
       alert('An error occurred while processing the order.');
+    }
+  };
+
+  // Fixed ZaloPay payment handler with correct data types
+  const handleZaloPayPayment = async (values) => {
+    const CustomerId = localStorage.getItem('CustomerId')
+      ? parseInt(localStorage.getItem('CustomerId'))
+      : null;
+
+    const selectedCartItemIds = selectedItems
+      .map((item) => item.CartId)
+      .filter((id) => id !== null && id !== undefined);
+
+    if (selectedCartItemIds.length === 0) {
+      alert('No valid items selected for checkout.');
+      return;
+    }
+
+    const PromotionId = values.promotionId ? parseInt(values.promotionId) : 1;
+
+    const orderPayload = {
+      CustomerId,
+      OrderStatusId: 1, // Pending
+      PromotionId,
+      Name: values.name,
+      Phone: values.phone,
+      Email: values.email,
+      Address: values.address,
+      SelectedCartItemIds: selectedCartItemIds,
+    };
+
+    try {
+      // Step 1: Place Order and get OrderId
+      const orderResponse = await fetch(
+        'http://careskinbeauty.shop:4456/api/Order',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token') || localStorage.getItem('Token') || ''}`,
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
+
+      if (!orderResponse.ok) {
+        const errorMessage = await orderResponse.text();
+        console.error('⚠️ Order Response:', errorMessage);
+        alert(`Failed to place order: ${errorMessage}`);
+        return;
+      }
+
+      const orderData = await orderResponse.json();
+      const OrderId = parseInt(orderData.OrderId); // Convert to integer
+
+      if (isNaN(OrderId) || OrderId <= 0) {
+        console.error('Invalid OrderId received:', orderData.OrderId);
+        alert('Error: Invalid order ID received from server');
+        return;
+      }
+
+      console.log('✅ Order Placed Successfully:', orderData);
+
+      // Step 2: Get ZaloPay Payment URL with correct data types
+      // Convert to VND (minimum 10000 VND ~ 0.40 USD)
+      const amountInVND = Math.max(Math.round(totalOrder * 24000), 10000);
+
+      const paymentPayload = {
+        OrderId: OrderId, // Integer
+        Amount: amountInVND, // Long
+      };
+
+      console.log('🔹 Sending ZaloPay Payment Payload:', paymentPayload);
+
+      try {
+        const paymentResponse = await fetch(
+          'http://careskinbeauty.shop:4456/api/ZaloPay/create',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paymentPayload),
+          }
+        );
+
+        console.log('Response status:', paymentResponse.status);
+
+        // Check if response is OK before attempting to parse JSON
+        if (!paymentResponse.ok) {
+          const errorText = await paymentResponse.text();
+          console.error('ZaloPay API Error Response:', errorText);
+          alert(
+            `Payment gateway error (${paymentResponse.status}): ${errorText}`
+          );
+          return;
+        }
+
+        const paymentData = await paymentResponse.json();
+
+        if (paymentData.ordersUrl) {
+          console.log('✅ Redirecting to ZaloPay:', paymentData.ordersUrl);
+          window.location.href = paymentData.ordersUrl; // Redirect user to ZaloPay
+        } else {
+          console.error('❌ Invalid payment response format:', paymentData);
+          alert('The payment gateway returned an invalid response format.');
+        }
+      } catch (parseError) {
+        console.error('❌ Error parsing ZaloPay response:', parseError);
+        alert(
+          'Unable to connect to the payment gateway. Please try again later.'
+        );
+      }
+    } catch (error) {
+      console.error('❌ ZaloPay Payment API Error:', error);
+      alert('An error occurred while processing the ZaloPay payment.');
     }
   };
 
@@ -698,7 +876,7 @@ const CheckoutPage = () => {
                       />
                       <div className="flex items-center justify-between flex-grow py-3 px-4">
                         <div className="flex items-center">
-                          <div className="mr-3 bg-white rounded-md p-1 border border-gray-100 shadow-sm w-20 h-14 flex items-center justify-center">
+                          <div className="mr-3 bg-white w-20 rounded-md border border-gray-100 shadow-sm h-16 flex items-center justify-center">
                             {/* VNPAY Logo */}
                             <img
                               src="https://downloadlogomienphi.com/sites/default/files/logos/download-logo-vector-vnpay-mien-phi.jpg"
@@ -711,7 +889,7 @@ const CheckoutPage = () => {
                               VNPay
                             </div>
                             <div className="text-sm text-gray-500">
-                              Pay with bank card, QR code or e-wallet
+                              Pay with bank card
                             </div>
                           </div>
                         </div>
@@ -753,7 +931,7 @@ const CheckoutPage = () => {
                       />
                       <div className="flex items-center justify-between flex-grow py-3 px-4">
                         <div className="flex items-center">
-                          <div className="mr-3 bg-white rounded-md p-1 border border-gray-100 shadow-sm w-20 h-14 flex items-center justify-center">
+                          <div className="mr-3 bg-white w-20 rounded-md border p-3 border-gray-100 shadow-sm h-16 flex items-center justify-center">
                             {/* MoMo Logo */}
                             <img
                               src="https://itviec.com/rails/active_storage/representations/proxy/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBM0E3SHc9PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--3873048b5c25240e612222d38b001c927993024c/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdCem9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFJc0FXa0NMQUU9IiwiZXhwIjpudWxsLCJwdXIiOiJ2YXJpYXRpb24ifX0=--15c3f2f3e11927673ae52b71712c1f66a7a1b7bd/MoMo%20Logo.png"
@@ -771,6 +949,61 @@ const CheckoutPage = () => {
                           </div>
                         </div>
                         {formik.values.paymentMethod === 'momo' && (
+                          <span className="relative flex h-6 w-6">
+                            <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="relative h-6 w-6 text-emerald-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* ZaloPay */}
+                    <label
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
+                        formik.values.paymentMethod === 'zalopay'
+                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                          : 'border-gray-200 hover:border-emerald-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="zalopay"
+                        checked={formik.values.paymentMethod === 'zalopay'}
+                        onChange={formik.handleChange}
+                        className="form-radio h-5 w-5 text-emerald-600 ml-4"
+                      />
+                      <div className="flex items-center justify-between flex-grow py-3 px-4">
+                        <div className="flex items-center">
+                          <div className="mr-3 bg-white w-20 rounded-md border p-3 border-gray-100 shadow-sm h-16 flex items-center justify-center">
+                            {/* ZaloPay Logo */}
+                            <img
+                              src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-Square.png"
+                              alt="ZaloPay"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800 text-lg">
+                              ZaloPay
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Pay with ZaloPay e-wallet
+                            </div>
+                          </div>
+                        </div>
+                        {formik.values.paymentMethod === 'zalopay' && (
                           <span className="relative flex h-6 w-6">
                             <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <svg

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import quizBg from '../../assets/SkinQuiz/skincare.jpg';
+import GuestUnauthorizedPage from '../../Pages/Unauthorized/GuestUnauthorizedPage';
 
 const SkinQuizPage = () => {
   const navigate = useNavigate();
@@ -21,6 +22,22 @@ const SkinQuizPage = () => {
   const [answerHistory, setAnswerHistory] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiResultData, setApiResultData] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
+  useEffect(() => {
+    // Authentication check - run this first
+    const CustomerId = localStorage.getItem('CustomerId');
+    const token =
+      localStorage.getItem('Token') || localStorage.getItem('token');
+
+    if (!CustomerId || !token) {
+      setIsLoading(true);
+
+      // Save current URL to return after login
+      localStorage.setItem('redirectAfterLogin', '/skinquiz');
+      setIsAuthenticated(false); // Mark as not authenticated
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Check if the quiz has already been completed
@@ -514,6 +531,18 @@ const SkinQuizPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  // If user is not authenticated, show unauthorized page
+  if (!isAuthenticated) {
+    return (
+      <GuestUnauthorizedPage
+        pageName="the Skin Quiz"
+        redirectPath="/login"
+        returnUrl="/skinquiz"
+        message="Please log in to take our skin quiz and get personalized recommendations"
+      />
+    );
+  }
 
   return (
     <>
@@ -1371,7 +1400,7 @@ const SkinQuizPage = () => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M12 8V12H16M12 8L8 12L12 16M12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8Z"
+                              d="M12 8V12H16M12 8L8 12L12 16M12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8Z"
                             ></path>
                           </svg>
                           Testimonials from Experts
