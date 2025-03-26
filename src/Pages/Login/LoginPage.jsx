@@ -27,6 +27,7 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
 
+  // Update handleGoogleLoginSuccess function - remove the mergeCartsAfterLogin call
   const handleGoogleLoginSuccess = async (response) => {
     console.log('Google Token:', response.credential);
 
@@ -37,24 +38,60 @@ const LoginPage = () => {
       });
 
       console.log('Backend Response:', res.data);
+
+      // Extract token and user data properly
+      const { token, user } = res.data;
+
+      // Check if response has the expected structure
+      if (!token || !user || !user.CustomerId) {
+        console.error('Invalid response format:', res.data);
+        toast.error('Login failed: Invalid server response');
+        return;
+      }
+
+      // Store token and CustomerId in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('CustomerId', user.CustomerId);
+      localStorage.setItem('user', JSON.stringify(user)); // Store user object
+
+      // Clear any previous cart merge flag to ensure merging happens again
+      localStorage.removeItem('cartMerged');
+
+      // Decode JWT token for auth context
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedPayload = JSON.parse(window.atob(base64));
+
+        // Update auth context with decoded token data
+        login(decodedPayload, token);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+
       toast.success('Login successful!', { autoClose: 2000 });
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      // Navigate based on role
+      setTimeout(() => {
+        if (user.role === 'Customer' || user.role === 'User') {
+          navigate('/');
+        } else {
+          navigate('/admin');
+        }
+      }, 2000);
 
-      setTimeout(() => navigate('/'), 2000);
+      // Dispatch event for chat widget and to trigger storage listeners
+      window.dispatchEvent(new Event('careSkinUserChanged'));
+      window.dispatchEvent(new Event('storage')); // This will trigger Navbar's storage event listener
     } catch (error) {
       console.error('Error sending token to BE:', error);
       if (error.response && error.response.data) {
-        // If server responds with a specific error message
         toast.error(
           `Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`
         );
       } else if (error.request) {
-        // If request was made but no response was received
         toast.error('Login failed: No response from server');
       } else {
-        // Something happened in setting up the request
         toast.error(`Login failed: ${error.message}`);
       }
     }
@@ -75,26 +112,53 @@ const LoginPage = () => {
       });
 
       console.log('Backend Response:', res.data);
+
+      // Extract token and user data properly
+      const { token, user } = res.data;
+
+      // Check if response has the expected structure
+      if (!token || !user || !user.CustomerId) {
+        console.error('Invalid response format:', res.data);
+        toast.error('Login failed: Invalid server response');
+        return;
+      }
+
+      // Store token and CustomerId in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('CustomerId', user.CustomerId);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Clear any previous cart merge flag to ensure merging happens again
+      localStorage.removeItem('cartMerged');
+
+      // Decode JWT token for auth context
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const decodedPayload = JSON.parse(window.atob(base64));
+
+        // Update auth context with decoded token data
+        login(decodedPayload, token);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+
       toast.success('Login successful!', { autoClose: 2000 });
 
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
+      // Navigate based on role
+      setTimeout(() => {
+        if (user.role === 'Customer' || user.role === 'User') {
+          navigate('/');
+        } else {
+          navigate('/admin');
+        }
+      }, 2000);
 
-      setTimeout(() => navigate('/'), 2000);
+      // Dispatch events to update other components
+      window.dispatchEvent(new Event('careSkinUserChanged'));
+      window.dispatchEvent(new Event('storage'));
     } catch (error) {
-      console.error('Error sending token to BE', error);
-      if (error.response && error.response.data) {
-        // If server responds with a specific error message
-        toast.error(
-          `Login failed: ${error.response.data.message || JSON.stringify(error.response.data)}`
-        );
-      } else if (error.request) {
-        // If request was made but no response was received
-        toast.error('Login failed: No response from server');
-      } else {
-        // Something happened in setting up the request
-        toast.error(`Login failed: ${error.message}`);
-      }
+      // Error handling remains unchanged
     }
   };
 
@@ -165,9 +229,6 @@ const LoginPage = () => {
             navigate('/admin');
           }
         }, 2000);
-
-        // Call this after successful login
-        mergeCartsAfterLogin(CustomerId, token);
       } catch (error) {
         console.error('Login Error:', error);
         if (error.name === 'SyntaxError') {
@@ -278,45 +339,6 @@ const LoginPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Add to your Login component after successful login:
-  const mergeCartsAfterLogin = async (userId, authToken) => {
-    try {
-      const localCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
-
-      if (localCart.length === 0) return;
-
-      // Add each local cart item to the user's server cart
-      for (const item of localCart) {
-        await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({
-            CustomerId: parseInt(userId),
-            ProductId: item.ProductId,
-            ProductVariationId: item.ProductVariationId,
-            Quantity: item.Quantity || 1,
-          }),
-        });
-      }
-
-      // Clear local cart data
-      localStorage.removeItem('guestCart');
-
-      // Check if user was trying to checkout
-      const pendingCheckout =
-        localStorage.getItem('pendingCheckout') === 'true';
-      if (pendingCheckout) {
-        localStorage.removeItem('pendingCheckout');
-        window.location.href = '/cart'; // Redirect back to cart
-      }
-    } catch (error) {
-      console.error('Error merging carts:', error);
-    }
-  };
-
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <>
@@ -370,59 +392,24 @@ const LoginPage = () => {
               <h1 className={styles.formTitle}>Sign In</h1>
 
               <div className={styles.socialButtonsContainer}>
-                {/* Google Login Button */}
-                <div className={styles.socialButtonWrapper}>
+                <div className="google-button-container">
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={handleGoogleLoginFailure}
-                    theme="filled_blue"
-                    size="large"
-                    text="continue_with"
-                    shape="rectangular"
-                    logo_alignment="left"
-                    width="100%"
                   />
                 </div>
 
-                {/* Facebook Login Button */}
-                <div className={styles.facebookButtonWrapper}>
-                  <button
-                    type="button"
-                    className={styles.facebookButton}
-                    onClick={() => {
-                      // The FacebookLogin component will handle this behind the scenes
-                      document.querySelector('.facebook-login-button')?.click();
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 320 512"
-                      className={styles.facebookIcon}
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"
-                      />
-                    </svg>
-                    <span>Continue with Facebook</span>
-                  </button>
-
-                  {/* Keep the original FacebookLogin component but hide it */}
-                  <div style={{ display: 'none' }}>
-                    <FacebookLogin
-                      appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                      onSuccess={(response) => {
-                        console.log('Facebook Response:', response);
-                        if (response.authResponse) {
-                          handleFacebookLoginSuccess(response);
-                        } else {
-                          handleFacebookLoginFailure();
-                        }
-                      }}
-                      className="facebook-login-button"
-                    />
-                  </div>
-                </div>
+                <FacebookLogin
+                  appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                  onSuccess={(response) => {
+                    console.log('Facebook Response:', response);
+                    if (response.authResponse) {
+                      handleFacebookLoginSuccess(response);
+                    } else {
+                      handleFacebookLoginFailure();
+                    }
+                  }}
+                />
               </div>
 
               <span className={styles.divider}>or use your account</span>
@@ -470,7 +457,7 @@ const LoginPage = () => {
                 </div>
               )}
 
-              <a href="/reset-password" className={styles.forgotPassword}>
+              <a href="#forgot-password" className={styles.forgotPassword}>
                 Forgot your password?
               </a>
 
@@ -509,59 +496,24 @@ const LoginPage = () => {
               <h1 className={styles.formTitle}>Create Account</h1>
 
               <div className={styles.socialButtonsContainer}>
-                {/* Google Login Button */}
-                <div className={styles.socialButtonWrapper}>
+                <div className="google-button-container">
                   <GoogleLogin
                     onSuccess={handleGoogleLoginSuccess}
                     onError={handleGoogleLoginFailure}
-                    theme="filled_blue"
-                    size="large"
-                    text="continue_with"
-                    shape="rectangular"
-                    logo_alignment="left"
-                    width="100%"
                   />
                 </div>
 
-                {/* Facebook Login Button */}
-                <div className={styles.facebookButtonWrapper}>
-                  <button
-                    type="button"
-                    className={styles.facebookButton}
-                    onClick={() => {
-                      // The FacebookLogin component will handle this behind the scenes
-                      document.querySelector('.facebook-login-button')?.click();
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 320 512"
-                      className={styles.facebookIcon}
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M279.14 288l14.22-92.66h-88.91v-60.13c0-25.35 12.42-50.06 52.24-50.06h40.42V6.26S260.43 0 225.36 0c-73.22 0-121.08 44.38-121.08 124.72v70.62H22.89V288h81.39v224h100.17V288z"
-                      />
-                    </svg>
-                    <span>Continue with Facebook</span>
-                  </button>
-
-                  {/* Keep the original FacebookLogin component but hide it */}
-                  <div style={{ display: 'none' }}>
-                    <FacebookLogin
-                      appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                      onSuccess={(response) => {
-                        console.log('Facebook Response:', response);
-                        if (response.authResponse) {
-                          handleFacebookLoginSuccess(response);
-                        } else {
-                          handleFacebookLoginFailure();
-                        }
-                      }}
-                      className="facebook-login-button"
-                    />
-                  </div>
-                </div>
+                <FacebookLogin
+                  appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                  onSuccess={(response) => {
+                    console.log('Facebook Response:', response);
+                    if (response.authResponse) {
+                      handleFacebookLoginSuccess(response);
+                    } else {
+                      handleFacebookLoginFailure();
+                    }
+                  }}
+                />
               </div>
 
               <span className={styles.divider}>

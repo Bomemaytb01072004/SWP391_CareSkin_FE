@@ -22,21 +22,20 @@ import {
   faHistory,
   faHeadset,
   faBoxOpen,
+  faWallet,
 } from '@fortawesome/free-solid-svg-icons';
 
-const OrderConfirmation = () => {
+const OrderConfirmationZalo = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSuccess, setIsSuccess] = useState(null);
-  const [message, setMessage] = useState('Verifying your order...');
+  const [message, setMessage] = useState('Verifying your ZaloPay payment...');
   const [orderId, setOrderId] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('zalopay');
   const [isLoading, setIsLoading] = useState(true);
   const [isValidRequest, setIsValidRequest] = useState(true);
   const [orderDetails, setOrderDetails] = useState(null);
   const [progressStep, setProgressStep] = useState(1); // For the progress stepper
-
-  // Add these new state variables for exchange rate
   const [exchangeRate, setExchangeRate] = useState(24000); // Default fallback rate
   const [isLoadingRate, setIsLoadingRate] = useState(true);
 
@@ -44,20 +43,19 @@ const OrderConfirmation = () => {
     const verifyOrderRequest = async () => {
       try {
         const queryParams = new URLSearchParams(location.search);
-        const transactionStatus = queryParams.get('vnp_TransactionStatus');
-        const txnRef = queryParams.get('vnp_TxnRef');
-        const responseCode = queryParams.get('vnp_ResponseCode');
-        const bankCode = queryParams.get('vnp_BankCode');
-        const transactionDate = queryParams.get('vnp_PayDate');
-        const paymentAmount = queryParams.get('vnp_Amount');
+        const zaloOrderId = queryParams.get('orderId');
+        const zaloStatus = queryParams.get('status');
+        const zaloAppTransId = queryParams.get('apptransid');
+        const zaloAmount = queryParams.get('amount');
+        const zaloChecksum = queryParams.get('checksum');
 
         // Check if we have transaction parameters (online payment)
-        if (txnRef) {
-          setPaymentMethod('online');
+        if (zaloOrderId && zaloStatus !== undefined) {
+          setPaymentMethod('zalopay');
 
           // Basic validation: Check if all required parameters exist
-          if (!transactionStatus || !responseCode || !bankCode) {
-            console.error('Missing required payment parameters');
+          if (!zaloAppTransId || !zaloAmount || !zaloChecksum) {
+            console.error('Missing required ZaloPay parameters');
             setIsValidRequest(false);
             setIsSuccess(false);
             setMessage('Invalid payment data. Please contact support.');
@@ -65,37 +63,35 @@ const OrderConfirmation = () => {
             return;
           }
 
-          // Parse order ID from transaction reference
-          const extractedOrderId = txnRef.split('_')[0];
-          setOrderId(extractedOrderId);
+          setOrderId(zaloOrderId);
 
-          // VNPay uses '00' for success, check both status and responseCode
-          const isPaymentSuccess =
-            transactionStatus === '00' && responseCode === '00';
+          // ZaloPay uses '1' for success
+          const isPaymentSuccess = zaloStatus === '1';
 
           if (isPaymentSuccess) {
             // Store successful transaction in localStorage to prevent URL manipulation
             const successfulTxn = {
-              orderId: extractedOrderId,
-              txnRef: txnRef,
+              orderId: zaloOrderId,
+              appTransId: zaloAppTransId,
               timestamp: Date.now(),
               status: 'success',
+              paymentMethod: 'zalopay',
             };
             localStorage.setItem(
-              `txn_${txnRef}`,
+              `zalopay_${zaloAppTransId}`,
               JSON.stringify(successfulTxn)
             );
 
-            await updateOrderStatus(extractedOrderId, 3); // Successful payment
-            const details = await fetchOrderDetails(extractedOrderId); // Fetch order details
+            await updateOrderStatus(zaloOrderId, 3); // Successful payment
+            const details = await fetchOrderDetails(zaloOrderId); // Fetch order details
             setOrderDetails(details);
 
-            // Calculate payment amount in USD (amount from VNPAY is in VND x 100)
-            if (paymentAmount && details) {
-              // VNPAY amount is in smallest currency unit (VND * 100)
-              const amountInVND = parseInt(paymentAmount) / 100;
+            // Calculate payment amount in USD (amount from ZaloPay is in VND)
+            if (zaloAmount && details) {
+              // ZaloPay amount is in VND
+              const amountInVND = parseInt(zaloAmount);
 
-              // Convert to USD using the dynamic exchange rate
+              // Convert to USD using the fetched exchange rate
               const amountInUSD = amountInVND / exchangeRate;
 
               console.log(
@@ -104,44 +100,46 @@ const OrderConfirmation = () => {
 
               // Send payment confirmation email
               await sendPaymentConfirmationEmail(
-                extractedOrderId,
+                zaloOrderId,
                 details.Email || details.email || localStorage.getItem('email'),
                 details.Name ||
                   details.name ||
                   localStorage.getItem('username'),
                 amountInUSD.toFixed(2),
-                'VNPAY' // Add payment method parameter
+                'ZaloPay'
               );
             }
 
             setIsSuccess(true);
             setProgressStep(3);
             setMessage(
-              'Order payment successful! Your order is now being processed.'
+              'ZaloPay payment successful! Your order is now being processed.'
             );
           } else {
             // Store failed transaction in localStorage
             const failedTxn = {
-              orderId: extractedOrderId,
-              txnRef: txnRef,
+              orderId: zaloOrderId,
+              appTransId: zaloAppTransId,
               timestamp: Date.now(),
               status: 'failed',
+              paymentMethod: 'zalopay',
             };
-            localStorage.setItem(`txn_${txnRef}`, JSON.stringify(failedTxn));
+            localStorage.setItem(
+              `zalopay_${zaloAppTransId}`,
+              JSON.stringify(failedTxn)
+            );
 
-            await updateOrderStatus(extractedOrderId, 5); // Failed payment
+            await updateOrderStatus(zaloOrderId, 5); // Failed payment
             setIsSuccess(false);
             setMessage(
-              'Order payment failed. Please try again or contact support.'
+              'ZaloPay payment failed. Please try again or contact support.'
             );
           }
         } else {
-          // No transaction parameters means COD
-          setPaymentMethod('cod');
-          setIsSuccess(true);
-          setProgressStep(2); // For Cash on Delivery
+          setIsValidRequest(false);
+          setIsSuccess(false);
           setMessage(
-            'Order placed successfully! Your order will be delivered soon.'
+            'Invalid ZaloPay transaction data. Please contact support.'
           );
         }
       } catch (error) {
@@ -158,23 +156,23 @@ const OrderConfirmation = () => {
     // Check if this transaction was already processed (prevents URL manipulation)
     const checkExistingTransaction = () => {
       const queryParams = new URLSearchParams(location.search);
-      const txnRef = queryParams.get('vnp_TxnRef');
+      const zaloAppTransId = queryParams.get('apptransid');
+      const zaloOrderId = queryParams.get('orderId');
 
-      if (txnRef) {
-        const existingTxn = localStorage.getItem(`txn_${txnRef}`);
+      if (zaloAppTransId && zaloOrderId) {
+        const existingTxn = localStorage.getItem(`zalopay_${zaloAppTransId}`);
 
         if (existingTxn) {
           const txnData = JSON.parse(existingTxn);
-          const extractedOrderId = txnRef.split('_')[0];
-          setOrderId(extractedOrderId);
-          setPaymentMethod('online');
+          setOrderId(zaloOrderId);
+          setPaymentMethod('zalopay');
 
           // Use stored transaction result instead of URL parameters
           if (txnData.status === 'success') {
             setIsSuccess(true);
             setProgressStep(3);
             setMessage(
-              'Order payment successful! Your order is now being processed.'
+              'ZaloPay payment successful! Your order is now being processed.'
             );
           } else {
             setIsSuccess(false);
@@ -195,7 +193,6 @@ const OrderConfirmation = () => {
     }
   }, [location.search, exchangeRate]);
 
-  // Add this new useEffect to fetch the exchange rate
   useEffect(() => {
     const fetchExchangeRate = async () => {
       try {
@@ -283,7 +280,7 @@ const OrderConfirmation = () => {
       return data;
     } catch (error) {
       console.error('Error fetching order details:', error);
-      throw error; // Re-throw to be handled by the caller
+      throw error;
     }
   };
 
@@ -351,21 +348,21 @@ const OrderConfirmation = () => {
           <div className="w-full max-w-4xl mx-auto px-6 py-14 bg-white shadow-xl rounded-2xl border border-gray-100">
             <div className="flex flex-col items-center">
               <div className="relative w-32 h-32 flex items-center justify-center">
-                <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-30"></div>
+                <div className="absolute inset-0 bg-purple-100 rounded-full animate-ping opacity-30"></div>
                 <FontAwesomeIcon
                   icon={faSpinner}
-                  className="text-7xl text-blue-500 animate-spin"
+                  className="text-7xl text-purple-500 animate-spin"
                 />
               </div>
               <h2 className="text-3xl font-bold text-gray-800 mt-6 mb-2">
-                Verifying your payment...
+                Verifying your ZaloPay payment...
               </h2>
               <p className="text-gray-600 text-lg mt-3 max-w-lg text-center">
-                Please wait while we confirm your order details. This may take a
-                few moments.
+                Please wait while we confirm your payment details. This may take
+                a few moments.
               </p>
               <div className="mt-8 w-full max-w-md h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 animate-pulse rounded-full"></div>
+                <div className="h-full bg-purple-500 animate-pulse rounded-full"></div>
               </div>
             </div>
           </div>
@@ -389,7 +386,7 @@ const OrderConfirmation = () => {
                 />
               </div>
               <h2 className="text-3xl font-bold text-red-800 mt-6 mb-2">
-                Invalid Payment Request
+                Invalid ZaloPay Request
               </h2>
               <div className="h-1 w-24 bg-red-300 my-4 rounded-full"></div>
               <p className="text-gray-600 mt-3 max-w-lg text-center">
@@ -461,41 +458,24 @@ const OrderConfirmation = () => {
           {isSuccess ? (
             <div className="mt-8">
               {/* Payment Info Card */}
-              <div
-                className={`bg-gradient-to-r ${paymentMethod === 'cod' ? 'from-amber-50 to-amber-100' : 'from-blue-50 to-blue-100'} p-5 rounded-xl mt-4 w-full shadow-md border ${paymentMethod === 'cod' ? 'border-amber-200' : 'border-blue-200'}`}
-              >
+              <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-5 rounded-xl mt-4 w-full shadow-md border border-purple-200">
                 <div className="flex items-center justify-center mb-2">
-                  <div
-                    className={`w-12 h-12 ${paymentMethod === 'cod' ? 'bg-amber-200' : 'bg-blue-200'} rounded-full flex items-center justify-center mr-3`}
-                  >
+                  <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center mr-3">
                     <FontAwesomeIcon
-                      icon={
-                        paymentMethod === 'cod' ? faMoneyBillWave : faCreditCard
-                      }
-                      className={`text-xl ${paymentMethod === 'cod' ? 'text-amber-700' : 'text-blue-700'}`}
+                      icon={faWallet}
+                      className="text-xl text-purple-700"
                     />
                   </div>
                   <div>
-                    <h3
-                      className={`text-lg font-semibold ${paymentMethod === 'cod' ? 'text-amber-800' : 'text-blue-800'}`}
-                    >
+                    <h3 className="text-lg font-semibold text-purple-800">
                       Payment Method
                     </h3>
-                    <p
-                      className={`${paymentMethod === 'cod' ? 'text-amber-900' : 'text-blue-900'} font-medium`}
-                    >
-                      {paymentMethod === 'cod'
-                        ? 'Cash On Delivery'
-                        : 'Online Payment'}
-                    </p>
+                    <p className="text-purple-900 font-medium">ZaloPay</p>
                   </div>
                 </div>
-                <p
-                  className={`text-sm mt-2 ${paymentMethod === 'cod' ? 'text-amber-700' : 'text-blue-700'} text-center`}
-                >
-                  {paymentMethod === 'cod'
-                    ? 'Payment will be collected upon delivery. No advance payment required.'
-                    : 'Your payment has been processed successfully. Thank you!'}
+                <p className="text-sm mt-2 text-purple-700 text-center">
+                  Your payment has been processed successfully through ZaloPay.
+                  Thank you!
                 </p>
               </div>
 
@@ -671,18 +651,14 @@ const OrderConfirmation = () => {
 
                       <div className="flex items-start">
                         <FontAwesomeIcon
-                          icon={faCreditCard}
+                          icon={faWallet}
                           className="text-gray-600 mt-1 mr-3"
                         />
                         <div>
                           <p className="text-sm text-gray-500">
                             Payment Method
                           </p>
-                          <p className="font-medium text-gray-800">
-                            {paymentMethod === 'cod'
-                              ? 'Cash On Delivery'
-                              : 'Online Payment'}
-                          </p>
+                          <p className="font-medium text-gray-800">ZaloPay</p>
                         </div>
                       </div>
 
@@ -699,13 +675,6 @@ const OrderConfirmation = () => {
                               ? orderDetails.TotalPrice
                               : orderDetails.TotalPriceSale}
                           </p>
-                          {/* Add exchange rate information */}
-                          {paymentMethod === 'online' && !isLoadingRate && (
-                            <p className="text-xs text-gray-500">
-                              Exchange rate: 1 USD ={' '}
-                              {exchangeRate.toLocaleString()} VND
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -734,7 +703,7 @@ const OrderConfirmation = () => {
                   </div>
 
                   <h3 className="text-xl font-semibold text-red-800 mt-4">
-                    Payment Failed
+                    ZaloPay Payment Failed
                   </h3>
 
                   <div className="h-1 w-16 bg-red-300 my-3 rounded-full"></div>
@@ -744,9 +713,9 @@ const OrderConfirmation = () => {
                   </p>
 
                   <p className="text-gray-600 mt-4 max-w-lg text-center">
-                    There was an issue processing your payment. Your order has
-                    not been confirmed. If you believe this is an error, please
-                    contact our customer support team.
+                    There was an issue processing your ZaloPay payment. Your
+                    order has not been confirmed. If you believe this is an
+                    error, please contact our customer support team.
                   </p>
 
                   <div className="bg-white p-4 rounded-lg mt-6 border border-red-200 w-full">
@@ -769,11 +738,7 @@ const OrderConfirmation = () => {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/"
-              className={`px-8 py-4 ${
-                isSuccess
-                  ? 'bg-gradient-to-r from-gray-600 to-gray-700'
-                  : 'bg-gradient-to-r from-gray-600 to-gray-700'
-              } text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center`}
+              className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center"
             >
               <FontAwesomeIcon icon={faHome} />
               <span>Back to Home</span>
@@ -782,7 +747,7 @@ const OrderConfirmation = () => {
             {isSuccess ? (
               <Link
                 to="/order-history"
-                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center"
+                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center"
               >
                 <FontAwesomeIcon icon={faHistory} />
                 <span>View My Orders</span>
@@ -790,7 +755,7 @@ const OrderConfirmation = () => {
             ) : (
               <Link
                 to="/contact"
-                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center"
+                className="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1 flex items-center space-x-2 w-full sm:w-auto justify-center"
               >
                 <FontAwesomeIcon icon={faHeadset} />
                 <span>Contact Support</span>
@@ -800,17 +765,17 @@ const OrderConfirmation = () => {
         </div>
 
         {/* Support banner */}
-        <div className="w-full max-w-4xl mx-auto mt-8 px-6 py-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg text-white">
+        <div className="w-full max-w-4xl mx-auto mt-8 px-6 py-6 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-lg text-white">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="mb-4 md:mb-0">
               <h3 className="text-xl font-bold">Need Help?</h3>
-              <p className="text-blue-100">
+              <p className="text-purple-100">
                 Our customer support team is available 24/7
               </p>
             </div>
             <Link
               to="/contact"
-              className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-md hover:bg-blue-50 transition duration-300"
+              className="px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg shadow-md hover:bg-purple-50 transition duration-300"
             >
               Contact Us
             </Link>
@@ -827,7 +792,7 @@ const sendPaymentConfirmationEmail = async (
   email,
   customerName,
   paymentAmount,
-  paymentMethod = 'VNPAY'
+  paymentMethod = 'ZaloPay'
 ) => {
   try {
     if (!orderId || !email) {
@@ -850,12 +815,11 @@ const sendPaymentConfirmationEmail = async (
           Email: email,
           CustomerName: customerName || 'Valued Customer',
           PaymentAmount: paymentAmount,
-          PaymentMethod: paymentMethod, // Use the parameter
+          PaymentMethod: paymentMethod,
         }),
       }
     );
 
-    // Rest of the function remains unchanged
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Failed to send payment confirmation email:', errorText);
@@ -870,4 +834,4 @@ const sendPaymentConfirmationEmail = async (
   }
 };
 
-export default OrderConfirmation;
+export default OrderConfirmationZalo;

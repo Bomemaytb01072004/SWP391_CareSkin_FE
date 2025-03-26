@@ -11,6 +11,7 @@ import CartPage from './Pages/Cart/CartPage';
 import CheckoutPage from './Pages/Checkout/CheckoutPage';
 import OrderConfirmation from './Pages/Checkout/OrderConfirmation';
 import OrderConfirmationMoMo from './Pages/Checkout/OrderConfirmationMoMo';
+import OrderConfirmationZalo from './Pages/Checkout/OrderConfirmationZalo';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
 import BlogPage from './Pages/Blog/BlogPage';
@@ -43,6 +44,10 @@ export default function App() {
           <Route
             path="/momo-confirmation"
             element={<OrderConfirmationMoMo />}
+          />
+          <Route
+            path="/zalo-confirmation"
+            element={<OrderConfirmationZalo />}
           />
           <Route path="/blog/:blogId" element={<BlogDetails />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

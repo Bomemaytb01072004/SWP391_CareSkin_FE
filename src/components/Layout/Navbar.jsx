@@ -48,175 +48,12 @@ function Navbar() {
     setIsLoggedIn(!!userSession);
   }, []);
 
-  // ▼▼▼ Add the Tawk.to chatbot here ▼▼▼
-  useEffect(() => {
-    // Prevent multiple initializations
-    if (window.Tawk_API && window.tawkInitialized) {
-      return;
-    }
-
-    // Function to initialize chatbot only once
-    const loadChatbot = async () => {
-      try {
-        let name = 'Guest';
-        let email = 'guest@example.com';
-        let uniqueId = Date.now() + Math.random().toString(36).substring(2, 15);
-
-        // Only try to fetch user info if logged in
-        if (token && CustomerId) {
-          const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-              cache: 'no-store',
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            name = (data.UserName || 'Guest').replace(/["'\\]/g, '');
-
-            const isValidEmail = (email) => {
-              const simpleEmailRegex =
-                /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-              return (
-                email &&
-                typeof email === 'string' &&
-                simpleEmailRegex.test(email)
-              );
-            };
-
-            email = isValidEmail(data.Email) ? data.Email : 'guest@example.com';
-            console.log(`Chat initialized for user: ${name} (${email})`);
-          }
-        }
-
-        // Don't create a new script if one already exists
-        if (!document.getElementById('tawk-script')) {
-          window.Tawk_API = window.Tawk_API || {};
-          window.Tawk_LoadStart = new Date();
-
-          // Set initial properties
-          window.Tawk_API.visitor = {
-            name: name,
-            email: email,
-            hash: uniqueId,
-          };
-
-          // This is critical - don't auto-hide the widget
-          window.Tawk_API.onBeforeLoad = function () {
-            // Allow the widget to be visible
-            window.Tawk_API.maximized = true;
-            window.Tawk_API.showWidget();
-          };
-
-          // Track that we've initialized
-          window.tawkInitialized = true;
-
-          const s1 = document.createElement('script');
-          s1.id = 'tawk-script';
-          s1.async = true;
-          s1.src = 'https://embed.tawk.to/67dc7f197bc349190b46342c/1imql0vm8';
-          s1.charset = 'UTF-8';
-          s1.setAttribute('crossorigin', '*');
-          document.head.appendChild(s1);
-
-          console.log('Tawk.to script initialized successfully');
-        } else {
-          // If script exists but session ended, just update visitor info
-          if (
-            window.Tawk_API &&
-            typeof window.Tawk_API.setAttributes === 'function'
-          ) {
-            window.Tawk_API.setAttributes(
-              {
-                name: name,
-                email: email,
-              },
-              function (error) {}
-            );
-
-            if (typeof window.Tawk_API.showWidget === 'function') {
-              window.Tawk_API.showWidget();
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error loading Tawk.to script:', error);
-      }
-    };
-
-    // Load chatbot only if not already initialized
-    if (!window.tawkInitialized) {
-      loadChatbot();
-    }
-
-    // Cleanup function
-    return () => {
-      // Don't remove the script or end the chat on component unmount
-      // Only do this when explicitly logging out
-    };
-  }, [token, CustomerId]); // Only re-run if user login state changes
-  // ▲▲▲ Add the Tawk.to chatbot here ▲▲▲
-
+  // Update the handleLogout function to use our new global method
   const handleLogout = () => {
-    // First, explicitly end chat and destroy session on Tawk side
-    if (window.Tawk_API) {
-      try {
-        // End the chat conversation
-        if (typeof window.Tawk_API.endChat === 'function') {
-          window.Tawk_API.endChat();
-        }
-
-        // Hide the widget
-        if (typeof window.Tawk_API.hideWidget === 'function') {
-          window.Tawk_API.hideWidget();
-        }
-      } catch (e) {
-        console.error('Error ending Tawk chat:', e);
-      }
+    // Clean up the chat session using our global method
+    if (window.CareSkin && window.CareSkin.endTawkChat) {
+      window.CareSkin.endTawkChat();
     }
-
-    // Remove any existing Tawk.to script from the DOM
-    const existingTawkScripts = document.querySelectorAll(
-      'script[src*="embed.tawk.to"]'
-    );
-    existingTawkScripts.forEach((script) => script.remove());
-
-    // Remove ALL Tawk_ variables from window object
-    for (let prop in window) {
-      if (prop.startsWith('Tawk_')) {
-        try {
-          delete window[prop];
-        } catch (e) {
-          window[prop] = undefined;
-        }
-      }
-    }
-
-    // Clear ALL storage
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('Tawk_')) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    Object.keys(sessionStorage).forEach((key) => {
-      if (key.startsWith('Tawk_')) {
-        sessionStorage.removeItem(key);
-      }
-    });
-
-    // Remove ALL Tawk.to cookies - be more aggressive
-    document.cookie.split(';').forEach((c) => {
-      const cookieName = c.trim().split('=')[0];
-      if (
-        cookieName.includes('tawk') ||
-        cookieName.includes('Tawk') ||
-        cookieName.includes('__ta')
-      ) {
-        document.cookie = `${cookieName}=;expires=${new Date(0).toUTCString()};path=/`;
-      }
-    });
 
     // Clear your own user/session data
     localStorage.removeItem('user');
@@ -231,6 +68,9 @@ function Navbar() {
 
     setIsLoggedIn(false);
     setCart([]);
+
+    // Dispatch event to notify about user change
+    window.dispatchEvent(new Event('careSkinUserChanged'));
     window.dispatchEvent(new Event('storage'));
 
     // Force a full page reload to ensure everything is fresh
@@ -293,6 +133,8 @@ function Navbar() {
 
           // Also cache in localStorage for faster loading on refresh
           localStorage.setItem('user', JSON.stringify(userData));
+          // Dispatch event for chat to update user info
+          window.dispatchEvent(new Event('careSkinUserChanged'));
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUserName('Unknown User');
@@ -766,12 +608,14 @@ function Navbar() {
                     <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-emerald-200 hover:border-emerald-500 transition-all">
                       <img
                         src={
-                          user?.PictureUrl || 'https://via.placeholder.com/150'
+                          user?.PictureUrl ||
+                          'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
                         }
                         alt="Profile"
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/150';
+                          e.target.src =
+                            'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
                         }}
                       />
                     </div>
@@ -804,12 +648,13 @@ function Navbar() {
                           <img
                             src={
                               user?.PictureUrl ||
-                              'https://via.placeholder.com/150'
+                              'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
                             }
                             alt="Profile"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/150';
+                              e.target.src =
+                                'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
                             }}
                           />
                         </div>

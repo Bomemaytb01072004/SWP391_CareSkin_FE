@@ -18,6 +18,8 @@ const OrderConfirmationMoMo = () => {
   const [isValidRequest, setIsValidRequest] = useState(true);
   const [apiCallStatus, setApiCallStatus] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [exchangeRate, setExchangeRate] = useState(24000); // Default fallback rate
+  const [isLoadingRate, setIsLoadingRate] = useState(true);
 
   // Add updateOrderStatus function (similar to OrderConfirmation.jsx)
   const updateOrderStatus = async (orderId, status) => {
@@ -105,7 +107,11 @@ const OrderConfirmationMoMo = () => {
       const orderId = orderDetails.OrderId;
 
       // Use the amount from MoMo response or fall back to order total
-      const paymentAmount = amount / 24000 || orderDetails.TotalAmount;
+      // Convert to USD using the dynamic exchange rate
+      const paymentAmount = amount / exchangeRate || orderDetails.TotalAmount;
+      console.log(
+        `Converting ${amount} VND to USD using rate ${exchangeRate} = ${paymentAmount.toFixed(2)} USD`
+      );
 
       if (!email || !orderId) {
         console.error(
@@ -124,7 +130,7 @@ const OrderConfirmationMoMo = () => {
         OrderId: orderId,
         Email: email,
         CustomerName: customerName,
-        PaymentAmount: paymentAmount,
+        PaymentAmount: paymentAmount.toFixed(2),
         PaymentMethod: 'Momo',
       };
 
@@ -154,6 +160,37 @@ const OrderConfirmationMoMo = () => {
       return false;
     }
   };
+
+  useEffect(() => {
+    const fetchExchangeRate = async () => {
+      try {
+        // Try to fetch current exchange rate from API
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch exchange rate');
+        }
+
+        const data = await response.json();
+
+        // VND rate per 1 USD
+        if (data.rates && data.rates.VND) {
+          setExchangeRate(data.rates.VND);
+          console.log(`Retrieved exchange rate: 1 USD = ${data.rates.VND} VND`);
+        }
+      } catch (error) {
+        console.error('Error fetching exchange rate:', error);
+        // Keep using the fallback rate
+        console.log(
+          `Using fallback exchange rate: 1 USD = ${exchangeRate} VND`
+        );
+      } finally {
+        setIsLoadingRate(false);
+      }
+    };
+
+    fetchExchangeRate();
+  }, []);
 
   useEffect(() => {
     const verifyMoMoCallback = async () => {
@@ -261,10 +298,19 @@ const OrderConfirmationMoMo = () => {
           if (details) {
             setOrderDetails(details);
 
-            // Send payment confirmation email
-            await sendPaymentConfirmationEmail(details, Number(amount));
+            // Wait until exchange rate is loaded before sending email
+            if (!isLoadingRate) {
+              // Send payment confirmation email with dynamic exchange rate
+              await sendPaymentConfirmationEmail(details, Number(amount));
+            } else {
+              // If rate isn't loaded yet, wait briefly then try again
+              setTimeout(async () => {
+                await sendPaymentConfirmationEmail(details, Number(amount));
+              }, 1000);
+            }
           }
 
+          // Rest of the code remains the same
           setIsSuccess(true);
           setMessage(
             'Order payment successful! Your order is now being processed.'
@@ -427,6 +473,18 @@ const OrderConfirmationMoMo = () => {
               <div className="bg-gray-100 px-4 py-2 mt-4 rounded-lg">
                 <span className="text-gray-700 font-medium">Order ID: </span>
                 <span className="text-gray-900">{orderId}</span>
+              </div>
+            )}
+
+            {/* Add exchange rate information */}
+            {!isLoadingRate && isSuccess && (
+              <div className="bg-blue-50 px-4 py-2 mt-2 rounded-lg text-sm">
+                <span className="text-blue-700 font-medium">
+                  Exchange Rate:{' '}
+                </span>
+                <span className="text-blue-900">
+                  1 USD = {exchangeRate.toLocaleString()} VND
+                </span>
               </div>
             )}
           </div>
