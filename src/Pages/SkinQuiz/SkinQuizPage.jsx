@@ -955,16 +955,16 @@ const SkinQuizPage = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.7 }}
-            className="max-w-7xl w-full mx-auto my-14 px-4"
+            className="max-w-7xl w-full mx-auto my-6 sm:my-14 px-3 sm:px-4"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="bg-white border border-gray-100 mt-6 rounded-3xl shadow-xl overflow-hidden"
+              className="bg-white border border-gray-100 mt-3 sm:mt-6 rounded-xl sm:rounded-3xl shadow-xl overflow-hidden"
             >
-              {/* Enhanced Header Section with Background Pattern */}
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-700 py-12 px-8 text-center text-white relative overflow-hidden">
+              {/* Enhanced Header Section with Background Pattern - More Mobile Friendly */}
+              <div className="bg-gradient-to-r from-emerald-500 to-emerald-700 py-8 sm:py-12 px-4 sm:px-8 text-center text-white relative overflow-hidden">
                 <div className="absolute inset-0 opacity-20">
                   <svg
                     width="100%"
@@ -995,16 +995,17 @@ const SkinQuizPage = () => {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.6 }}
+                  className="relative z-10"
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3">
                     Your Personalized Skin Analysis
                   </h2>
-                  <div className="flex justify-center items-center gap-2 mb-4">
-                    <span className="h-1 w-12 bg-emerald-200 rounded-full"></span>
-                    <span className="h-1 w-24 bg-white rounded-full"></span>
-                    <span className="h-1 w-12 bg-emerald-200 rounded-full"></span>
+                  <div className="flex justify-center items-center gap-2 mb-2 sm:mb-4">
+                    <span className="h-1 w-8 sm:w-12 bg-emerald-200 rounded-full"></span>
+                    <span className="h-1 w-16 sm:w-24 bg-white rounded-full"></span>
+                    <span className="h-1 w-8 sm:w-12 bg-emerald-200 rounded-full"></span>
                   </div>
-                  <p className="text-emerald-100 max-w-2xl mx-auto">
+                  <p className="text-emerald-100 max-w-2xl mx-auto text-sm sm:text-base px-2">
                     Based on your responses, we've created a customized profile
                     to help you understand your skin better and build the
                     perfect routine.
@@ -1012,24 +1013,24 @@ const SkinQuizPage = () => {
                 </motion.div>
               </div>
 
-              {/* Content Section with Enhanced Cards */}
-              <div className="p-6 md:p-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Content Section with Enhanced Cards - Mobile Optimized */}
+              <div className="p-4 sm:p-6 md:p-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                   {/* Left Column: Skin Type & Concerns */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4, duration: 0.6 }}
-                    className="space-y-10"
+                    className="space-y-6 md:space-y-10"
                   >
-                    {/* Enhanced Skin Type Card */}
-                    <div className="bg-emerald-50 rounded-2xl p-8 border border-emerald-100 shadow-sm">
-                      <div className="flex items-center mb-6">
-                        <div className="bg-emerald-200 p-3 rounded-full mr-4">
+                    {/* Enhanced Skin Type Card - Better Mobile Padding */}
+                    <div className="bg-emerald-50 rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-emerald-100 shadow-sm">
+                      <div className="flex items-center mb-4 sm:mb-6">
+                        <div className="bg-emerald-200 p-2 sm:p-3 rounded-full mr-3 sm:mr-4">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -1045,39 +1046,40 @@ const SkinQuizPage = () => {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-gray-800">
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                             Your Skin Type
                           </h3>
-                          <p className="text-gray-500 text-sm">
+                          <p className="text-gray-500 text-xs sm:text-sm">
                             The foundation of your skincare routine
                           </p>
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl p-6 shadow-sm border border-emerald-100">
-                        <div className="flex items-center mb-4">
-                          <span className="text-3xl font-bold text-emerald-600">
+                      <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-emerald-100">
+                        <div className="flex flex-wrap items-center mb-3 sm:mb-4 gap-2">
+                          <span className="text-2xl sm:text-3xl font-bold text-emerald-600">
                             {apiResultData?.SkinType?.TypeName ||
                               answers[1] ||
                               'Normal Skin'}
                           </span>
-                          <span className="ml-2 bg-emerald-600 text-white text-xs py-1 px-3 rounded-full">
+                          <span className="bg-emerald-600 text-white text-xs py-1 px-2 sm:px-3 rounded-full">
                             Primary Type
                           </span>
                         </div>
 
-                        <p className="text-gray-600 mt-4 text-sm">
+                        <p className="text-gray-600 mt-3 sm:mt-4 text-xs sm:text-sm">
                           {apiResultData?.SkinType?.Description ||
                             `Your skin is classified as ${apiResultData?.SkinType?.TypeName || answers[1] || 'Normal'}. 
                     This means your skincare routine should focus on products that
                     address the specific needs of this skin type.`}
                         </p>
+
                         {apiResultData && (
-                          <div className="mt-5 p-4 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                          <div className="mt-4 sm:mt-5 p-3 sm:p-4 bg-emerald-50/50 rounded-lg border border-emerald-100">
                             <p className="text-xs text-emerald-700 font-medium">
                               <span className="flex items-center gap-2 mb-1">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
+                                  className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                                   viewBox="0 0 20 20"
                                   fill="currentColor"
                                 >
@@ -1107,14 +1109,14 @@ const SkinQuizPage = () => {
                       </div>
                     </div>
 
-                    {/* Primary Concerns Card */}
-                    <div className="bg-red-50 rounded-2xl p-8 border border-red-100 shadow-sm">
-                      <div className="flex items-center mb-6">
-                        <div className="bg-red-100 p-3 rounded-full mr-4">
+                    {/* Primary Concerns Card - Mobile Optimized */}
+                    <div className="bg-red-50 rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-red-100 shadow-sm">
+                      <div className="flex items-center mb-4 sm:mb-6">
+                        <div className="bg-red-100 p-2 sm:p-3 rounded-full mr-3 sm:mr-4">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="20"
+                            height="20"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -1127,17 +1129,17 @@ const SkinQuizPage = () => {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-gray-800">
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                             Primary Concerns
                           </h3>
-                          <p className="text-gray-500 text-sm">
+                          <p className="text-gray-500 text-xs sm:text-sm">
                             Key issues to address in your routine
                           </p>
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl p-6 shadow-sm border border-red-100">
+                      <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-red-100">
                         <div className="flex items-center">
-                          <span className="text-2xl font-bold text-red-500">
+                          <span className="text-xl sm:text-2xl font-bold text-red-500">
                             {(() => {
                               // Get skin type and determine primary concern
                               const skinType =
@@ -1158,8 +1160,8 @@ const SkinQuizPage = () => {
                           </span>
                         </div>
 
-                        {/* Concern Progress Bars */}
-                        <div className="mt-5 space-y-3">
+                        {/* Concern Progress Bars - Better Spacing for Mobile */}
+                        <div className="mt-4 sm:mt-5 space-y-2 sm:space-y-3">
                           {(() => {
                             // Get primary concerns based on skin type
                             const skinType =
@@ -1220,9 +1222,9 @@ const SkinQuizPage = () => {
                                     {concern.level}%
                                   </span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                                   <motion.div
-                                    className="h-2 rounded-full bg-gradient-to-r from-red-400 to-red-600"
+                                    className="h-full rounded-full bg-gradient-to-r from-red-400 to-red-600"
                                     initial={{ width: 0 }}
                                     animate={{ width: `${concern.level}%` }}
                                     transition={{
@@ -1236,7 +1238,7 @@ const SkinQuizPage = () => {
                           })()}
                         </div>
 
-                        <p className="text-gray-600 mt-5 text-sm">
+                        <p className="text-gray-600 mt-4 sm:mt-5 text-xs sm:text-sm">
                           {(() => {
                             const skinType =
                               apiResultData?.SkinType?.TypeName ||
@@ -1256,22 +1258,22 @@ const SkinQuizPage = () => {
                     </div>
                   </motion.div>
 
-                  {/* Right Column: Skin Characteristics & Routine Blueprint */}
+                  {/* Right Column: Skin Characteristics & Routine Blueprint - Mobile Friendly */}
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
                     className="mb-1"
                   >
-                    <div className="space-y-10 ">
-                      {/* Skin Characteristics Card */}
-                      <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 shadow-sm">
-                        <div className="flex items-center mb-6">
-                          <div className="bg-gray-200 p-3 rounded-full mr-4">
+                    <div className="space-y-6 md:space-y-10">
+                      {/* Skin Characteristics Card - Optimized for Mobile */}
+                      <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-gray-100 shadow-sm">
+                        <div className="flex items-center mb-4 sm:mb-6">
+                          <div className="bg-gray-200 p-2 sm:p-3 rounded-full mr-3 sm:mr-4">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
+                              width="20"
+                              height="20"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
@@ -1288,19 +1290,19 @@ const SkinQuizPage = () => {
                             </svg>
                           </div>
                           <div>
-                            <h3 className="text-2xl font-bold text-gray-800">
+                            <h3 className="text-xl sm:text-2xl font-bold text-gray-800">
                               Skin Characteristics
                             </h3>
-                            <p className="text-gray-500 text-sm">
+                            <p className="text-gray-500 text-xs sm:text-sm">
                               Understanding your skin's unique traits
                             </p>
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                          <h4 className="font-semibold text-gray-700 mb-4 pb-2 border-b flex items-center">
+                        <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+                          <h4 className="font-semibold text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 pb-2 border-b flex items-center">
                             <svg
-                              className="w-5 h-5 mr-2 text-gray-500"
+                              className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-500"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -1315,10 +1317,9 @@ const SkinQuizPage = () => {
                             </svg>
                             Key Traits & Recommendations
                           </h4>
-                          <ul className="space-y-4">
-                            {/* Skin Type Characteristics */}
+                          <ul className="space-y-2 sm:space-y-4">
+                            {/* Skin Type Characteristics - Mobile Touch Friendly */}
                             {(() => {
-                              // Get the skin type directly from API result
                               const skinType =
                                 apiResultData?.SkinType?.TypeName ||
                                 (apiQuestions.length > 0
@@ -1326,7 +1327,6 @@ const SkinQuizPage = () => {
                                   : null) ||
                                 'Normal Skin';
 
-                              // Get traits for this skin type
                               const skinTypeTraits =
                                 skinCharacteristicsMapping[skinType] ||
                                 skinCharacteristicsMapping['Normal Skin'];
@@ -1334,12 +1334,12 @@ const SkinQuizPage = () => {
                               return skinTypeTraits.map((char, index) => (
                                 <motion.li
                                   key={`skin-${index}`}
-                                  className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                  className="flex items-start gap-2 sm:gap-3 p-1.5 sm:p-2 hover:bg-gray-50 rounded-lg transition-colors"
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: 0.6 + index * 0.1 }}
                                 >
-                                  <span className="text-lg mt-0.5">
+                                  <span className="text-base sm:text-lg mt-0.5">
                                     {char.positive ? (
                                       <span className="text-emerald-500">
                                         ✓
@@ -1348,7 +1348,7 @@ const SkinQuizPage = () => {
                                       <span className="text-amber-500">⚠️</span>
                                     )}
                                   </span>
-                                  <span className="text-gray-700">
+                                  <span className="text-xs sm:text-sm text-gray-700">
                                     {char.text}
                                   </span>
                                 </motion.li>
@@ -1358,13 +1358,15 @@ const SkinQuizPage = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-blue-50 rounded-2xl p-4 border border-blue-100 mt-4 shadow-sm">
-                      <div className="flex items-center mb-6">
-                        <div className="bg-blue-200 p-2 rounded-full mr-4">
+
+                    {/* Dermatologist Verification Card - Mobile Optimized */}
+                    <div className="bg-blue-50 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-blue-100 mt-4 shadow-sm">
+                      <div className="flex items-center mb-4 sm:mb-6">
+                        <div className="bg-blue-200 p-2 rounded-full mr-3 sm:mr-4">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
+                            width="18"
+                            height="18"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -1377,20 +1379,19 @@ const SkinQuizPage = () => {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-blue-800">
+                          <h3 className="text-lg sm:text-xl font-bold text-blue-800">
                             Verified by Dermatologists
                           </h3>
-                          <p className="text-blue-500 text-sm">
-                            Our program is reviewed and approved by certified
-                            dermatologists.
+                          <p className="text-blue-500 text-xs sm:text-sm">
+                            Our program is reviewed by certified experts
                           </p>
                         </div>
                       </div>
 
-                      <div className="bg-white rounded-xl p-4 mt-1 shadow-sm border border-blue-200">
-                        <h4 className="font-semibold text-blue-700 mb-4 pb-2 border-b flex items-center">
+                      <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 mt-1 shadow-sm border border-blue-200">
+                        <h4 className="font-semibold text-xs sm:text-sm text-blue-700 mb-3 sm:mb-4 pb-1 sm:pb-2 border-b flex items-center">
                           <svg
-                            className="w-5 h-5 mr-2 text-blue-500"
+                            className="w-3.5 h-3.5 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-blue-500"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1400,17 +1401,16 @@ const SkinQuizPage = () => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M12 8V12H16M12 8L8 12L12 16M12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C7.58172 8 4 4.41828 4 0C4 -4.41828 7.58172 -8 12 -8C16.4183 -8 20 -4.41828 20 0C20 4.41828 16.4183 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8ZM12 8C16.4183 8 20 11.5817 20 16C20 20.4183 16.4183 24 12 24C7.58172 24 4 20.4183 4 16C4 11.5817 7.58172 8 12 8Z"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                             ></path>
                           </svg>
                           Testimonials from Experts
                         </h4>
-                        <p className="text-blue-700">
+                        <p className="text-blue-700 text-xs sm:text-sm">
                           <strong>Dr. Jane Doe, MD</strong>
                           <br />
                           <em>
-                            "I have reviewed this program and can confirm that
-                            the skin care advice provided is in line with
+                            "This program provides skin care advice in line with
                             current dermatological standards."
                           </em>
                         </p>
@@ -1419,23 +1419,23 @@ const SkinQuizPage = () => {
                   </motion.div>
                 </div>
 
-                {/* Next Steps */}
+                {/* Next Steps - Better Mobile Button Size */}
                 <motion.div
-                  className="mt-12 text-center"
+                  className="mt-8 sm:mt-12 text-center"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.2, duration: 0.6 }}
                 >
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 sm:mb-4">
                     Ready to see your personalized routine?
                   </h3>
-                  <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+                  <p className="text-gray-600 mb-5 sm:mb-8 max-w-2xl mx-auto text-xs sm:text-sm px-2">
                     We've created a custom skincare routine based on your unique
                     skin profile. Discover the perfect products and steps to
                     achieve your best skin!
                   </p>
                   <motion.button
-                    className="py-4 px-8 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-full shadow-lg hover:shadow-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all"
+                    className="py-3 sm:py-4 px-6 sm:px-8 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold rounded-full shadow-lg hover:shadow-emerald-500/20 hover:from-emerald-600 hover:to-emerald-700 transition-all text-sm sm:text-base"
                     onClick={() => navigate('/skinroutine')}
                     whileHover={{
                       scale: 1.05,

@@ -20,9 +20,9 @@ import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import ResetPasswordPage from './Pages/UserProfile/ResetPasswordPage';
-
 import AboutPage from './Pages/About/AboutPage';
 import GuestUnauthorizedPage from './Pages/Unauthorized/GuestUnauthorizedPage';
+import ContactPage from './Pages/Contact/ContactPage';
 export default function App() {
   return (
     <AuthProvider>
@@ -40,6 +40,8 @@ export default function App() {
           <Route path="/blogs" element={<BlogPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route
             path="/momo-confirmation"

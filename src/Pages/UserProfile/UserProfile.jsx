@@ -1635,9 +1635,6 @@ const UserProfile = () => {
             <div className="mt-auto pt-6 text-center">
               <p className="text-xs text-gray-500">
                 Need help?{' '}
-                {/* <a href="/contact" className="text-emerald-600 hover:underline">
-                  Contact Support
-                </a> */}
                 <Link
                   to="/contact"
                   className="text-emerald-600 hover:underline space-x-1"
