@@ -3,6 +3,7 @@ import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import Breadcrumb from '../../components/Breadcrumb/Breadcrumb';
 import { fetchProductById } from '../../utils/api';
+import { generateProductSlug } from '../../utils/urlUtils'; // Add this import
 import 'bootstrap/dist/css/bootstrap-grid.min.css';
 import styles from './CompareProductPage.module.css';
 import LoadingPage from '../LoadingPage/LoadingPage';
@@ -69,7 +70,9 @@ function CompareProduct() {
       <Navbar />
 
       <div className="container py-4 py-md-5">
-        <div className={`${styles.compareProduct} ${isTwoProducts ? styles.twoProductsContainer : ''}`}>
+        <div
+          className={`${styles.compareProduct} ${isTwoProducts ? styles.twoProductsContainer : ''}`}
+        >
           <div className="row mt-4 mb-4">
             <div className="col-12">
               <Breadcrumb items={breadcrumbItems} />
@@ -79,7 +82,9 @@ function CompareProduct() {
             </div> */}
           </div>
 
-          <div className={`row g-4 ${isTwoProducts ? styles.twoProductsRow : ''}`}>
+          <div
+            className={`row g-4 ${isTwoProducts ? styles.twoProductsRow : ''}`}
+          >
             {products.map((product) => (
               <div
                 className={`col-12 col-sm-6 col-md-${colSize}`}
@@ -103,7 +108,7 @@ function CompareProduct() {
                   </div>
                   <div className={styles.cardBody}>
                     <div>
-                      <Link to={`/product/${product.ProductId}`}>
+                      <Link to={`/product/${generateProductSlug(product)}`}>
                         <h5 className={styles.nameProductTitle}>
                           {product.ProductName}
                         </h5>
@@ -134,7 +139,9 @@ function CompareProduct() {
             ))}
           </div>
 
-          <div className={`${styles.compareTableContainer} ${isTwoProducts ? styles.twoProductsTable : ''}`}>
+          <div
+            className={`${styles.compareTableContainer} ${isTwoProducts ? styles.twoProductsTable : ''}`}
+          >
             <div className="table-responsive">
               <table className={`table ${styles.customTable}`}>
                 <thead>
@@ -158,14 +165,17 @@ function CompareProduct() {
                     <td>Skin Type</td>
                     {products.map((product) => (
                       <td key={product.ProductId}>
-                        {product.ProductForSkinTypes && product.ProductForSkinTypes.length > 0 ? (
+                        {product.ProductForSkinTypes &&
+                        product.ProductForSkinTypes.length > 0 ? (
                           <ul className="m-0">
-                            {product.ProductForSkinTypes.map((skinType, index) => (
-                              <li key={index}>{skinType.TypeName}</li>
-                            ))}
+                            {product.ProductForSkinTypes.map(
+                              (skinType, index) => (
+                                <li key={index}>{skinType.TypeName}</li>
+                              )
+                            )}
                           </ul>
                         ) : (
-                          "Not specified"
+                          'Not specified'
                         )}
                       </td>
                     ))}
@@ -174,14 +184,17 @@ function CompareProduct() {
                     <td>Key Ingredients</td>
                     {products.map((product) => (
                       <td key={product.ProductId}>
-                        {product.MainIngredients && product.MainIngredients.length > 0 ? (
+                        {product.MainIngredients &&
+                        product.MainIngredients.length > 0 ? (
                           <ul className="m-0">
-                            {product.MainIngredients.map((ingredient, index) => (
-                              <li key={index}>{ingredient.IngredientName}</li>
-                            ))}
+                            {product.MainIngredients.map(
+                              (ingredient, index) => (
+                                <li key={index}>{ingredient.IngredientName}</li>
+                              )
+                            )}
                           </ul>
                         ) : (
-                          "Not specified"
+                          'Not specified'
                         )}
                       </td>
                     ))}
@@ -189,13 +202,17 @@ function CompareProduct() {
                   <tr>
                     <td>Full Ingredients</td>
                     {products.map((product) => (
-                      <td key={product.ProductId}>{product.DetailIngredients[0].IngredientName}</td>
+                      <td key={product.ProductId}>
+                        {product.DetailIngredients[0].IngredientName}
+                      </td>
                     ))}
                   </tr>
                   <tr>
                     <td>Usage</td>
                     {products.map((product) => (
-                      <td key={product.ProductId}>{product.Usages[0].Instruction}</td>
+                      <td key={product.ProductId}>
+                        {product.Usages[0].Instruction}
+                      </td>
                     ))}
                   </tr>
                 </tbody>

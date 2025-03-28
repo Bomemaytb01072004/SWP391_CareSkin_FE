@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
+import { generateProductSlug } from '../../utils/urlUtils';
 
 function CardProduct({ product, addToCart, addToCompare }) {
   return (
@@ -10,7 +11,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
       <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
         <Link
           className="relative mx-4 mt-3 flex-col overflow-hidden rounded-xl"
-          to={`/product/${product.ProductId}`}
+          to={`/product/${generateProductSlug(product)}`} // Changed to use the slug
         >
           <img
             className="w-auto h-auto object-cover"
@@ -27,7 +28,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
         </Link>
 
         <div className="px-2 pb-4 flex flex-col justify-between flex-grow">
-          <Link to={`/product/${product.ProductId}`}>
+          <Link to={`/product/${generateProductSlug(product)}`}>
             <h5 className="mt-3 mx-1 text-lg tracking-tight text-slate-900 truncate">
               {product.ProductName}
             </h5>

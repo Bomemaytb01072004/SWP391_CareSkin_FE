@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Helmet } from 'react-helmet'; // Add this import at the top
 import { motion } from 'framer-motion';
 import { fetchProductById } from '../../utils/api';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -25,11 +26,14 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 import 'bootstrap/dist/css/bootstrap-grid.min.css';
 import './LightGalleryOverrides.css'; // Must come after the above
 import { toast } from 'react-toastify';
+import { generateProductSlug, extractProductId } from '../../utils/urlUtils'; // Import the utility functions
 
 function ProductDetailedPage() {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
+  const { slug } = useParams(); // Change from id to slug
+  const productId = extractProductId(slug); // Extract the ID from the slug
+
   const navigate = useNavigate();
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [quantity, setQuantity] = useState(1); // Default quantity set to 1
@@ -59,18 +63,34 @@ function ProductDetailedPage() {
 
   const breadcrumbItems = [
     { label: 'Products', link: '/products', active: false },
-    { label: `Product ${id}`, link: `/products/${id}`, active: true },
+    {
+      label: product?.ProductName || `Product`,
+      link: `/product/${slug}`,
+      active: true,
+    },
   ];
 
   useEffect(() => {
     const getProduct = async () => {
+      if (!productId) {
+        navigate('/products');
+        return;
+      }
+
       try {
         setLoading(true);
-        const data = await fetchProductById(id);
+        const data = await fetchProductById(productId);
 
         // Redirect if product is not active
         if (!data.IsActive) {
           navigate('/products');
+          return;
+        }
+
+        // Redirect to canonical URL if current slug doesn't match expected slug
+        const expectedSlug = generateProductSlug(data);
+        if (slug !== expectedSlug && expectedSlug) {
+          navigate(`/product/${expectedSlug}`, { replace: true });
           return;
         }
 
@@ -85,16 +105,16 @@ function ProductDetailedPage() {
       }
     };
     getProduct();
-  }, [id]);
+  }, [productId, navigate, slug]);
 
   useEffect(() => {
     const fetchProductReviews = async () => {
-      if (!id) return;
+      if (!productId) return;
 
       try {
         setLoadingReviews(true);
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${id}`
+          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${productId}`
         );
 
         if (!response.ok) {
@@ -112,16 +132,15 @@ function ProductDetailedPage() {
     };
 
     fetchProductReviews();
-  }, [id]);
+  }, [productId]);
 
-  // Update your fetchRatingData function to handle both number and object responses
   useEffect(() => {
     const fetchRatingData = async () => {
-      if (!id) return;
+      if (!productId) return;
 
       try {
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/average/${id}`
+          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/average/${productId}`
         );
 
         if (!response.ok) {
@@ -133,18 +152,14 @@ function ProductDetailedPage() {
         const data = await response.json();
         console.log('Raw Rating API Response:', data);
 
-        // Handle the case when API returns just a number (like 4.5)
         let avgRating = 0;
         let totalReviews = 0;
 
-        // Check if response is directly a number
         if (typeof data === 'number') {
           console.log('API returned direct rating number:', data);
           avgRating = data;
-          // For total reviews count, use the length of actual reviews
           totalReviews = productReviews.length;
         } else if (data && typeof data === 'object') {
-          // If response is an object, extract properties as before
           if (data.AverageRating !== undefined) avgRating = data.AverageRating;
           else if (data.averageRating !== undefined)
             avgRating = data.averageRating;
@@ -160,7 +175,6 @@ function ProductDetailedPage() {
           `Final extracted values - Average: ${avgRating}, Total: ${totalReviews}`
         );
 
-        // Ensure we have valid numbers
         const parsedAverage = parseFloat(avgRating);
         const parsedTotal = parseInt(totalReviews) || productReviews.length;
 
@@ -185,9 +199,8 @@ function ProductDetailedPage() {
     };
 
     fetchRatingData();
-  }, [id, productReviews]);
+  }, [productId, productReviews]);
 
-  // Local calculation as fallback
   const calculateLocalRatingStats = () => {
     if (productReviews.length > 0) {
       const sum = productReviews.reduce(
@@ -202,12 +215,9 @@ function ProductDetailedPage() {
     }
   };
 
-  // Toggle a specific accordion index
   const toggleAccordion = (index) => {
     setOpenStates((prev) => {
-      // Copy the array
       const newStates = [...prev];
-      // Flip just the clicked index
       newStates[index] = !newStates[index];
       return newStates;
     });
@@ -322,9 +332,7 @@ function ProductDetailedPage() {
 
   const formatPrice = (price) => price.toFixed(2);
 
-  // Updated getDisplayRating function to maintain decimal precision
   const getDisplayRating = () => {
-    // Try to read directly from the first review if all else fails
     if (
       (ratingStats.averageRating === 0 || !ratingStats.averageRating) &&
       productReviews &&
@@ -334,8 +342,8 @@ function ProductDetailedPage() {
     }
 
     const rating = parseFloat(ratingStats.averageRating);
-    console.log('Display rating value:', rating); // Debug log
-    return isNaN(rating) ? '0.0' : rating.toFixed(1); // Keep one decimal place
+    console.log('Display rating value:', rating);
+    return isNaN(rating) ? '0.0' : rating.toFixed(1);
   };
 
   const formatReviewDate = (dateString) => {
@@ -347,21 +355,17 @@ function ProductDetailedPage() {
     });
   };
 
-  // Updated renderStars function to support decimal values (half stars)
   const renderStars = (rating) => {
-    // Default to the first review's rating if no average available
     if (!rating && productReviews && productReviews.length > 0) {
       rating = productReviews[0].Rating;
     }
 
-    // Ensure rating is a number and preserve decimal values
     const numRating = parseFloat(rating) || 0;
-    console.log('Rendering stars for rating:', numRating); // Debug log
+    console.log('Rendering stars for rating:', numRating);
 
     const stars = [];
     for (let i = 1; i <= 5; i++) {
       if (i <= Math.floor(numRating)) {
-        // Full star
         stars.push(
           <FontAwesomeIcon
             key={i}
@@ -370,16 +374,11 @@ function ProductDetailedPage() {
           />
         );
       } else if (i - numRating < 1 && i - numRating > 0) {
-        // Half star - use a more precise approach
         const percentFilled = (numRating - Math.floor(numRating)) * 100;
 
-        // Use a container with relative positioning
         stars.push(
           <span key={i} className="relative inline-block">
-            {/* Empty star background */}
             <FontAwesomeIcon icon={faStarRegular} className="text-gray-300" />
-
-            {/* Filled overlay with precise width */}
             <span
               className="absolute top-0 left-0 overflow-hidden text-yellow-400"
               style={{ width: `${percentFilled}%` }}
@@ -389,7 +388,6 @@ function ProductDetailedPage() {
           </span>
         );
       } else {
-        // Empty star
         stars.push(
           <FontAwesomeIcon
             key={i}
@@ -407,7 +405,6 @@ function ProductDetailedPage() {
     if (files.length > 0) {
       setReviewImages((prev) => [...prev, ...files]);
 
-      // Create preview URLs
       const newPreviews = files.map((file) => ({
         url: URL.createObjectURL(file),
         name: file.name,
@@ -424,7 +421,6 @@ function ProductDetailedPage() {
     });
 
     setPreviewImages((prev) => {
-      // Revoke the URL to avoid memory leaks
       URL.revokeObjectURL(prev[index].url);
       const newPreviews = [...prev];
       newPreviews.splice(index, 1);
@@ -443,7 +439,6 @@ function ProductDetailedPage() {
       return;
     }
 
-    // Validate required fields
     if (!userFeedback.trim()) {
       toast.error('Please enter your feedback');
       return;
@@ -457,36 +452,30 @@ function ProductDetailedPage() {
     setIsSubmittingReview(true);
 
     try {
-      // Create FormData for multipart/form-data submission
       const formData = new FormData();
 
-      // Add the required text fields
-      formData.append('ProductId', id);
+      formData.append('ProductId', productId);
       formData.append('Rating', userRating);
       formData.append('FeedBack', userFeedback.trim());
 
-      // Add image files if any
       if (reviewImages.length > 0) {
-        // Important: Use the same field name multiple times for multiple files
         reviewImages.forEach((file) => {
           formData.append('FeedbackImages', file);
         });
       }
 
       console.log('Submitting review with FormData:', {
-        ProductId: id,
+        ProductId: productId,
         Rating: userRating,
         FeedBack: userFeedback,
         ImageCount: reviewImages.length,
       });
 
-      // Submit the review with FormData - DO NOT set Content-Type header
       const response = await fetch(
         `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/${CustomerId}`,
         {
           method: 'POST',
           headers: {
-            // Let the browser set the content type with boundary
             Authorization: `Bearer ${token}`,
           },
           body: formData,
@@ -498,7 +487,6 @@ function ProductDetailedPage() {
         console.error('API error response:', errorText);
 
         try {
-          // Try to parse as JSON for better error messages
           const errorData = JSON.parse(errorText);
           const errorMessage = errorData.errors
             ? Object.values(errorData.errors).flat().join(', ')
@@ -514,20 +502,17 @@ function ProductDetailedPage() {
         }
       }
 
-      // Success!
       toast.success('Your review has been submitted successfully!');
 
-      // Reset form
       setUserRating(5);
       setUserFeedback('');
       setReviewImages([]);
       setPreviewImages([]);
 
-      // Refresh reviews and ratings
       const fetchProductReviews = async () => {
         try {
           const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${id}`
+            `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${productId}`
           );
           if (response.ok) {
             const data = await response.json();
@@ -538,11 +523,9 @@ function ProductDetailedPage() {
         }
       };
 
-      // Refresh both the reviews and the rating stats
       await fetchProductReviews();
       await fetchRatingData();
 
-      // Optional: reload the page if the state updates don't refresh the UI
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -556,11 +539,10 @@ function ProductDetailedPage() {
     }
   };
 
-  // Add this helper function to convert files to base64
   const readFileAsBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',')[1]); // Remove the data URL prefix
+      reader.onload = () => resolve(reader.result.split(',')[1]);
       reader.onerror = (error) => reject(error);
       reader.readAsDataURL(file);
     });
@@ -576,6 +558,30 @@ function ProductDetailedPage() {
 
   const handleMouseLeave = () => {
     setHoverRating(0);
+  };
+
+  // Use this to create a proper absolute URL for canonical links and OG tags
+  const getProductUrl = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/product/${generateProductSlug(product)}`;
+  };
+
+  // Format ingredients for meta keywords
+  const getMainIngredients = () => {
+    if (!product?.MainIngredients) return '';
+    return product.MainIngredients.filter(
+      (ing) => ing.IngredientName !== 'null'
+    )
+      .map((ing) => ing.IngredientName)
+      .join(', ');
+  };
+
+  // Extract a clean description for meta tags
+  const getMetaDescription = () => {
+    if (!product?.Description) return '';
+    return product.Description.length > 160
+      ? `${product.Description.substring(0, 157)}...`
+      : product.Description;
   };
 
   if (loading) {
@@ -599,6 +605,108 @@ function ProductDetailedPage() {
   }
   return (
     <>
+      {product && (
+        <Helmet>
+          {/* Basic meta tags */}
+          <title>{product.ProductName} | CareSkin Beauty</title>
+          <meta name="description" content={getMetaDescription()} />
+          <meta
+            name="keywords"
+            content={`${product.ProductName}, ${
+              product.BrandName || 'skincare'
+            }, ${product.Category || ''}, ${getMainIngredients()}`}
+          />
+
+          {/* Canonical URL to prevent duplicate content */}
+          <link rel="canonical" href={getProductUrl()} />
+
+          {/* Open Graph / Facebook tags */}
+          <meta property="og:type" content="product" />
+          <meta
+            property="og:title"
+            content={`${product.ProductName} | CareSkin Beauty`}
+          />
+          <meta property="og:description" content={getMetaDescription()} />
+          <meta property="og:image" content={product.PictureUrl} />
+          <meta property="og:url" content={getProductUrl()} />
+          <meta property="og:site_name" content="CareSkin Beauty" />
+
+          {/* Twitter Card tags */}
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta
+            name="twitter:title"
+            content={`${product.ProductName} | CareSkin Beauty`}
+          />
+          <meta name="twitter:description" content={getMetaDescription()} />
+          <meta name="twitter:image" content={product.PictureUrl} />
+
+          {/* Product JSON-LD structured data for rich results */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Product',
+              name: product.ProductName,
+              image: product.PictureUrl,
+              description: product.Description,
+              brand: {
+                '@type': 'Brand',
+                name: product.BrandName || 'CareSkin',
+              },
+              sku: product.ProductId,
+              offers: {
+                '@type': 'Offer',
+                url: getProductUrl(),
+                priceCurrency: 'USD',
+                price: selectedVariation
+                  ? selectedVariation.SalePrice > 0
+                    ? selectedVariation.SalePrice
+                    : selectedVariation.Price
+                  : 0,
+                availability: 'https://schema.org/InStock',
+              },
+              aggregateRating:
+                ratingStats.averageRating > 0
+                  ? {
+                      '@type': 'AggregateRating',
+                      ratingValue: getDisplayRating(),
+                      reviewCount: ratingStats.totalReviews || 0,
+                      bestRating: '5',
+                      worstRating: '1',
+                    }
+                  : undefined,
+            })}
+          </script>
+
+          {/* BreadcrumbList structured data */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: window.location.origin,
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'Products',
+                  item: `${window.location.origin}/products`,
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: product.ProductName,
+                  item: getProductUrl(),
+                },
+              ],
+            })}
+          </script>
+        </Helmet>
+      )}
+
       <Navbar />
 
       <div className="container mx-auto px-4 py-10 mt-20">
@@ -606,9 +714,6 @@ function ProductDetailedPage() {
           <Breadcrumb items={breadcrumbItems} />
           <div className="col-12 col-md-6 d-flex flex-column align-items-center align-items-lg-start text-center text-lg-start">
             <div className="flex-1 flex flex-col items-center  min-w-[500px]">
-              {/* LightGallery wrapper: 
-                 "plugins={[lgZoom]}" enables zoom within the lightbox. 
-                 "a href" points to the large image source. */}
               <LightGallery
                 plugins={[lgZoom]}
                 elementClassNames="lightgallery-container"
@@ -640,21 +745,16 @@ function ProductDetailedPage() {
             </div>
           </div>
           <div className="col-lg-6 col-md-12 flex flex-col items-center text-center">
-            {/* Brand Name */}
             <h3 className="text-sm text-gray-500 uppercase tracking-wide">
               {product.BrandName}
             </h3>
-            {/* Product Name */}
             <h1 className="text-3xl font-bold text-gray-900 mt-2  w-5/6">
               {product.ProductName}
             </h1>
-            {/* Category */}
             <h5 className="text-md text-gray-500 mt-1">{product.Category}</h5>
             <div className="flex items-center space-x-1 text-black mt-2">
-              {/* Replace hardcoded stars with dynamic rendering */}
               <div className="flex">
-                {renderStars(parseFloat(ratingStats.averageRating))}{' '}
-                {/* Don't use Math.round here */}
+                {renderStars(parseFloat(ratingStats.averageRating))}
               </div>
               <span className="text-gray-700 text-sm ml-1">
                 ({ratingStats.totalReviews || 0} reviews)
@@ -685,7 +785,6 @@ function ProductDetailedPage() {
               </ul>
             </div>
             <div className="mt-6 space-y-4 ">
-              {/* Variations (Options) */}
               <div>
                 <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
                   Option:
@@ -709,7 +808,6 @@ function ProductDetailedPage() {
                 </div>
               </div>
 
-              {/* Quantity Selector */}
               <div>
                 <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
                   Quantity:
@@ -731,9 +829,7 @@ function ProductDetailedPage() {
                 </div>
               </div>
 
-              {/* Add to Cart & Compare Button */}
               <div className="flex justify-center items-center space-x-4 mt-6 ">
-                {/* Add to Basket Button */}
                 <motion.button
                   className="flex items-center justify-center w-2/3 py-3 text-white bg-black rounded-md text-sm font-semibold uppercase tracking-wide hover:bg-emerald-950 transition"
                   whileTap={{ scale: 0.95 }}
@@ -746,7 +842,6 @@ function ProductDetailedPage() {
                   Add to Cart
                 </motion.button>
 
-                {/* Compare Button */}
                 <motion.button
                   className="border border-gray-300 p-3 rounded-lg  hover:bg-gray-100 transition-all shadow-md"
                   whileHover={{ scale: 1.1 }}
@@ -808,7 +903,6 @@ function ProductDetailedPage() {
           <div className="col-12 mt-10">
             <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
 
-            {/* Reviews Summary */}
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm mb-8">
               <div className="flex flex-col md:flex-row items-center justify-between">
                 <div className="flex flex-col items-center md:items-start mb-4 md:mb-0">
@@ -819,8 +913,7 @@ function ProductDetailedPage() {
                     <span className="text-gray-500">out of 5</span>
                   </div>
                   <div className="flex mt-2 text-xl">
-                    {renderStars(parseFloat(ratingStats.averageRating))}{' '}
-                    {/* Don't use Math.round here */}
+                    {renderStars(parseFloat(ratingStats.averageRating))}
                   </div>
                   <p className="text-gray-500 mt-1">
                     Based on{' '}
@@ -835,23 +928,19 @@ function ProductDetailedPage() {
                 </div>
 
                 <div className="w-full md:w-1/2">
-                  {/* Rating distribution bars */}
                   {[5, 4, 3, 2, 1].map((star) => {
-                    // If API provides distribution, use it, otherwise fall back to client calculation
                     let count, percentage;
 
                     if (
                       ratingStats.distribution &&
                       ratingStats.distribution[star] !== undefined
                     ) {
-                      // Use API-provided distribution
                       count = ratingStats.distribution[star];
                       percentage =
                         ratingStats.totalReviews > 0
                           ? Math.round((count / ratingStats.totalReviews) * 100)
                           : 0;
                     } else {
-                      // Fall back to client calculation
                       count = productReviews.filter(
                         (review) => review.Rating === star
                       ).length;
@@ -884,14 +973,12 @@ function ProductDetailedPage() {
               </div>
             </div>
 
-            {/* Review Form - Only show by default if there are reviews or user clicked button */}
             {(productReviews.length > 0 || showReviewForm) && (
               <div className="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-100">
                 <h3 className="text-xl font-bold mb-4">Write a Review</h3>
 
                 {localStorage.getItem('CustomerId') ? (
                   <form onSubmit={submitReview}>
-                    {/* Rating Stars */}
                     <div className="mb-4">
                       <p className="text-sm font-medium mb-2">Your Rating:</p>
                       <div
@@ -914,8 +1001,6 @@ function ProductDetailedPage() {
                       </div>
                     </div>
 
-                    {/* Rest of the form remains the same */}
-                    {/* Feedback Text */}
                     <div className="mb-4">
                       <label
                         htmlFor="feedback"
@@ -934,7 +1019,6 @@ function ProductDetailedPage() {
                       />
                     </div>
 
-                    {/* Image Upload */}
                     <div className="mb-4">
                       <p className="text-sm font-medium mb-2">Add Photos:</p>
                       <div className="flex flex-wrap gap-2 items-center">
@@ -999,7 +1083,6 @@ function ProductDetailedPage() {
                       </div>
                     </div>
 
-                    {/* Submit Button */}
                     <button
                       type="submit"
                       className="px-6 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition disabled:opacity-50"
@@ -1031,7 +1114,6 @@ function ProductDetailedPage() {
               </div>
             )}
 
-            {/* Individual Reviews */}
             {loadingReviews ? (
               <div className="flex justify-center py-10">
                 <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
@@ -1054,7 +1136,6 @@ function ProductDetailedPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Existing reviews mapping remains the same */}
                 {productReviews.map((review) => (
                   <div key={review.RatingFeedbackId} className="border-b pb-6">
                     <div className="flex items-center">
@@ -1078,7 +1159,6 @@ function ProductDetailedPage() {
 
                     <p className="mt-3 text-gray-700">{review.FeedBack}</p>
 
-                    {/* Review Images */}
                     {review.FeedbackImages &&
                       review.FeedbackImages.length > 0 && (
                         <div className="mt-4">
