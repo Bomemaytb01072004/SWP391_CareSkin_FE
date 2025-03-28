@@ -159,8 +159,10 @@ function ProductsPage() {
 
   // Check if coming from "New Arrivals" and sort accordingly
   useEffect(() => {
-    if (location.state?.fromNewArrivals) {
-      setSortOption('Newest'); // Apply sorting ONLY when coming from New Arrivals
+    if (location.state?.fromBestsellers) {
+      setSortOption('Popular'); // Apply sorting when coming from Bestsellers
+    } else if (location.state?.fromNewArrivals) {
+      setSortOption('Newest'); // Apply sorting when coming from New Arrivals
     }
   }, [location.state]);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
+import { Link } from 'react-router-dom';
 import bgImage from '../../assets/bg-login.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -32,6 +33,7 @@ import {
   faAngleDoubleRight,
   faEye,
   faEyeSlash,
+  faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -1083,12 +1085,8 @@ const UserProfile = () => {
 
       case 'Password':
         return (
-          <div className="py-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              Password Management
-            </h2>
-
-            <div className="max-w-md mx-auto bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="p-16 mx-auto  ">
+            <div className="max-w-md mx-auto bg-white rounded-lg align-middle">
               {resetStep === 0 && (
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -1129,8 +1127,8 @@ const UserProfile = () => {
                         type="email"
                         value={resetEmail || user.Email}
                         onChange={(e) => setResetEmail(e.target.value)}
-                        className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                        disabled={resetLoading}
+                        className="w-full border border-gray-300 rounded-md p-2.5 bg-gray-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        disabled={true}
                         placeholder="Enter your email address"
                         required
                       />
@@ -1637,9 +1635,13 @@ const UserProfile = () => {
             <div className="mt-auto pt-6 text-center">
               <p className="text-xs text-gray-500">
                 Need help?{' '}
-                <a href="/contact" className="text-emerald-600 hover:underline">
-                  Contact Support
-                </a>
+                <Link
+                  to="/contact"
+                  className="text-emerald-600 hover:underline space-x-1"
+                >
+                  <span>Contact Support</span>
+                  <FontAwesomeIcon className="" icon={faHeadset} />
+                </Link>
               </p>
             </div>
           </div>

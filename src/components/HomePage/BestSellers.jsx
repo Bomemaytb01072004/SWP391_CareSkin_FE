@@ -136,7 +136,9 @@ const BestSellers = () => {
       </div>
       <div className="text-center mt-8">
         <button
-          onClick={() => navigate('/products')}
+          onClick={() =>
+            navigate('/products', { state: { fromBestsellers: true } })
+          }
           className="bg-black text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors"
         >
           View All

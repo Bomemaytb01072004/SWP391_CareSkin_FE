@@ -16,36 +16,101 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-    <df-messenger
-      intent="WELCOME"
-      chat-title="CareSkin_ChatbotAI"
-      agent-id="f73d77df-ffa3-4416-81eb-f59b9fa9b0ad"
-      language-code="en"
-    ></df-messenger> -->
-    <!--Start of Tawk.to Script-->
-    <!-- <script type="text/javascript">
-      var Tawk_API = Tawk_API || {};
-      Tawk_API.onLoad = function () {
-        Tawk_API.setAttributes(
-          {
-            name: 'YourUsername',
-            email: 'user@example.com',
-          },
-          function (error) {}
-        );
-      };
-      (function () {
-        var s1 = document.createElement('script'),
-          s0 = document.getElementsByTagName('script')[0];
+
+    <!-- Start of Tawk.to Script -->
+    <script type="text/javascript">
+      // Create global CareSkin namespace for chat functionality
+      window.CareSkin = window.CareSkin || {};
+
+      // Initialize Tawk.to
+      window.CareSkin.initTawkTo = function () {
+        // Prevent multiple initializations
+        if (window.tawkInitialized) return;
+
+        var Tawk_API = (window.Tawk_API = window.Tawk_API || {});
+        var Tawk_LoadStart = new Date();
+
+        // Get user info from localStorage if available
+        var user = null;
+        try {
+          var userStr = localStorage.getItem('user');
+          if (userStr) user = JSON.parse(userStr);
+        } catch (e) {
+          console.error('Error parsing user data', e);
+        }
+
+        // Set visitor information
+        Tawk_API.visitor = {
+          name: user ? user.UserName || user.FullName || 'Guest' : 'Guest',
+          email: user ? user.Email || 'guest@example.com' : 'guest@example.com',
+        };
+
+        // Configuration options
+        Tawk_API.onBeforeLoad = function () {
+          // Ensure the widget is visible by default
+          Tawk_API.maximized = true;
+        };
+
+        // Set up listener for login/logout events
+        window.addEventListener('careSkinUserChanged', function () {
+          // Update visitor info when user changes
+          try {
+            var updatedUser = JSON.parse(localStorage.getItem('user'));
+            if (updatedUser && Tawk_API.setAttributes) {
+              Tawk_API.setAttributes(
+                {
+                  name: updatedUser.UserName || updatedUser.FullName || 'Guest',
+                  email: updatedUser.Email || 'guest@example.com',
+                },
+                function (error) {
+                  if (error)
+                    console.error('Failed to update Tawk.to visitor', error);
+                }
+              );
+            } else if (!updatedUser && Tawk_API.endChat) {
+              // User logged out
+              Tawk_API.endChat();
+
+              // Reset to guest after brief delay
+              setTimeout(function () {
+                if (Tawk_API.setAttributes) {
+                  Tawk_API.setAttributes(
+                    {
+                      name: 'Guest',
+                      email: 'guest@example.com',
+                    },
+                    function () {}
+                  );
+                }
+              }, 500);
+            }
+          } catch (e) {
+            console.error('Error updating chat visitor data', e);
+          }
+        });
+
+        // Method for logout - to be called from application
+        window.CareSkin.endTawkChat = function () {
+          if (Tawk_API && Tawk_API.endChat) Tawk_API.endChat();
+        };
+
+        // Load the script
+        var s1 = document.createElement('script');
         s1.async = true;
         s1.src = 'https://embed.tawk.to/67dc7f197bc349190b46342c/1imql0vm8';
         s1.charset = 'UTF-8';
         s1.setAttribute('crossorigin', '*');
-        s0.parentNode.insertBefore(s1, s0);
-      })();
-    </script> -->
-    <!--End of Tawk.to Script-->
+        document.head.appendChild(s1);
+
+        window.tawkInitialized = true;
+        console.log('Tawk.to initialized from index.html');
+      };
+
+      // Initialize on page load
+      window.CareSkin.initTawkTo();
+    </script>
+    <!-- End of Tawk.to Script -->
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
