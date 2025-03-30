@@ -6,11 +6,11 @@ import {
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  deleteAnswer,
   getAnswersByQuestionId,
   createAnswer,
   updateAnswer,
-  deleteAnswer,
-  updateQuiz
+  updateQuiz,
 } from '../../utils/apiQ_A';
 
 // API URL for direct fetching
@@ -21,12 +21,12 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editQuizDetails, setEditQuizDetails] = useState(false);
-  
+
   // Edit states
   const [editingQuestionId, setEditingQuestionId] = useState(null);
   const [currentQuestionText, setCurrentQuestionText] = useState('');
   const [editingAnswers, setEditingAnswers] = useState([]);
-  
+
   // New question state
   const [addingNewQuestion, setAddingNewQuestion] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -36,7 +36,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     { AnswersText: '', Score: 3 },
     { AnswersText: '', Score: 4 }
   ]);
-  
+
   // Quiz details edit state
   const [editedQuizDetails, setEditedQuizDetails] = useState({
     Title: '',
@@ -79,57 +79,47 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     }
   };
 
-  // Start editing a question
   const handleEditQuestion = async (questionId) => {
     try {
       setLoading(true);
       setEditingQuestionId(questionId);
-      
-      // Find the question in our questions array
+
       const questionToEdit = quiz.Questions.find(q => q.QuestionsId === questionId);
-      
+
       if (questionToEdit) {
         setCurrentQuestionText(questionToEdit.QuestionText);
-        
-        // Check if the question already has answers in the local state
+
         if (questionToEdit.Answers && questionToEdit.Answers.length > 0) {
-          // Use the answers from the local state
           const formattedAnswers = questionToEdit.Answers.map(answer => ({
-            AnswerID: answer.AnswerID,
+            AnswerId: answer.AnswerId,
             AnswersText: answer.AnswersText,
             Score: answer.Score
           }));
-          
-          // Ensure we have 4 answers (fill with empty ones if needed)
+
           while (formattedAnswers.length < 4) {
             formattedAnswers.push({ AnswersText: '', Score: formattedAnswers.length + 1 });
           }
-          
-          // Sort answers by score (lowest to highest)
+
           formattedAnswers.sort((a, b) => a.Score - b.Score);
-          
+
           setEditingAnswers(formattedAnswers);
         } else {
-          // Fetch answers for this question from API
           try {
             const answersData = await getAnswersByQuestionId(questionId);
-            
+
             if (answersData && answersData.length > 0) {
-              // Fill the current answers with the fetched data
               const formattedAnswers = answersData.map(answer => ({
-                AnswerID: answer.AnswerID,
+                AnswerId: answer.AnswerId,
                 AnswersText: answer.AnswersText,
                 Score: answer.Score
               }));
-              
-              // Ensure we have 4 answers (fill with empty ones if needed)
+
               while (formattedAnswers.length < 4) {
                 formattedAnswers.push({ AnswersText: '', Score: formattedAnswers.length + 1 });
               }
-              
-              // Sort answers by score (lowest to highest)
+
               formattedAnswers.sort((a, b) => a.Score - b.Score);
-              
+
               setEditingAnswers(formattedAnswers);
             } else {
               // Reset to default 4 empty answers
@@ -142,7 +132,6 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
             }
           } catch (error) {
             console.error('Error fetching answers:', error);
-            // If we fail to fetch answers, still provide empty answers to edit
             setEditingAnswers([
               { AnswersText: '', Score: 1 },
               { AnswersText: '', Score: 2 },
@@ -160,37 +149,30 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     }
   };
 
-  // Save edited question
   const handleSaveQuestion = async (questionId) => {
     try {
       setLoading(true);
-      
-      // Validate question
+
       if (!currentQuestionText.trim()) {
         toast.error('Please enter a question text');
         return;
       }
-      
-      // Validate answers - at least one answer must be provided
+
       const validAnswers = editingAnswers.filter(ans => ans.AnswersText.trim());
       if (validAnswers.length < 1) {
         toast.error('Please provide at least one answer');
         return;
       }
-      
-      // Validate questionId
+
       if (!questionId) {
         console.error('Question ID is undefined', { questionId });
         toast.error('Cannot update question: Missing question ID');
         return;
       }
-      
-      // First, update the question text
+
       try {
         console.log('Updating question text:', questionId, currentQuestionText);
-        const questionData = {
-          QuestionText: currentQuestionText
-        };
+        const questionData = { QuestionText: currentQuestionText };
         await updateQuestion(questionId, questionData);
         console.log('Question text updated successfully');
       } catch (error) {
@@ -198,39 +180,32 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
         toast.error('Failed to update question text');
         throw error;
       }
-      
-      // Get existing answers for this question to avoid duplicates
+
       let existingAnswers = [];
       try {
         existingAnswers = await getAnswersByQuestionId(questionId);
         console.log('Existing answers:', existingAnswers);
       } catch (error) {
         console.error('Error fetching existing answers:', error);
-        // Continue with the update even if we can't fetch existing answers
       }
-      
-      // Then, update or create each answer separately
+
       const answerPromises = [];
-      
-      // Track which answers we've processed to avoid duplicates
       const processedAnswerIds = new Set();
-      
+
       for (const answer of editingAnswers) {
         if (answer.AnswersText.trim()) {
           const answerPromise = (async () => {
             try {
-              if (answer.AnswerID) {
-                // Update existing answer
-                console.log('Updating answer:', answer.AnswerID, answer);
+              if (answer.AnswerId) {
+                console.log('Updating answer:', answer.AnswerId, answer);
                 const answerData = {
                   AnswersText: answer.AnswersText,
                   Score: answer.Score
                 };
-                await updateAnswer(answer.AnswerID, answerData);
-                processedAnswerIds.add(answer.AnswerID);
-                console.log('Answer updated successfully:', answer.AnswerID);
+                await updateAnswer(answer.AnswerId, answerData);
+                processedAnswerIds.add(answer.AnswerId);
+                console.log('Answer updated successfully:', answer.AnswerId);
               } else {
-                // Create new answer
                 console.log('Creating new answer for question:', questionId, answer);
                 const answerData = {
                   AnswersText: answer.AnswersText,
@@ -245,36 +220,18 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
               throw error;
             }
           })();
-          
+
           answerPromises.push(answerPromise);
         }
       }
-      
-      // Delete any existing answers that weren't updated
-      if (existingAnswers.length > 0) {
-        for (const existingAnswer of existingAnswers) {
-          if (!processedAnswerIds.has(existingAnswer.AnswerId)) {
-            try {
-              console.log('Deleting unused answer:', existingAnswer.AnswerId);
-              await deleteAnswer(existingAnswer.AnswerId);
-            } catch (error) {
-              console.error('Error deleting unused answer:', error);
-              // Continue with other operations even if this fails
-            }
-          }
-        }
-      }
-                                
-      // Wait for all answer updates to complete
+
       await Promise.all(answerPromises);
       console.log('All answers updated successfully');
-      
-      // Reset editing state
+
       setEditingQuestionId(null);
       setCurrentQuestionText('');
       setEditingAnswers([]);
-      
-      // Refresh quiz data
+
       await fetchQuiz();
       toast.success('Question and answers updated successfully');
     } catch (error) {
@@ -285,23 +242,70 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     }
   };
 
+  const handleDeleteAnswer = async (answerId, questionId) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this answer?");
+    if (!confirmDelete) return;
+
+    try {
+      // Gọi API để xóa câu trả lời
+      await deleteAnswer(answerId);
+
+      // Thông báo thành công
+      toast.success("Answer deleted successfully!");
+
+      // Refetch lại danh sách câu trả lời
+      const updatedAnswers = await getAnswersByQuestionId(questionId);
+      const formattedAnswers = updatedAnswers.map((answer) => ({
+        AnswerId: answer.AnswerId,
+        AnswersText: answer.AnswersText,
+        Score: answer.Score,
+      }));
+
+      // Đảm bảo luôn có 4 câu trả lời (nếu thiếu thì thêm các câu trống)
+      while (formattedAnswers.length < 4) {
+        formattedAnswers.push({ AnswersText: '', Score: formattedAnswers.length + 1 });
+      }
+
+      // Cập nhật danh sách câu trả lời trong `editingAnswers`
+      setEditingAnswers(formattedAnswers);
+
+      // Cập nhật danh sách câu trả lời trong `quiz`
+      setQuiz((prevQuiz) => {
+        const updatedQuestions = prevQuiz.Questions.map((question) => {
+          if (question.QuestionsId === questionId) {
+            return { ...question, Answers: formattedAnswers };
+          }
+          return question;
+        });
+        return { ...prevQuiz, Questions: updatedQuestions };
+      });
+    } catch (error) {
+      console.error("Failed to delete answer:", error);
+      toast.error("Failed to delete answer");
+    }
+  };
+
   // Delete a question
   const handleDeleteQuestion = async (questionId) => {
     if (!window.confirm('Are you sure you want to delete this question?')) {
       return;
     }
-    
+  
     try {
       setLoading(true);
-      await deleteQuestion(questionId);
-      
-      // Update local state
-      setQuiz(prev => ({
-        ...prev,
-        Questions: prev.Questions.filter(q => q.QuestionsId !== questionId)
-      }));
-      
-      toast.success('Question deleted successfully');
+  
+      const response = await deleteQuestion(questionId);
+  
+      if (response.ok) {
+        setQuiz((prev) => ({
+          ...prev,
+          Questions: prev.Questions.filter((q) => q.QuestionsId !== questionId),
+        }));
+  
+        toast.success('Question deleted successfully');
+      } else {
+        toast.error('Failed to delete question');
+      }
     } catch (error) {
       console.error('Error deleting question:', error);
       toast.error('Failed to delete question');
@@ -310,29 +314,28 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     }
   };
 
-  // Add new question
   const handleAddQuestion = async () => {
     try {
       setLoading(true);
-      
+
       // Validate question
       if (!newQuestionText.trim()) {
         toast.error('Please enter a question text');
         return;
       }
-      
+
       // Validate answers - at least one answer must be provided
       const validAnswers = newAnswers.filter(ans => ans.AnswersText.trim());
       if (validAnswers.length < 1) {
         toast.error('Please provide at least one answer');
         return;
       }
-      
+
       // Create the question
       const newQuestion = await createQuestion(quizId, {
         QuestionText: newQuestionText
       });
-      
+
       // Create each answer for the new question
       for (const answer of newAnswers) {
         if (answer.AnswersText.trim()) {
@@ -342,7 +345,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
           });
         }
       }
-      
+
       // Reset form
       setNewQuestionText('');
       setNewAnswers([
@@ -352,7 +355,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
         { AnswersText: '', Score: 4 }
       ]);
       setAddingNewQuestion(false);
-      
+
       // Refresh quiz data
       await fetchQuiz();
       toast.success('Question added successfully');
@@ -372,7 +375,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       return newAnswers;
     });
   };
-  
+
   // Handle answer score change for editing
   const handleAnswerScoreChange = (index, value) => {
     const score = parseInt(value);
@@ -384,7 +387,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       });
     }
   };
-  
+
   // Handle new answer text change
   const handleNewAnswerTextChange = (index, value) => {
     setNewAnswers(prev => {
@@ -393,7 +396,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       return newAnswersList;
     });
   };
-  
+
   // Handle new answer score change
   const handleNewAnswerScoreChange = (index, value) => {
     const score = parseInt(value);
@@ -405,18 +408,18 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       });
     }
   };
-  
+
   // Handle removing an answer during editing
   const handleRemoveAnswer = (index) => {
     setEditingAnswers(prev => {
       const newAnswers = [...prev];
       newAnswers.splice(index, 1);
-      
+
       // Add a new empty answer if we have less than 4
       if (newAnswers.length < 4) {
         newAnswers.push({ AnswersText: '', Score: newAnswers.length + 1 });
       }
-      
+
       return newAnswers;
     });
   };
@@ -425,23 +428,23 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
   const handleSaveQuizDetails = async () => {
     try {
       setLoading(true);
-      
+
       // Validate
       if (!editedQuizDetails.Title || !editedQuizDetails.Description) {
         toast.error('Title and Description are required');
         return;
       }
-      
+
       // Update quiz
       await updateQuiz(quizId, editedQuizDetails);
-      
+
       // Reset state
       setEditQuizDetails(false);
-      
+
       // Refresh quiz data
       await fetchQuiz();
       if (refetchQuizzes) refetchQuizzes();
-      
+
       toast.success('Quiz updated successfully');
     } catch (error) {
       console.error('Error updating quiz:', error);
@@ -450,7 +453,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       setLoading(false);
     }
   };
-  
+
   // Handle quiz details change
   const handleQuizDetailsChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -512,13 +515,27 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
+          {/* Title on left */}
           <h2 className="text-xl font-semibold">View Quiz Details</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={24} />
-          </button>
+
+          {/* Buttons on right */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className={`px-3 py-1 text-sm rounded ${editMode
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+                }`}
+            >
+              {editMode ? "Exit Edit Mode" : "Enable Edit Mode"}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -527,7 +544,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
           {editQuizDetails ? (
             <div className="bg-gray-100 p-4 rounded-lg mb-6">
               <h3 className="text-lg font-medium text-black mb-3">Edit Quiz Details</h3>
-              
+
               {/* Title */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black mb-1">
@@ -542,7 +559,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   placeholder="Enter quiz title"
                 />
               </div>
-              
+
               {/* Description */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-black mb-1">
@@ -557,9 +574,9 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   placeholder="Enter quiz description"
                 />
               </div>
-              
+
               {/* Active Status */}
-              <div className="flex items-center mb-4">
+              {/* <div className="flex items-center mb-4">
                 <input
                   type="checkbox"
                   id="isActive"
@@ -571,8 +588,8 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                 <label htmlFor="isActive" className="ml-2 block text-sm text-black">
                   Active
                 </label>
-              </div>
-              
+              </div> */}
+
               {/* Action Buttons */}
               <div className="flex justify-end space-x-2">
                 <button
@@ -600,7 +617,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-medium text-black mt-1">{quiz.Title}</p>
                     {editMode && (
-                      <button 
+                      <button
                         onClick={() => setEditQuizDetails(true)}
                         className="text-blue-600 hover:text-blue-800"
                       >
@@ -615,11 +632,10 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   <h3 className="text-sm font-medium text-black">Status</h3>
                   <div className="flex items-center mt-1">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        quiz.IsActive
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${quiz.IsActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
-                      }`}
+                        }`}
                     >
                       {quiz.IsActive ? (
                         <>
@@ -638,8 +654,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
 
                 {/* Quiz ID */}
                 <div>
-                  <h3 className="text-sm font-medium text-black">Quiz ID</h3>
-                  <p className="text-sm text-black mt-1 font-mono">{quiz.QuizID}</p>
+                  <h3 className="text-sm font-medium text-black">Quiz ID: {quiz.QuizId} </h3>
                 </div>
               </div>
 
@@ -674,7 +689,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
             {addingNewQuestion && (
               <div className="bg-gray-100 p-4 rounded-lg mb-6">
                 <h4 className="font-medium text-black mb-3">Add New Question</h4>
-                
+
                 {/* Question Text */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-black mb-1">
@@ -688,13 +703,13 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                     placeholder="Enter question text"
                   />
                 </div>
-                
+
                 {/* Answers */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-black mb-2">
                     Answers (with scores 1-4)
                   </label>
-                  
+
                   <div className="space-y-3">
                     {newAnswers.map((answer, index) => (
                       <div key={index} className="flex items-center space-x-2">
@@ -719,7 +734,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex justify-end space-x-2">
                   <button
@@ -752,7 +767,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                         <p className="text-sm font-mono text-gray-500">
                           Question ID: {question.QuestionsId}
                         </p>
-                        
+
                         {/* Question Text (editable or view-only) */}
                         {editingQuestionId === question.QuestionsId ? (
                           <textarea
@@ -769,7 +784,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                           </h4>
                         )}
                       </div>
-                      
+
                       {/* Edit/Delete buttons */}
                       {editMode && !editingQuestionId && (
                         <div className="flex space-x-2">
@@ -789,7 +804,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                           </button>
                         </div>
                       )}
-                      
+
                       {/* Save button when editing */}
                       {editingQuestionId === question.QuestionsId && (
                         <div className="flex space-x-2">
@@ -817,7 +832,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                       {editingQuestionId === question.QuestionsId ? (
                         <div className="space-y-3">
                           {editingAnswers.map((answer, aIndex) => (
-                            <div key={aIndex} className="flex items-center space-x-2">
+                            <div key={answer.AnswerId ?? `temp-${aIndex}`} className="flex items-center space-x-2">
                               <input
                                 type="text"
                                 value={answer.AnswersText}
@@ -837,7 +852,7 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                               </select>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveAnswer(aIndex)}
+                                onClick={() => handleDeleteAnswer(answer.AnswerId, question.QuestionsId)}
                                 className="text-red-600 hover:text-red-800 p-2"
                                 title="Remove answer"
                               >
@@ -853,41 +868,41 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                             // Sort answers by score before displaying
                             [...question.Answers]
                               .sort((a, b) => a.Score - b.Score)
-                              .map((answer, aIndex) => (
-                                <div 
-                                  key={answer.AnswerID} 
+                              .map((answer) => (
+                                <div
+                                  key={answer.AnswerId}
                                   className="p-3 mb-2 rounded-lg bg-gray-200 text-gray-800 border-l-4"
-                                  style={{ 
-                                    borderLeftColor: 
-                                      answer.Score === 1 ? '#ef4444' : 
-                                      answer.Score === 2 ? '#f97316' : 
-                                      answer.Score === 3 ? '#3b82f6' : 
-                                      '#10b981',
+                                  style={{
+                                    borderLeftColor:
+                                      answer.Score === 1 ? '#ef4444' :
+                                        answer.Score === 2 ? '#f97316' :
+                                          answer.Score === 3 ? '#3b82f6' :
+                                            '#10b981',
                                     marginBottom: '8px'
                                   }}
                                 >
                                   <div className="flex justify-between items-center">
                                     {/* Answer Text */}
                                     <p className="font-medium">{answer.AnswersText}</p>
-                                    
+
                                     {/* Score */}
-                                    <span 
+                                    <span
                                       className="px-2 py-1 rounded-full text-white text-xs font-bold"
-                                      style={{ 
-                                        backgroundColor: 
-                                          answer.Score === 1 ? '#ef4444' : 
-                                          answer.Score === 2 ? '#f97316' : 
-                                          answer.Score === 3 ? '#3b82f6' : 
-                                          '#10b981'
+                                      style={{
+                                        backgroundColor:
+                                          answer.Score === 1 ? '#ef4444' :
+                                            answer.Score === 2 ? '#f97316' :
+                                              answer.Score === 3 ? '#3b82f6' :
+                                                '#10b981'
                                       }}
                                     >
                                       Score: {answer.Score}
                                     </span>
                                   </div>
-                                  
+
                                   {/* Answer ID */}
                                   <p className="text-xs text-gray-500 font-mono mt-1">
-                                    Answer ID: {answer.AnswerID}
+                                    Answer ID: {answer.AnswerId}
                                   </p>
                                 </div>
                               ))
