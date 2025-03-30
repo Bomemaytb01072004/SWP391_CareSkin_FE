@@ -24,6 +24,7 @@ import {
   faBoxOpen,
   faWallet,
 } from '@fortawesome/free-solid-svg-icons';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const OrderConfirmationZalo = () => {
   const location = useLocation();
@@ -47,14 +48,16 @@ const OrderConfirmationZalo = () => {
         const zaloStatus = queryParams.get('status');
         const zaloAppTransId = queryParams.get('apptransid');
         const zaloAmount = queryParams.get('amount');
+        // Make checksum optional since it's not always provided by ZaloPay
         const zaloChecksum = queryParams.get('checksum');
 
         // Check if we have transaction parameters (online payment)
         if (zaloOrderId && zaloStatus !== undefined) {
           setPaymentMethod('zalopay');
 
-          // Basic validation: Check if all required parameters exist
-          if (!zaloAppTransId || !zaloAmount || !zaloChecksum) {
+          // Modified validation: Only check for truly required parameters
+          // ZaloPay doesn't always include checksum in their response
+          if (!zaloAppTransId || !zaloAmount) {
             console.error('Missing required ZaloPay parameters');
             setIsValidRequest(false);
             setIsSuccess(false);
@@ -235,7 +238,7 @@ const OrderConfirmationZalo = () => {
       }
 
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${numericOrderId}/status`,
+        `${backendUrl}/api/Order/${numericOrderId}/status`,
         {
           method: 'PUT',
           headers: {
@@ -259,16 +262,13 @@ const OrderConfirmationZalo = () => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          },
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Order/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -803,7 +803,7 @@ const sendPaymentConfirmationEmail = async (
     }
 
     const response = await fetch(
-      'http://careskinbeauty.shop:4456/api/Email/send-payment-confirmation',
+      `${backendUrl}/api/Email/send-payment-confirmation`,
       {
         method: 'POST',
         headers: {

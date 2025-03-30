@@ -33,6 +33,8 @@ import {
 import { Link } from 'react-router-dom'; // Import Link for navigation
 
 function HomePage() {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   // Add state for skin types
   const [skinTypes, setSkinTypes] = useState([]);
   const [loadingSkinTypes, setLoadingSkinTypes] = useState(true);
@@ -168,9 +170,7 @@ function HomePage() {
     const fetchBlogs = async () => {
       setLoadingBlogs(true);
       try {
-        const response = await fetch(
-          'http://careskinbeauty.shop:4456/api/BlogNews'
-        );
+        const response = await fetch(`${backendUrl}/api/BlogNews`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
@@ -183,7 +183,7 @@ function HomePage() {
           Picture: blog.Picture
             ? blog.Picture.startsWith('http')
               ? blog.Picture
-              : `http://careskinbeauty.shop:4456${blog.Picture.startsWith('/') ? '' : '/'}${blog.Picture}`
+              : `${backendUrl}${blog.Picture.startsWith('/') ? '' : '/'}${blog.Picture}`
             : null,
         }));
 
@@ -381,7 +381,7 @@ function HomePage() {
               >
                 <Link
                   to="/skinquiz"
-                  className="px-6 py-4 bg-emerald-600 text-white rounded-full shadow-md hover:bg-emerald-700 transition text-base font-medium inline-block"
+                  className="px-6 py-4 bg-emerald-800 text-white rounded-full shadow-md hover:bg-emerald-900 transition text-base font-medium inline-block"
                 >
                   Take Skin Quiz
                 </Link>
@@ -392,7 +392,7 @@ function HomePage() {
               >
                 <Link
                   to="/products"
-                  className="px-6 py-4 border-2 border-emerald-600 text-emerald-600 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium inline-block"
+                  className="px-6 py-4 border-2 border-emerald-800 text-emerald-800 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium inline-block"
                 >
                   Shop Products
                 </Link>
@@ -502,6 +502,7 @@ function HomePage() {
                       Math.max(0, prev - skinTypesPerPage)
                     )
                   }
+                  aria-label="Previous skin types"
                   initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
                   whileHover={{
@@ -576,6 +577,7 @@ function HomePage() {
                       )
                     )
                   }
+                  aria-label="Next skin types"
                   initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
                   whileHover={{
@@ -602,11 +604,16 @@ function HomePage() {
                     className={`h-2 rounded-full transition-all ${
                       index ===
                       Math.floor(currentSkinTypeIndex / skinTypesPerPage)
-                        ? 'w-6 bg-emerald-600'
-                        : 'w-2 bg-emerald-200'
+                        ? 'w-6 bg-emerald-800' // Darker color for better contrast
+                        : 'w-2 bg-emerald-300' // Darker color for better contrast
                     }`}
                     onClick={() =>
                       setCurrentSkinTypeIndex(index * skinTypesPerPage)
+                    }
+                    aria-label={`Go to skin type page ${index + 1}`}
+                    aria-current={
+                      index ===
+                      Math.floor(currentSkinTypeIndex / skinTypesPerPage)
                     }
                   />
                 ))}
@@ -659,6 +666,7 @@ function HomePage() {
                       Math.max(0, prev - categoriesPerPage)
                     )
                   }
+                  aria-label="Previous categories"
                   initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
                   whileHover={{
@@ -729,6 +737,7 @@ function HomePage() {
                       )
                     )
                   }
+                  aria-label="Next categories"
                   initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
                   whileHover={{
@@ -755,11 +764,16 @@ function HomePage() {
                     className={`h-2 rounded-full transition-all ${
                       index ===
                       Math.floor(currentCategoryIndex / categoriesPerPage)
-                        ? 'w-6 bg-emerald-600'
-                        : 'w-2 bg-emerald-200'
+                        ? 'w-6 bg-emerald-800' // Darker color for better contrast
+                        : 'w-2 bg-emerald-300' // Darker color for better contrast
                     }`}
                     onClick={() =>
                       setCurrentCategoryIndex(index * categoriesPerPage)
+                    }
+                    aria-label={`Go to category page ${index + 1}`}
+                    aria-current={
+                      index ===
+                      Math.floor(currentCategoryIndex / categoriesPerPage)
                     }
                   />
                 ))}
@@ -959,7 +973,7 @@ function HomePage() {
                           blog.PictureUrl && blog.PictureUrl.startsWith('http')
                             ? blog.PictureUrl
                             : blog.PictureUrl
-                              ? `http://careskinbeauty.shop:4456${blog.PictureUrl}`
+                              ? `${backendUrl}${blog.PictureUrl}`
                               : '/images/blog-placeholder.jpg'
                         }
                         alt={blog.Title}
@@ -1151,7 +1165,7 @@ function HomePage() {
             />
             <motion.button
               type="submit"
-              className="px-6 py-3 bg-emerald-600 text-white rounded-r-full hover:bg-emerald-700 transition font-medium"
+              className="px-6 py-3 bg-emerald-800 text-white rounded-r-full hover:bg-emerald-900 transition font-medium"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

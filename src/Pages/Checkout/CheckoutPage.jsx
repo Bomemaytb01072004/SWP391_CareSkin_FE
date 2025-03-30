@@ -6,6 +6,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { fetchActivePromotions } from '../../utils/api';
 import { motion } from 'framer-motion'; // Make sure to import motion if not already
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const CheckoutPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
@@ -63,7 +64,7 @@ const CheckoutPage = () => {
       if (CustomerId && token) {
         try {
           const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+            `${backendUrl}/api/Customer/${CustomerId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -267,17 +268,14 @@ const CheckoutPage = () => {
     console.log('Sending Order Payload:', JSON.stringify(orderPayload));
 
     try {
-      const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Order',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          },
-          body: JSON.stringify(orderPayload),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
 
       const responseText = await response.text();
 
@@ -339,17 +337,14 @@ const CheckoutPage = () => {
 
     try {
       // Step 1: Place Order
-      const orderResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/Order',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
-          },
-          body: JSON.stringify(orderPayload),
-        }
-      );
+      const orderResponse = await fetch(`${backendUrl}/api/Order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
 
       if (!orderResponse.ok) {
         const errorMessage = await orderResponse.text();
@@ -373,7 +368,7 @@ const CheckoutPage = () => {
       };
 
       const paymentResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/vnpay/create-payment',
+        `${backendUrl}/api/vnpay/create-payment`,
         {
           method: 'POST',
           headers: {
@@ -431,17 +426,14 @@ const CheckoutPage = () => {
 
     try {
       // Step 1: Place Order and fetch OrderId
-      const orderResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/Order',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
-          },
-          body: JSON.stringify(orderPayload),
-        }
-      );
+      const orderResponse = await fetch(`${backendUrl}/api/Order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('Token') || ''}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
 
       if (!orderResponse.ok) {
         const errorMessage = await orderResponse.text();
@@ -463,7 +455,7 @@ const CheckoutPage = () => {
       console.log('🔹 Sending MoMo Payment Payload:', paymentPayload);
 
       const paymentResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/momo/create-payment',
+        `${backendUrl}/api/momo/create-payment`,
         {
           method: 'POST',
           headers: {
@@ -518,17 +510,14 @@ const CheckoutPage = () => {
 
     try {
       // Step 1: Place Order and get OrderId
-      const orderResponse = await fetch(
-        'http://careskinbeauty.shop:4456/api/Order',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || localStorage.getItem('Token') || ''}`,
-          },
-          body: JSON.stringify(orderPayload),
-        }
-      );
+      const orderResponse = await fetch(`${backendUrl}/api/Order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || localStorage.getItem('Token') || ''}`,
+        },
+        body: JSON.stringify(orderPayload),
+      });
 
       if (!orderResponse.ok) {
         const errorMessage = await orderResponse.text();
@@ -563,7 +552,7 @@ const CheckoutPage = () => {
 
       try {
         const paymentResponse = await fetch(
-          'http://careskinbeauty.shop:4456/api/ZaloPay/create',
+          `${backendUrl}/api/ZaloPay/create`,
           {
             method: 'POST',
             headers: {

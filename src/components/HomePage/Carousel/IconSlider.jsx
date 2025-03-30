@@ -3,9 +3,10 @@ import styles from './IconSlider.module.css';
 
 function IconSlider() {
   const [brands, setBrands] = useState([]);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
-    fetch('http://careskinbeauty.shop:4456/api/Brand')
+    fetch(`${backendUrl}/api/Brand`)
       .then((response) => response.json())
       .then((data) => {
         setBrands(data);

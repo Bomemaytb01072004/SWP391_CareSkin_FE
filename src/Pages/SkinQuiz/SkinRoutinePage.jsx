@@ -16,6 +16,8 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const SkinRoutinePage = () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   const navigate = useNavigate();
   const [routineData, setRoutineData] = useState(null);
   const [skinTypeInfo, setSkinTypeInfo] = useState(null);
@@ -150,7 +152,7 @@ const SkinRoutinePage = () => {
 
         // Fetch SkinTypeId using CustomerId
         const skinTypeResponse = await fetch(
-          `http://careskinbeauty.shop:4456/api/Result/Customer/${CustomerId}`
+          `${backendUrl}/api/Result/Customer/${CustomerId}`
         );
         if (!skinTypeResponse.ok) {
           throw new Error('Failed to fetch skin type information.');
@@ -186,7 +188,7 @@ const SkinRoutinePage = () => {
 
         // Fetch routines using SkinTypeId
         const routineResponse = await fetch(
-          `http://careskinbeauty.shop:4456/api/routines/skinType/${skinTypeId}`
+          `${backendUrl}/api/routines/skinType/${skinTypeId}`
         );
         if (!routineResponse.ok) {
           throw new Error('Failed to fetch skincare routines.');
@@ -316,17 +318,14 @@ const SkinRoutinePage = () => {
       console.log('Adding to cart with payload:', payload);
 
       // Make the API call
-      const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Cart/add',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       // Parse the response - use text first to see any error messages
       const responseText = await response.text();
@@ -342,7 +341,7 @@ const SkinRoutinePage = () => {
       try {
         // Fetch updated cart from API
         const cartResponse = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          `${backendUrl}/api/Cart/customer/${CustomerId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -488,17 +487,14 @@ const SkinRoutinePage = () => {
         }
 
         try {
-          const response = await fetch(
-            'http://careskinbeauty.shop:4456/api/Cart/add',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(payload),
-            }
-          );
+          const response = await fetch(`${backendUrl}/api/Cart/add`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
 
           if (response.ok) {
             successCount++;
@@ -517,7 +513,7 @@ const SkinRoutinePage = () => {
       // Update local cart with server data
       try {
         const cartResponse = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          `${backendUrl}/api/Cart/customer/${CustomerId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

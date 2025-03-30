@@ -37,6 +37,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
 import { useLocation, useNavigate } from 'react-router-dom';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const UserProfile = () => {
   // Keep existing state variables
@@ -146,7 +147,7 @@ const UserProfile = () => {
       return;
     }
 
-    fetch(`http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`, {
+    fetch(`${backendUrl}/api/Customer/${CustomerId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -184,7 +185,7 @@ const UserProfile = () => {
     setOrderError('');
     try {
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/customer/${CustomerId}`,
+        `${backendUrl}/api/Order/customer/${CustomerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -240,16 +241,13 @@ const UserProfile = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Customer/${CustomerId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const responseData = await response.json();
       console.log('Update response status:', response.status);
@@ -1436,7 +1434,7 @@ const UserProfile = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/forgot-password',
+        `${backendUrl}/api/Customer/forgot-password`,
         {
           method: 'POST',
           headers: {
@@ -1476,7 +1474,7 @@ const UserProfile = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/verify-reset-pin',
+        `${backendUrl}/api/Customer/verify-reset-pin`,
         {
           method: 'POST',
           headers: {
@@ -1523,7 +1521,7 @@ const UserProfile = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/reset-password',
+        `${backendUrl}/api/Customer/reset-password`,
         {
           method: 'POST',
           headers: {
