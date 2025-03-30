@@ -1,3 +1,4 @@
+// ProductsPage.jsx
 import styles from './ProductsPage.module.css';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
@@ -9,7 +10,7 @@ import Pagination from '../../components/Pagination/Pagination';
 import {
   fetchActiveProductsWithDetails,
   fetchCategoriesFromActiveProducts,
-  fetchSkinTypeProduct,
+  fetchSkinTypeProduct
 } from '../../utils/api.js';
 import { useState, useEffect, useMemo, createContext } from 'react';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
@@ -34,7 +35,10 @@ function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [skinTypes, setSkinTypes] = useState([]);
   const location = useLocation();
+  categories
+  // Đặt mặc định "" hoặc "Price: Low to High" tuỳ nhu cầu
   const [sortOption, setSortOption] = useState('');
+
   const [filters, setFilters] = useState({
     category: [],
     priceRange: [],
@@ -56,22 +60,18 @@ function ProductsPage() {
   // -----------------------------
   // Phân trang
   // -----------------------------
-  const [currentPage, setCurrentPage] = useState(1); // Trang hiện tại
-  const itemsPerPage = 20; // Số sản phẩm mỗi trang (tuỳ ý)
-
-  // Lấy tổng số trang = làm tròn trên (filteredProducts / itemsPerPage)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const totalPages = Math.ceil(totalProduct / itemsPerPage);
 
-  // Tính mảng sản phẩm hiển thị cho trang hiện tại
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  // Memoize the current page products to avoid unnecessary recalculations
   const currentPageProducts = useMemo(() => {
     return filteredProducts.slice(startIndex, endIndex);
   }, [filteredProducts, startIndex, endIndex]);
 
-  // Update the master loading state whenever any individual state changes
+  // Cập nhật isLoading tổng khi 1 trong 3 loading thay đổi
   useEffect(() => {
     setIsLoading(loadingProducts || loadingCategories || loadingSkinTypes);
   }, [loadingProducts, loadingCategories, loadingSkinTypes]);
@@ -96,7 +96,7 @@ function ProductsPage() {
     })();
   }, []);
 
-  // Fetch categories and transform them for the Filters component
+  // Fetch categories
   useEffect(() => {
     (async () => {
       try {
@@ -114,10 +114,11 @@ function ProductsPage() {
             cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
           return {
             label: capitalizedLabel,
-            // Use lowercase with underscores for value
-            value: cat.toLowerCase().replace(/\s+/g, '_'),
+            // Change this to match exactly what HomePage is sending
+            value: capitalizedLabel
           };
         });
+
 
         setCategories(mappedCategories);
       } catch (error) {
@@ -128,23 +129,19 @@ function ProductsPage() {
     })();
   }, []);
 
-  // Fetch skin types and transform them for the Filters component
+  // Fetch skin types (chỉ lấy IsActive = true)
   useEffect(() => {
     (async () => {
       try {
         setLoadingSkinTypes(true);
         const data = await fetchSkinTypeProduct();
-        // Only use active skin types
         const activeSkinTypes = data.filter((item) => item.IsActive === true);
 
-        // Transform skin types into the format expected by Filters component
         const mappedSkinTypes = activeSkinTypes.map((item) => {
-          // Extract the skin type name without the 'Skin' suffix
           const labelWithoutSkin = item.TypeName.replace(' Skin', '');
           return {
             label: labelWithoutSkin,
-            // Ensure SkinTypeId is stored as a string to match form value format
-            value: item.SkinTypeId.toString(),
+            value: item.SkinTypeId.toString()
           };
         });
 
@@ -157,15 +154,12 @@ function ProductsPage() {
     })();
   }, []);
 
-  // Check if coming from "New Arrivals" and sort accordingly
+  // Nếu đến từ New Arrivals, tự set sort = "Newest"
   useEffect(() => {
-    if (location.state?.fromBestsellers) {
-      setSortOption('Popular'); // Apply sorting when coming from Bestsellers
-    } else if (location.state?.fromNewArrivals) {
-      setSortOption('Newest'); // Apply sorting when coming from New Arrivals
+    if (location.state?.fromNewArrivals) {
+      setSortOption('Newest');
     }
   }, [location.state]);
-
   // Check if coming from "Shop by Skin Type" and update the filters
   useEffect(() => {
     if (location.state?.filterBySkinType) {
@@ -176,18 +170,7 @@ function ProductsPage() {
     }
   }, [location.state]);
 
-  // Function to get price from a product's first variation
-  const getPriceFromFirstVariation = (product) => {
-    if (!product.Variations || product.Variations.length === 0) {
-      return 0;
-    }
-    const firstVariation = product.Variations[0];
-    return firstVariation.SalePrice && firstVariation.SalePrice > 0
-      ? firstVariation.SalePrice
-      : firstVariation.Price || 0;
-  };
-
-  // Apply filters and sorting to products
+  // Filter + Sort
   useEffect(() => {
     let newFiltered = [...products];
 
@@ -195,14 +178,14 @@ function ProductsPage() {
     if (filters.category.length > 0) {
       newFiltered = newFiltered.filter((product) => {
         if (!product.Category) return false;
-
-        const productCategories = product.Category.split(',').map((cat) =>
-          cat.trim().toLowerCase().replace(/\s+/g, '_')
+        const productCategories = product.Category.split(',').map(cat =>
+          cat.trim().charAt(0).toUpperCase() + cat.trim().slice(1).toLowerCase()
         );
 
-        return filters.category.some((selectedCat) =>
-          productCategories.includes(selectedCat.toLowerCase())
-        );
+        return filters.category.some(selectedCat => {
+          const selectedCatLabel = selectedCat.replace(/_/g, ' ');
+          return productCategories.some(prodCat => prodCat === selectedCatLabel);
+        });
       });
     }
 
@@ -217,15 +200,16 @@ function ProductsPage() {
         ) {
           return false;
         }
+        const firstVariation = product.Variations[0];
+        const priceToCompare =
+          (firstVariation.SalePrice && firstVariation.SalePrice > 0)
+            ? firstVariation.SalePrice
+            : firstVariation.Price;
 
-        const priceToCompare = getPriceFromFirstVariation(product);
-
-        // If no valid price, exclude this product
         if (typeof priceToCompare !== 'number' || isNaN(priceToCompare)) {
           return false;
         }
 
-        // Check if the price falls within any of the selected ranges
         return filters.priceRange.some((range) => {
           switch (range) {
             case 'under_25':
@@ -246,21 +230,30 @@ function ProductsPage() {
     // Filter by skin type
     if (filters.skinType.length > 0) {
       newFiltered = newFiltered.filter((product) => {
-        if (!product.ProductForSkinTypes) return false;
-
-        // Extract skin type IDs from product
-        const productSkinTypeIds = product.ProductForSkinTypes.map(
-          (item) => item.SkinTypeId
-        );
-
-        // Check if product matches the selected skin type
-        return filters.skinType.some((selectedSkinTypeId) =>
-          productSkinTypeIds.includes(Number(selectedSkinTypeId))
-        );
+        if (!product.ProductForSkinTypes || product.ProductForSkinTypes.length === 0) {
+          return false;
+        }
+        const productSkinTypeIds = product.ProductForSkinTypes.map(item => item.SkinTypeId);
+        return filters.skinType.some(selectedSkinTypeId => {
+          const numericSelectedId = Number(selectedSkinTypeId);
+          return productSkinTypeIds.includes(numericSelectedId);
+        });
       });
     }
 
-    // Sort products based on the selected option
+    // Ưu tiên SalePrice nếu > 0, nếu không lấy Price, nếu không có Variations thì = 0
+    const getPriceFromFirstVariation = (product) => {
+      if (!product.Variations || product.Variations.length === 0) {
+        return 0;
+      }
+      const firstVariation = product.Variations[0];
+      const price = (firstVariation.SalePrice && firstVariation.SalePrice > 0)
+        ? firstVariation.SalePrice
+        : firstVariation.Price;
+      return price ?? 0; // phòng khi cả SalePrice lẫn Price bị null/undefined
+    };
+
+    // Sort products
     if (sortOption) {
       newFiltered.sort((a, b) => {
         const priceA = getPriceFromFirstVariation(a);
@@ -272,26 +265,164 @@ function ProductsPage() {
           case 'Price: High to Low':
             return priceB - priceA;
           case 'Newest':
-            // Use ProductId as a proxy for newness if PublishedDate isn't reliable
+            // Giả định ID cao hơn = mới hơn
             return b.ProductId - a.ProductId;
           case 'Popular':
+            // Giả định AverageRating cao = popular hơn
             return (b.AverageRating || 0) - (a.AverageRating || 0);
           default:
+            console.log('No matching sort option:', sortOption);
             return 0;
         }
       });
+
+      // Kiểm tra thứ tự cuối sau sort
+      console.log('filteredProducts after sort:', newFiltered.map(p => p.ProductId));
     }
 
     setFilteredProducts(newFiltered);
     setTotalProduct(newFiltered.length);
-    setCurrentPage(1); // Reset to page 1 whenever filter/sort changes
+    setCurrentPage(1);
   }, [products, filters, sortOption]);
 
-  // Handle filters from URL parameters
+  useEffect(() => {
+    if (filters.skinType.length > 0) {
+      console.log('Active skin type filters:', filters.skinType);
+      console.log(
+        'Selected skin type filters (as numbers):',
+        filters.skinType.map((id) => Number(id))
+      );
+
+      // Check the first 2 products to see if they match the skin type filters
+      if (products.length >= 2) {
+        const productSample = products.slice(0, 2);
+        productSample.forEach((product, index) => {
+          if (
+            product.ProductForSkinTypes &&
+            Array.isArray(product.ProductForSkinTypes)
+          ) {
+            const skinTypeIds = product.ProductForSkinTypes.map(
+              (item) => item.SkinTypeId
+            );
+            console.log(`Product ${index} skin type IDs:`, skinTypeIds);
+
+            // Check if this product matches any of the selected filters
+            const matches = filters.skinType.some((selectedId) => {
+              const numericId = Number(selectedId);
+              return skinTypeIds.includes(numericId);
+            });
+
+            console.log(`Product ${index} matches skin type filter:`, matches);
+          }
+        });
+      }
+    }
+  }, [filters.skinType, products]);
+
+  // Debug: Log product structure
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log('Product example:', products[0]);
+      console.log('Skin Type information:');
+      console.log('- products[0].SkinType:', products[0].SkinType);
+      console.log(
+        '- products[0].ProductSkinTypes:',
+        products[0].ProductSkinTypes
+      );
+      console.log(
+        '- products[0].ProductForSkinTypes:',
+        products[0].ProductForSkinTypes
+      );
+    }
+  }, [products]);
+
+  // Debug: Add more product structure info for price
+  useEffect(() => {
+    if (products.length > 0) {
+      console.log('Price information:');
+      const sampleProduct = products[0];
+      console.log('Direct price property:', sampleProduct.Price);
+      console.log('Variations:', sampleProduct.Variations);
+
+      if (sampleProduct.Variations && sampleProduct.Variations.length > 0) {
+        console.log(
+          'First variation price:',
+          sampleProduct.Variations[0].Price
+        );
+        console.log(
+          'First variation sale price:',
+          sampleProduct.Variations[0].SalePrice
+        );
+      }
+    }
+  }, [products]);
+
+  // Debug price range filtering
+  useEffect(() => {
+    if (filters.priceRange.length > 0 && products.length > 0) {
+      console.log('Active price range filters:', filters.priceRange);
+
+      // Check a few sample products
+      const sampleProducts = products.slice(0, 3);
+      sampleProducts.forEach((product, index) => {
+        if (product.Variations && product.Variations.length > 0) {
+          const firstVariation = product.Variations[0];
+          const priceToCompare =
+            firstVariation.SalePrice && firstVariation.SalePrice > 0
+              ? firstVariation.SalePrice
+              : firstVariation.Price;
+
+          console.log(
+            `Product ${index} - Name: ${product.ProductName}, Price: ${priceToCompare}`
+          );
+
+          // Check if the product matches any selected price range
+          const matches = filters.priceRange.some((range) => {
+            switch (range) {
+              case 'under_25':
+                return priceToCompare < 25;
+              case '25_50':
+                return priceToCompare >= 25 && priceToCompare <= 50;
+              case '50_100':
+                return priceToCompare >= 50 && priceToCompare <= 100;
+              case 'over_100':
+                return priceToCompare > 100;
+              default:
+                return false;
+            }
+          });
+
+          console.log(`Product ${index} matches price filter: ${matches}`);
+        } else {
+          console.log(`Product ${index} has no variations or prices`);
+        }
+      });
+    }
+  }, [filters.priceRange, products]);
+
+  // 5. Hàm nhận updatedFilters từ Filters
+  const handleFilterChange = (updatedFilters) => {
+    setFilters(updatedFilters);
+  };
+
+  // Hàm nhận option sort
+  const handleSortChange = (option) => {
+    // Đảm bảo option là 1 trong các case ("Price: Low to High", "Price: High to Low", "Newest", "Popular")
+    console.log('Sort changed to:', option);
+    setSortOption(option);
+  };
+
+  const loadingContextValue = {
+    isLoading,
+    categories,
+    skinTypes,
+    products,
+  };
+
   useEffect(() => {
     console.log('Location state:', location.state);
 
-    // Handle skin type filter from URL
+    // Handle skin type filter
     if (location.state?.filterBySkinType) {
       console.log(
         'Applying skin type filter:',
@@ -303,7 +434,7 @@ function ProductsPage() {
       }));
     }
 
-    // Handle category filter from URL
+    // Handle category filter
     if (location.state?.filterByCategory) {
       console.log('Applying category filter:', location.state.filterByCategory);
       // Ensure consistent case transformation
@@ -320,23 +451,7 @@ function ProductsPage() {
     }
   }, [location.state]);
 
-  // Handlers for filter and sort changes
-  const handleFilterChange = (updatedFilters) => {
-    setFilters(updatedFilters);
-  };
-
-  const handleSortChange = (option) => {
-    console.log('Sort changed to:', option);
-    setSortOption(option);
-  };
-
-  // Create the context value to pass to child components
-  const loadingContextValue = {
-    isLoading,
-    categories,
-    skinTypes,
-    products,
-  };
+  console.log('Updated filters state:', filters);
 
   if (isLoading) {
     return <LoadingPage />;
@@ -367,7 +482,7 @@ function ProductsPage() {
           <div className={`col-12 col-md-8 col-lg-9`}>
             <div className={`d-flex align-items-center mb-3`}>
               <div className={`fw-bold ${styles.totalProducts}`}>
-                {totalProduct} {totalProduct === 1 ? 'product' : 'products'}
+                {totalProduct} products
               </div>
               <div className={styles.sortByFeature}>
                 <Dropdown

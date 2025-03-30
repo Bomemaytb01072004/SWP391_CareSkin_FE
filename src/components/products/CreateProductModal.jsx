@@ -28,7 +28,7 @@ function CreateProductModal({
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl overflow-auto z-[10000]"
+                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[100vh] overflow-y-scroll z-[10000]"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">

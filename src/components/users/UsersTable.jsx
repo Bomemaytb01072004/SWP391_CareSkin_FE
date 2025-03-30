@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, Trash2, Edit } from "lucide-react";
 import { fetchCustomers } from "../../utils/api";
 import EditUserForm from "./EditUserForm";
 
@@ -225,13 +225,13 @@ const UsersTable = ({ customers }) => {
                                             onClick={() => handleEdit(customer.CustomerId)}
                                             className="text-blue-600 hover:text-blue-400 mr-2"
                                         >
-                                            Edit
+                                            <Edit size={18} />
                                         </button>
                                         <button
                                             className="text-red-600 hover:text-red-400"
                                             onClick={() => handleDelete(customer.CustomerId)}
                                         >
-                                            Delete
+                                             <Trash2 size={18} />
                                         </button>
                                     </td>
                                 </motion.tr>

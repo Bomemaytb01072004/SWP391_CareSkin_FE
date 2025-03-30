@@ -17,7 +17,7 @@ function EditProductModal({
     handleRemoveExistingAdditionalImage,
     handleAdditionalImagesChangeEdit,
     handleEdit,
-    onClose,      
+    onClose,
     skinTypeList,
 
 
@@ -28,23 +28,6 @@ function EditProductModal({
     handleRemoveEditDetailIngredient,
 }) {
     if (!editProductState) return null;
-
-    // const handleAdditionalImagesChangeEdit = (e) => {
-    //     if (!e.target.files) return;
-    //     const files = Array.from(e.target.files);
-    
-    //     const newPreviews = files.map((file) => URL.createObjectURL(file));
-    //     setPreviewUrlAdditionalImagesEditState((prev) => [...prev, ...newPreviews]);
-    
-    //     const validFiles = files.filter((file) => file.size > 0);
-    //     if (validFiles.length > 0) {
-    //       setEditProduct((prev) => ({
-    //         ...prev,
-    //         AdditionalPicturesFile: [...(prev.AdditionalPicturesFile || []), ...validFiles],
-    //       }));
-    //     }
-    //   };
-    
 
     return (
         <div

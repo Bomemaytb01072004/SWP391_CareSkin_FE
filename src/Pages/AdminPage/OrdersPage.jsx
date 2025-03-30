@@ -148,11 +148,11 @@ const OrdersPage = () => {
 
       {/* Order Details Modal */}
       {viewingOrder && orderDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-60 backdrop-blur-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 backdrop-blur-md">
           <div className="bg-white p-6 rounded-lg shadow-xl w-[90%] max-w-2xl relative">
             {/* Close Button */}
             <button
-              className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 text-xl"
+              className="absolute top-3 right-4 text-gray-100 hover:text-gray-700 text-xl"
               onClick={() => {
                 setViewingOrder(null);
                 setEditingOrderInfo(null);
@@ -188,7 +188,7 @@ const OrdersPage = () => {
                   <p>
                     <strong>Status:</strong>{' '}
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full  ${statusClasses[orderDetails.OrderStatusName] || 'bg-gray-500 text-white'}`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full  ${statusClasses[orderDetails.OrderStatusName] || 'bg-gray-100 text-white'}`}
                     >
                       {orderDetails.OrderStatusName}
                     </span>
@@ -296,7 +296,7 @@ const OrdersPage = () => {
 
                 <div className="flex justify-end gap-2 mt-4">
                   <button
-                    className="bg-gray-500 px-4 py-2 rounded text-white hover:bg-gray-600"
+                    className="bg-gray-100 px-4 py-2 rounded text-white hover:bg-gray-600"
                     onClick={() => setEditingOrderInfo(null)}
                   >
                     Cancel

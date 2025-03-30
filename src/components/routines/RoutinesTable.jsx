@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
-import { Edit, Trash, Search, Eye, Layers, Plus } from 'lucide-react';
+import { Edit, Trash2, Search, Eye, Layers, Plus } from 'lucide-react';
 import { deleteRoutine } from '../../utils/apiOfRoutine';
 
 const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) => {
@@ -219,21 +219,21 @@ const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) 
                         className="text-blue-600 hover:text-blue-400 p-1 rounded-full hover:bg-gray-200 transition"
                         title="View Routine"
                       >
-                        <Eye size={16} />
+                        <Eye size={18} />
                       </button>
                       <button
                         onClick={() => onEdit(routine)}
-                        className="text-indigo-600 hover:text-indigo-400 p-1 rounded-full hover:bg-gray-200 transition"
+                        className="text-yellow-400 hover:text-yellow-300"
                         title="Edit Routine"
                       >
-                        <Edit size={16} />
+                        <Edit size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(routine.RoutineId)}
                         className="text-red-600 hover:text-red-400 p-1 rounded-full hover:bg-gray-200 transition"
                         title="Delete Routine"
                       >
-                        <Trash size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </td>

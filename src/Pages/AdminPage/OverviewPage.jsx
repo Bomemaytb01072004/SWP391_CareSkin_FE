@@ -10,6 +10,7 @@ import CategoryDistributionChart from "../../components/overview/CategoryDistrib
 import DailyOrders from '../../components/orders/DailyOrders';
 import { fetchProducts, fetchCustomers } from "../../utils/api";
 import { calculateSalesStats } from "../../utils/apiSales";
+import { useQueryClient } from '@tanstack/react-query';
 
 const OverviewPage = () => {
   const {
@@ -62,11 +63,24 @@ const OverviewPage = () => {
   if (productsLoading || usersLoading) return <div>Loading...</div>;
   if (productsError || usersError) return <div>Error fetching data</div>;
 
+  function CheckCache() {
+    const queryClient = useQueryClient();
+    const cachedProducts = queryClient.getQueryData(["products"]);
+  
+    if (cachedProducts) {
+      console.log("Dữ liệu products đã được cache:", cachedProducts);
+    } else {
+      console.log("Dữ liệu products chưa có trong cache.");
+    }
+  
+    return null;
+  }
+
 
   return (
     <div className="bg-white flex-1 overflow-auto relative z-0">
       <Header title="Overview" />
-
+      <CheckCache />
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
         <motion.div
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8"
