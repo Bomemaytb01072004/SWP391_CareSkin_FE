@@ -162,7 +162,7 @@ const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
             <button
               type="button"
               onClick={handleAddQuiz}
-              disabled={!newQuiz.Title || !newQuiz.Description || !newQuiz.Questions || newQuiz.Questions.length === 0}
+              disabled={!newQuiz.Title || !newQuiz.Description}
               className="bg-blue-300 hover:bg-blue-400 text-black px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Quiz
