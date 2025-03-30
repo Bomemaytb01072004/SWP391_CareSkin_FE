@@ -49,7 +49,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        '${backendUrl}/api/Customer/forgot-password',
+        `${backendUrl}/api/Customer/forgot-password`,
         {
           method: 'POST',
           headers: {
@@ -93,7 +93,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        '${backendUrl}/api/Customer/verify-reset-pin',
+        `${backendUrl}/api/Customer/verify-reset-pin`,
         {
           method: 'POST',
           headers: {
@@ -142,7 +142,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        '${backendUrl}/api/Customer/reset-password',
+        `${backendUrl}/api/Customer/reset-password`,
         {
           method: 'POST',
           headers: {

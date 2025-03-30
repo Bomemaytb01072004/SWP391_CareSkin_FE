@@ -3,6 +3,7 @@ import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function BlogPage() {
   const [blogs, setBlogs] = useState([]);
@@ -18,9 +19,7 @@ function BlogPage() {
     const fetchBlogs = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          'http://careskinbeauty.shop:4456/api/BlogNews'
-        );
+        const response = await fetch(`${backendUrl}/api/BlogNews`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }

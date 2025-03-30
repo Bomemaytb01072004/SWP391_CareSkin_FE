@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const CartPage = () => {
         if (CustomerId) {
           try {
             const response = await fetch(
-              `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+              `${backendUrl}/api/Cart/customer/${CustomerId}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -97,7 +98,7 @@ const CartPage = () => {
         console.log(`Removing CartId: ${cartId} from API...`);
 
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
+          `${backendUrl}/api/Cart/remove/${cartId}`,
           {
             method: 'DELETE',
             headers: {
@@ -177,23 +178,20 @@ const CartPage = () => {
 
     if (CustomerId) {
       try {
-        const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/update`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              CustomerId: parseInt(CustomerId),
-              ProductId: cartItem.ProductId,
-              ProductVariationId:
-                productVariationId ?? cartItem.ProductVariationId,
-              Quantity: newQuantity,
-            }),
-          }
-        );
+        const response = await fetch(`${backendUrl}/api/Cart/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            CustomerId: parseInt(CustomerId),
+            ProductId: cartItem.ProductId,
+            ProductVariationId:
+              productVariationId ?? cartItem.ProductVariationId,
+            Quantity: newQuantity,
+          }),
+        });
 
         if (!response.ok)
           throw new Error(
@@ -267,17 +265,14 @@ const CartPage = () => {
 
         console.log('Sending payload to API:', payload);
 
-        const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/update`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        const response = await fetch(`${backendUrl}/api/Cart/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -369,7 +364,7 @@ const CartPage = () => {
 
         // Perform batch delete requests
         const removeRequests = cartIdsToRemove.map((cartId) =>
-          fetch(`http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`, {
+          fetch(`${backendUrl}/api/Cart/remove/${cartId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` },
           })

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const EditUserForm = ({ customerId, onClose }) => {
   const [user, setUser] = useState({
@@ -19,7 +20,7 @@ const EditUserForm = ({ customerId, onClose }) => {
   useEffect(() => {
     if (!customerId) return;
 
-    fetch(`http://careskinbeauty.shop:4456/api/Customer/${customerId}`)
+    fetch(`${backendUrl}/api/Customer/${customerId}`)
       .then((response) => response.json())
       .then((data) => {
         setUser({
@@ -59,13 +60,10 @@ const EditUserForm = ({ customerId, onClose }) => {
     }
 
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Customer/${customerId}`,
-        {
-          method: 'PUT',
-          body: formData,
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Customer/${customerId}`, {
+        method: 'PUT',
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error('Failed to update user');

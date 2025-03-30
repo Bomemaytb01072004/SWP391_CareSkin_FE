@@ -15,6 +15,7 @@ import {
   faHeart,
   faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Navbar() {
   const location = useLocation();
@@ -117,7 +118,7 @@ function Navbar() {
       if (CustomerId && token) {
         try {
           const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/Customer/${CustomerId}`,
+            `${backendUrl}/api/Customer/${CustomerId}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -168,7 +169,7 @@ function Navbar() {
       if (CustomerId && token) {
         // For logged in users, fetch from API
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+          `${backendUrl}/api/Cart/customer/${CustomerId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -273,17 +274,14 @@ function Navbar() {
           Quantity: cartItem.Quantity,
         };
 
-        const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/update`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-          }
-        );
+        const response = await fetch(`${backendUrl}/api/Cart/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -340,7 +338,7 @@ function Navbar() {
     if (CustomerId && token) {
       try {
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/Cart/remove/${cartId}`,
+          `${backendUrl}/api/Cart/remove/${cartId}`,
           {
             method: 'DELETE',
             headers: {
@@ -466,7 +464,7 @@ function Navbar() {
 
       // Fetch current server cart
       const currentCartRes = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/customer/${customerId}`,
+        `${backendUrl}/api/Cart/customer/${customerId}`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         }
@@ -484,7 +482,7 @@ function Navbar() {
         if (match) {
           // Update existing item with new total quantity
           const updatedQty = (match.Quantity || 1) + (localItem.Quantity || 1);
-          await fetch(`http://careskinbeauty.shop:4456/api/Cart/update`, {
+          await fetch(`${backendUrl}/api/Cart/update`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -499,7 +497,7 @@ function Navbar() {
           });
         } else {
           // Add item to the server cart
-          await fetch('http://careskinbeauty.shop:4456/api/Cart/add', {
+          await fetch(`${backendUrl}/api/Cart/add`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

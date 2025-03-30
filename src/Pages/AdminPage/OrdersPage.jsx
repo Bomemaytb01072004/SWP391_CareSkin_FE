@@ -7,6 +7,7 @@ import StatCard from '../../components/common/StatCard';
 import DailyOrders from '../../components/orders/DailyOrders';
 import OrderDistribution from '../../components/orders/OrderDistribution';
 import OrdersTable from '../../components/orders/OrdersTable';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const OrdersPage = () => {
   const [orderStats, setOrderStats] = useState({
@@ -39,17 +40,14 @@ const OrdersPage = () => {
 
   const updateOrderInfo = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`,
-        {
-          method: 'PUT',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderForm),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Order/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderForm),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -58,7 +56,7 @@ const OrdersPage = () => {
       }
 
       const updatedOrderResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`
+        `${backendUrl}/api/Order/${orderId}`
       );
       const updatedOrderData = await updatedOrderResponse.json();
 

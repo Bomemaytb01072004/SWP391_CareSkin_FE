@@ -6,6 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +75,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
       console.log('Sending OrderStatusId as:', newStatusId);
 
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}/status`,
+        `${backendUrl}/api/Order/${orderId}/status`,
         {
           method: 'PUT',
           headers: {
@@ -105,25 +106,25 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
             : order
         )
       );
-      
+
       // Show success toast with status name
       const newStatusName = Object.keys(statusClasses)[newStatusId - 1];
       toast.success(`Order #${orderId} status updated to ${newStatusName}`, {
-        position: "top-right",
+        position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
         pauseOnHover: true,
         draggable: true,
       });
-      
+
       setEditingOrder(null);
     } catch (error) {
       console.error('Failed to update order status:', error);
-      
+
       // Show error toast
       toast.error(`Failed to update order: ${error.message}`, {
-        position: "top-right",
+        position: 'top-right',
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -135,10 +136,10 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
 
   const cancelOrder = (orderId) => {
     // Hiển thị hộp thoại xác nhận trước khi hủy
-    if (window.confirm("Are you sure you want to cancel this order?")) {
+    if (window.confirm('Are you sure you want to cancel this order?')) {
       updateOrderStatus(orderId, 5);
       toast.warn(`Order #${orderId} has been cancelled`, {
-        position: "top-right",
+        position: 'top-right',
         autoClose: 4000,
         hideProgressBar: false,
         closeOnClick: true,
@@ -150,9 +151,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`
-      );
+      const response = await fetch(`${backendUrl}/api/Order/${orderId}`);
       if (!response.ok) {
         throw new Error(
           `Failed to fetch order details: ${response.statusText}`
@@ -316,7 +315,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         pauseOnHover
         theme="light"
       />
-      
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-black">Order List</h2>
         <div className="relative">
@@ -434,7 +433,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                     className="text-red-400 hover:text-red-300"
                     onClick={() => cancelOrder(order.orderId)}
                   >
-                     <Trash2 size={18} />
+                    <Trash2 size={18} />
                   </button>
                 </td>
               </motion.tr>

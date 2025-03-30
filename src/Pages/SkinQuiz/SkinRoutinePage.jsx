@@ -318,17 +318,14 @@ const SkinRoutinePage = () => {
       console.log('Adding to cart with payload:', payload);
 
       // Make the API call
-      const response = await fetch(
-        '${backendUrl}/api/Cart/add',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       // Parse the response - use text first to see any error messages
       const responseText = await response.text();
@@ -490,17 +487,14 @@ const SkinRoutinePage = () => {
         }
 
         try {
-          const response = await fetch(
-            '${backendUrl}/api/Cart/add',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(payload),
-            }
-          );
+          const response = await fetch(`${backendUrl}/api/Cart/add`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
 
           if (response.ok) {
             successCount++;

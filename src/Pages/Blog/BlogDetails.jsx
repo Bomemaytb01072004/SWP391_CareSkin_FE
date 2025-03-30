@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import ReactMarkdown from 'react-markdown'; // We'll keep this for Markdown support
 import styles from './Blog.module.css'; // Import the CSS module
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function BlogDetails() {
   // Rest of your component state and hooks remain the same
@@ -47,9 +48,7 @@ function BlogDetails() {
     const fetchBlogDetails = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/BlogNews/${blogId}`
-        );
+        const response = await fetch(`${backendUrl}/api/BlogNews/${blogId}`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
@@ -68,9 +67,7 @@ function BlogDetails() {
 
     const fetchRelatedBlogs = async () => {
       try {
-        const response = await fetch(
-          'http://careskinbeauty.shop:4456/api/BlogNews'
-        );
+        const response = await fetch(`${backendUrl}/api/BlogNews`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }

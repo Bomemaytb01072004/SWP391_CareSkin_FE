@@ -170,7 +170,7 @@ function HomePage() {
     const fetchBlogs = async () => {
       setLoadingBlogs(true);
       try {
-        const response = await fetch('${backendUrl}/api/BlogNews');
+        const response = await fetch(`${backendUrl}/api/BlogNews`);
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }

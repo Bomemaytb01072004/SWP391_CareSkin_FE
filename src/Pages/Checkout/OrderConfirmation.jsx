@@ -23,6 +23,7 @@ import {
   faHeadset,
   faBoxOpen,
 } from '@fortawesome/free-solid-svg-icons';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -238,7 +239,7 @@ const OrderConfirmation = () => {
       }
 
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${numericOrderId}/status`,
+        `${backendUrl}/api/Order/${numericOrderId}/status`,
         {
           method: 'PUT',
           headers: {
@@ -262,16 +263,13 @@ const OrderConfirmation = () => {
 
   const fetchOrderDetails = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          },
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Order/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -838,7 +836,7 @@ const sendPaymentConfirmationEmail = async (
     }
 
     const response = await fetch(
-      'http://careskinbeauty.shop:4456/api/Email/send-payment-confirmation',
+      `${backendUrl}/api/Email/send-payment-confirmation`,
       {
         method: 'POST',
         headers: {

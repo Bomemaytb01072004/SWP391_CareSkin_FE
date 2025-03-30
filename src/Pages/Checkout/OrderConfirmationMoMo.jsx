@@ -37,7 +37,7 @@ const OrderConfirmationMoMo = () => {
       );
 
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${numericOrderId}/status`,
+        `${backendUrl}/api/Order/${numericOrderId}/status`,
         {
           method: 'PUT',
           headers: {
@@ -65,16 +65,13 @@ const OrderConfirmationMoMo = () => {
   // Add fetchOrderDetails function (similar to OrderConfirmation.jsx)
   const fetchOrderDetails = async (orderId) => {
     try {
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Order/${orderId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          },
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Order/${orderId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -137,7 +134,7 @@ const OrderConfirmationMoMo = () => {
       console.log('Email confirmation payload:', emailPayload);
 
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Email/send-payment-confirmation',
+        `${backendUrl}/api/Email/send-payment-confirmation`,
         {
           method: 'POST',
           headers: {
@@ -264,16 +261,13 @@ const OrderConfirmationMoMo = () => {
         console.log('Sending to MoMo IPN API:', payloadToSend);
 
         // Call the MoMo IPN API
-        const response = await fetch(
-          'http://careskinbeauty.shop:4456/api/momo/momo_ipn',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payloadToSend),
-          }
-        );
+        const response = await fetch(`${backendUrl}/api/momo/momo_ipn`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payloadToSend),
+        });
 
         const responseData = await response.json();
         console.log('MoMo IPN API response:', responseData);
