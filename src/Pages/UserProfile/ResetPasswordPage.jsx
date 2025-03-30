@@ -17,6 +17,7 @@ import styles from './ResetPasswordPage.module.css';
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Get email from URL if provided
   const emailFromUrl = searchParams.get('email') || '';
@@ -48,7 +49,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/forgot-password',
+        '${backendUrl}/api/Customer/forgot-password',
         {
           method: 'POST',
           headers: {
@@ -92,7 +93,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/verify-reset-pin',
+        '${backendUrl}/api/Customer/verify-reset-pin',
         {
           method: 'POST',
           headers: {
@@ -141,7 +142,7 @@ const ResetPasswordPage = () => {
 
     try {
       const response = await fetch(
-        'http://careskinbeauty.shop:4456/api/Customer/reset-password',
+        '${backendUrl}/api/Customer/reset-password',
         {
           method: 'POST',
           headers: {

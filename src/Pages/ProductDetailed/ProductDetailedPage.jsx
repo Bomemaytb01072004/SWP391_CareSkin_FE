@@ -60,6 +60,7 @@ function ProductDetailedPage() {
 
   const [hoverRating, setHoverRating] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const breadcrumbItems = [
     { label: 'Products', link: '/products', active: false },
@@ -114,7 +115,7 @@ function ProductDetailedPage() {
       try {
         setLoadingReviews(true);
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${productId}`
+          `${backendUrl}/api/RatingFeedback/RatingFeedback/product/${productId}`
         );
 
         if (!response.ok) {
@@ -140,7 +141,7 @@ function ProductDetailedPage() {
 
       try {
         const response = await fetch(
-          `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/average/${productId}`
+          `${backendUrl}/api/RatingFeedback/RatingFeedback/average/${productId}`
         );
 
         if (!response.ok) {
@@ -274,17 +275,14 @@ function ProductDetailedPage() {
         ProductVariationId: selectedVariation.ProductVariationId,
         Quantity: quantity,
       };
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/add`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(newCartItem),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newCartItem),
+      });
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API Response Error:', errorData);
@@ -292,7 +290,7 @@ function ProductDetailedPage() {
       }
       console.log('Cart successfully updated in API!');
       const cartResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        `${backendUrl}/api/Cart/customer/${CustomerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!cartResponse.ok) {
@@ -472,7 +470,7 @@ function ProductDetailedPage() {
       });
 
       const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/${CustomerId}`,
+        `${backendUrl}/api/RatingFeedback/RatingFeedback/${CustomerId}`,
         {
           method: 'POST',
           headers: {
@@ -512,7 +510,7 @@ function ProductDetailedPage() {
       const fetchProductReviews = async () => {
         try {
           const response = await fetch(
-            `http://careskinbeauty.shop:4456/api/RatingFeedback/RatingFeedback/product/${productId}`
+            `${backendUrl}/api/RatingFeedback/RatingFeedback/product/${productId}`
           );
           if (response.ok) {
             const data = await response.json();
@@ -751,7 +749,7 @@ function ProductDetailedPage() {
             <h1 className="text-3xl font-bold text-gray-900 mt-2  w-5/6">
               {product.ProductName}
             </h1>
-            <h5 className="text-md text-gray-500 mt-1">{product.Category}</h5>
+            <h2 className="text-md text-gray-500 mt-1">{product.Category}</h2>
             <div className="flex items-center space-x-1 text-black mt-2">
               <div className="flex">
                 {renderStars(parseFloat(ratingStats.averageRating))}
@@ -812,17 +810,25 @@ function ProductDetailedPage() {
                 <p className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
                   Quantity:
                 </p>
-                <div className="flex justify-center items-center border border-gray-300 rounded-md w-fit mx-auto">
+                <div
+                  className="flex justify-center items-center border border-gray-300 rounded-md w-fit mx-auto"
+                  role="group"
+                  aria-label="Product quantity"
+                >
                   <button
                     className="p-3 text-sm font-bold text-gray-700 hover:bg-gray-100 transition"
                     onClick={() => handleQuantityChange(-1)}
+                    aria-label="Decrease quantity"
                   >
                     -
                   </button>
-                  <span className="px-6  text-lg font-medium">{quantity}</span>
+                  <span className="px-6 text-lg font-medium" aria-live="polite">
+                    {quantity}
+                  </span>
                   <button
                     className="p-3 text-sm font-bold text-gray-700 hover:bg-gray-100 transition"
                     onClick={() => handleQuantityChange(1)}
+                    aria-label="Increase quantity"
                   >
                     +
                   </button>
@@ -847,6 +853,7 @@ function ProductDetailedPage() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => addToCompare(product)}
+                  aria-label="Add to compare list"
                 >
                   <FontAwesomeIcon
                     icon={faCodeCompare}
@@ -984,6 +991,8 @@ function ProductDetailedPage() {
                       <div
                         className="flex space-x-1 text-xl"
                         onMouseLeave={handleMouseLeave}
+                        role="radiogroup"
+                        aria-label="Product rating"
                       >
                         {[1, 2, 3, 4, 5].map((star) => (
                           <FontAwesomeIcon
@@ -996,6 +1005,15 @@ function ProductDetailedPage() {
                             }`}
                             onMouseEnter={() => handleStarHover(star)}
                             onClick={() => handleStarClick(star)}
+                            role="radio"
+                            aria-checked={star === userRating}
+                            aria-label={`${star} star${star !== 1 ? 's' : ''}`}
+                            tabIndex={0}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                handleStarClick(star);
+                              }
+                            }}
                           />
                         ))}
                       </div>
@@ -1033,6 +1051,7 @@ function ProductDetailedPage() {
                               type="button"
                               className="absolute top-1 right-1 bg-white rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition"
                               onClick={() => removeImage(index)}
+                              aria-label="Remove image"
                             >
                               <svg
                                 className="w-4 h-4 text-gray-700"
@@ -1056,6 +1075,7 @@ function ProductDetailedPage() {
                             type="button"
                             onClick={() => fileInputRef.current.click()}
                             className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center hover:border-gray-400 transition"
+                            aria-label="Upload product review image"
                           >
                             <svg
                               className="w-6 h-6 text-gray-500"
@@ -1085,7 +1105,7 @@ function ProductDetailedPage() {
 
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition disabled:opacity-50"
+                      className="px-6 py-2 bg-emerald-800 text-white rounded-full hover:bg-emerald-900 transition disabled:opacity-50"
                       disabled={isSubmittingReview}
                     >
                       {isSubmittingReview ? (
