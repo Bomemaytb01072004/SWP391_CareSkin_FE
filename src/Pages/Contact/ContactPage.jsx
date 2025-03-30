@@ -282,11 +282,11 @@ function ContactPage() {
                         'bold italic backcolor | alignleft aligncenter ' +
                         'alignright alignjustify | bullist numlist outdent indent | ' +
                         'image | removeformat | help',
-                      // Add image upload handler
                       images_upload_handler: handleImageUpload,
-                      // Prevent automatic base64 encoding
                       automatic_uploads: false,
                       paste_data_images: true,
+                      resize: false, // Disable the resize handle entirely
+                      statusbar: false, // Hide the status bar which contains the resize handle
                     }}
                   />
                 </div>
