@@ -3,6 +3,7 @@ import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { generateBlogSlug } from '../../utils/urlUtils';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function BlogPage() {
@@ -121,31 +122,19 @@ function BlogPage() {
 
   // Function to format just the date part
   const formatDateOnly = (dateString) => {
-    if (!dateString || dateString === 'string') return 'No date';
+    if (!dateString || dateString === 'string') {
+      return 'No date available';
+    }
 
     try {
-      // Handle the new format "MM/DD/YYYY hh:mm:ss AM/PM"
-      if (dateString.includes('/')) {
-        const datePart = dateString.split(' ')[0]; // MM/DD/YYYY
-        const [month, day, year] = datePart.split('/');
-        const date = new Date(`${year}-${month}-${day}`);
-
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-      }
-      // Handle ISO date format
-      else {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-      }
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(date);
     } catch (error) {
+      console.error('Date formatting error:', error);
       return 'Invalid date';
     }
   };
@@ -407,7 +396,10 @@ function BlogPage() {
               >
                 {/* Blog Image with enhanced hover effect */}
                 <div className="relative h-56 overflow-hidden group">
-                  <Link to={`/blog/${blog.BlogId}`} className="block h-full">
+                  <Link
+                    to={`/blog/${generateBlogSlug(blog)}`}
+                    className="block h-full"
+                  >
                     {blog.PictureUrl ? (
                       <img
                         src={blog.PictureUrl}
@@ -498,7 +490,10 @@ function BlogPage() {
                   </div>
 
                   {/* Title with link - Enhanced hover */}
-                  <Link to={`/blog/${blog.BlogId}`} className="group">
+                  <Link
+                    to={`/blog/${generateBlogSlug(blog)}`}
+                    className="group"
+                  >
                     <h2 className="text-xl font-semibold mb-3 line-clamp-2 text-gray-800 group-hover:text-emerald-600 transition-colors">
                       {blog.Title !== 'string' ? blog.Title : 'Untitled Blog'}
                     </h2>
@@ -514,16 +509,18 @@ function BlogPage() {
                   {/* Bottom section with Enhanced Read More Button */}
                   <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
                     <Link
-                      to={`/blog/${blog.BlogId}`}
+                      to={`/blog/${generateBlogSlug(blog)}`}
                       className="group inline-flex items-center justify-center text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+                      aria-label={`Read more about ${blog.Title}`}
                     >
-                      Read More
+                      Read article
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-4 w-4 ml-1 transform transition-transform duration-300 group-hover:translate-x-1.5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -724,7 +721,7 @@ function BlogPage() {
                 >
                   <path
                     fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                     clipRule="evenodd"
                   />
                 </svg>
@@ -737,7 +734,7 @@ function BlogPage() {
       <Footer />
 
       {/* Add this CSS to your global styles or in a style tag */}
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         @keyframes blob {
           0% {
             transform: translate(0px, 0px) scale(1);

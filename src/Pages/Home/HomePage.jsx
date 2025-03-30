@@ -31,6 +31,7 @@ import {
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom'; // Import Link for navigation
+import { generateBlogSlug } from '../../utils/urlUtils';
 
 function HomePage() {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -381,7 +382,7 @@ function HomePage() {
               >
                 <Link
                   to="/skinquiz"
-                  className="px-6 py-4 bg-emerald-800 text-white rounded-full shadow-md hover:bg-emerald-900 transition text-base font-medium inline-block"
+                  className="px-6 py-4 bg-emerald-700 text-white rounded-full shadow-md hover:bg-emerald-900 transition text-base font-medium inline-block"
                 >
                   Take Skin Quiz
                 </Link>
@@ -392,7 +393,7 @@ function HomePage() {
               >
                 <Link
                   to="/products"
-                  className="px-6 py-4 border-2 border-emerald-800 text-emerald-800 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium inline-block"
+                  className="px-6 py-4 border-2 border-emerald-700 text-emerald-700 rounded-full shadow-sm hover:bg-emerald-50 transition text-base font-medium inline-block"
                 >
                   Shop Products
                 </Link>
@@ -604,7 +605,7 @@ function HomePage() {
                     className={`h-2 rounded-full transition-all ${
                       index ===
                       Math.floor(currentSkinTypeIndex / skinTypesPerPage)
-                        ? 'w-6 bg-emerald-800' // Darker color for better contrast
+                        ? 'w-6 bg-emerald-700' // Darker color for better contrast
                         : 'w-2 bg-emerald-300' // Darker color for better contrast
                     }`}
                     onClick={() =>
@@ -764,7 +765,7 @@ function HomePage() {
                     className={`h-2 rounded-full transition-all ${
                       index ===
                       Math.floor(currentCategoryIndex / categoriesPerPage)
-                        ? 'w-6 bg-emerald-800' // Darker color for better contrast
+                        ? 'w-6 bg-emerald-700' // Darker color for better contrast
                         : 'w-2 bg-emerald-300' // Darker color for better contrast
                     }`}
                     onClick={() =>
@@ -967,7 +968,7 @@ function HomePage() {
                 >
                   {/* Blog Image with enhanced hover effect */}
                   <div className="relative h-56 overflow-hidden group">
-                    <Link to={`/blog/${blog.BlogId}`}>
+                    <Link to={`/blog/${generateBlogSlug(blog)}`}>
                       <img
                         src={
                           blog.PictureUrl && blog.PictureUrl.startsWith('http')
@@ -1040,7 +1041,7 @@ function HomePage() {
                     </div>
 
                     {/* Title */}
-                    <Link to={`/blog/${blog.BlogId}`}>
+                    <Link to={`/blog/${generateBlogSlug(blog)}`}>
                       <h3 className="text-xl font-semibold mb-3 line-clamp-2 text-gray-800 hover:text-emerald-600 transition-colors">
                         {blog.Title}
                       </h3>
@@ -1054,10 +1055,11 @@ function HomePage() {
                     {/* Bottom section with Read More link and time */}
                     <div className="mt-auto flex justify-between items-center pt-4 border-t border-gray-100">
                       <Link
-                        to={`/blog/${blog.BlogId}`}
+                        to={`/blog/${generateBlogSlug(blog)}`}
                         className="group inline-flex items-center justify-center text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+                        aria-label={`Read more about ${blog.Title}`}
                       >
-                        Read More
+                        Read More: {truncateText(blog.Title, 8)}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-4 w-4 ml-1 group-hover:translate-x-1.5 transition-transform"
@@ -1165,7 +1167,7 @@ function HomePage() {
             />
             <motion.button
               type="submit"
-              className="px-6 py-3 bg-emerald-800 text-white rounded-r-full hover:bg-emerald-900 transition font-medium"
+              className="px-6 py-3 bg-emerald-700 text-white rounded-r-full hover:bg-emerald-900 transition font-medium"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

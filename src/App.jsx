@@ -53,7 +53,7 @@ export default function App() {
             path="/zalo-confirmation"
             element={<OrderConfirmationZalo />}
           />{' '}
-          <Route path="/blog/:blogId" element={<BlogDetails />} />{' '}
+          <Route path="/blog/:blogSlug" element={<BlogDetails />} />{' '}
           <Route path="/reset-password" element={<ResetPasswordPage />} />{' '}
           <Route
             path="/compare/:product1/:product2"
