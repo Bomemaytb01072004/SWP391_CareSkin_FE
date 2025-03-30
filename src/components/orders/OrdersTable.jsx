@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { fetchOrders } from '../../utils/api';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
   const [orders, setOrders] = useState([]);
@@ -91,6 +93,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         throw new Error(`Failed: ${errorText || response.statusText}`);
       }
 
+      // Update local state
       setFilteredOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.orderId === orderId
@@ -102,14 +105,47 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
             : order
         )
       );
+      
+      // Show success toast with status name
+      const newStatusName = Object.keys(statusClasses)[newStatusId - 1];
+      toast.success(`Order #${orderId} status updated to ${newStatusName}`, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      
       setEditingOrder(null);
     } catch (error) {
       console.error('Failed to update order status:', error);
+      
+      // Show error toast
+      toast.error(`Failed to update order: ${error.message}`, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
   const cancelOrder = (orderId) => {
-    updateOrderStatus(orderId, 5);
+    // Hiển thị hộp thoại xác nhận trước khi hủy
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      updateOrderStatus(orderId, 5);
+      toast.warn(`Order #${orderId} has been cancelled`, {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
   };
 
   const fetchOrderDetails = async (orderId) => {
@@ -268,6 +304,19 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
     >
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-black">Order List</h2>
         <div className="relative">
@@ -332,7 +381,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                   {editingOrder === order.orderId ? (
                     <div className="flex items-center gap-2">
                       <select
-                        className="bg-gray-700 text-black p-1 rounded"
+                        className="bg-gray-100 text-black p-1 rounded"
                         defaultValue={order.statusId}
                         onChange={(e) =>
                           updateOrderStatus(
@@ -379,13 +428,13 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                     className="text-yellow-400 hover:text-yellow-300 text-xs"
                     onClick={() => setEditingOrder(order.orderId)}
                   >
-                    Edit
+                    <Edit size={18} />
                   </button>
                   <button
                     className="text-red-400 hover:text-red-300"
                     onClick={() => cancelOrder(order.orderId)}
                   >
-                    Delete
+                     <Trash2 size={18} />
                   </button>
                 </td>
               </motion.tr>

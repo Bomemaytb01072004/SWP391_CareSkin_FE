@@ -107,7 +107,7 @@ const EditSkinTypeModal = ({ editSkinTypeState, setEditSkinType, handleEdit, onC
           </div>
 
           {/* Active Status */}
-          <div>
+          {/* <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-black">
               <input
                 type="checkbox"
@@ -118,7 +118,7 @@ const EditSkinTypeModal = ({ editSkinTypeState, setEditSkinType, handleEdit, onC
               />
               <span>Active (will be visible to users)</span>
             </label>
-          </div>
+          </div> */}
 
           {/* Submit Buttons */}
           <div className="flex justify-end pt-4 space-x-3">

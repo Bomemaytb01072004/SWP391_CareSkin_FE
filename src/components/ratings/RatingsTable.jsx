@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Star, Eye, Trash, Search } from 'lucide-react';
+import { Star, Eye, Search, Trash2 } from 'lucide-react';
 import { deleteRating } from '../../utils/apiOfRating';
 import ViewRatingModal from './ViewRatingModal';
+import PaginationAdmin from '../../components/Pagination/PaginationAdmin';
 
 const RatingsTable = ({ ratings, refetchRatings }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +20,7 @@ const RatingsTable = ({ ratings, refetchRatings }) => {
     // Then filter by search term (product name or feedback text)
     const term = searchTerm.toLowerCase();
     const filtered = sorted.filter(
-      (rating) => 
+      (rating) =>
         (rating.ProductName && rating.ProductName.toLowerCase().includes(term)) ||
         (rating.FeedBack && rating.FeedBack.toLowerCase().includes(term))
     );
@@ -66,9 +67,9 @@ const RatingsTable = ({ ratings, refetchRatings }) => {
       />
     ));
   };
-  
+
   const getRatingStatusBadge = (rating) => {
-    const isActive = !!rating.IsActive; 
+    const isActive = !!rating.IsActive;
     return (
       <span
         className={`px-2 py-1 rounded-full text-xs ${isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
@@ -158,13 +159,13 @@ const RatingsTable = ({ ratings, refetchRatings }) => {
                         onClick={() => handleView(rating)}
                         className="text-blue-600 hover:text-blue-400 p-1 rounded-full hover:bg-gray-200 transition"
                       >
-                        <Eye size={16} />
+                        <Eye size={18} />
                       </button>
                       <button
                         onClick={() => handleDelete(rating.RatingFeedbackId)}
                         className="text-red-600 hover:text-red-400 p-1 rounded-full hover:bg-gray-200 transition"
                       >
-                        <Trash size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </td>
@@ -183,33 +184,12 @@ const RatingsTable = ({ ratings, refetchRatings }) => {
 
       {/* Pagination */}
       {filteredRatings.length > 0 && (
-        <div className="flex justify-center my-4 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 mx-2 rounded-lg ${currentPage === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-black'}`}
-          >
-            Previous
-          </button>
-
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg ${currentPage === i + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className={`px-4 py-2 mx-2 rounded-lg ${currentPage === totalPages ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-black'}`}
-          >
-            Next
-          </button>
-        </div>
+        <PaginationAdmin
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          theme="blue"
+        />
       )}
 
       {/* View Modal */}

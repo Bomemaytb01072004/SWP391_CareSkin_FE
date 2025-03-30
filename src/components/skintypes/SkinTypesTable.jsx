@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Search, Trash2, PlusCircle, Eye, Power } from 'lucide-react';
+import { Edit, Search, Trash2, PlusCircle, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import CreateSkinTypeModal from './CreateSkinTypeModal';
@@ -382,7 +382,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-3">
                         <button
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-blue-600 hover:text-blue-400 p-1 rounded-full hover:bg-gray-200 transition"
                           onClick={() => handleOpenViewModal(skinType)}
                           title="View skin type"
                         >
@@ -395,13 +395,13 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                         >
                           <Edit size={18} />
                         </button>
-                        <button
+                        {/* <button
                           className={`${skinType.IsActive ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}`}
                           onClick={() => handleToggleActive(skinType)}
                           title={skinType.IsActive ? 'Deactivate skin type' : 'Activate skin type'}
                         >
                           <Power size={18} />
-                        </button>
+                        </button> */}
                         <button
                           className="text-red-400 hover:text-red-300"
                           onClick={() => handleDelete(skinType.SkinTypeId)}
