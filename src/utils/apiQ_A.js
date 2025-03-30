@@ -159,17 +159,11 @@ export const deleteQuiz = async (id) => {
       }
     }
 
-    // Check if there's content to parse
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json") && response.status !== 204) {
-      return await response.json();
-    }
-    
-    // If no content or not JSON, just return success
-    return { success: true };
+    // Trả về thành công cho các trường hợp khác
+    return { success: true, message: "Quiz deleted successfully" };
   } catch (error) {
-    console.error("Error deleting quiz:", error);
-    throw error;
+    console.error("Error in deleteQuiz function:", error);
+    throw error; // Ném lại lỗi để hàm gọi có thể xử lý
   }
 };
 

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Trash2, Edit } from 'lucide-react';
-import { fetchCustomers } from '../../utils/api';
-import EditUserForm from './EditUserForm';
+
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Search, Trash2, Edit } from "lucide-react";
+import { fetchCustomers } from "../../utils/api";
+import EditUserForm from "./EditUserForm";
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const UsersTable = ({ customers }) => {
@@ -13,9 +15,10 @@ const UsersTable = ({ customers }) => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
 
-  useEffect(() => {
-    setLocalCustomers(customers);
-  }, [customers]);
+    useEffect(() => {
+        setLocalCustomers(customers);
+    }, [customers]);
+
 
   useEffect(() => {
     (async () => {
@@ -168,123 +171,92 @@ const UsersTable = ({ customers }) => {
               </tr>
             </thead>
 
-            <tbody className="bg-white divide-y divide-gray-300">
-              {currentUsers.map((customer) => (
-                <motion.tr
-                  key={customer.CustomerId}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold">
-                      {customer.PictureUrl ? (
-                        <img
-                          src={customer.PictureUrl}
-                          alt={customer.FullName}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span>{customer.FullName.charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-black">
-                      {customer.FullName}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">
-                      {customer.Email}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {customer.Gender && customer.Gender !== 'Unknown'
-                        ? customer.Gender
-                        : 'Not specified'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-700">
-                      {customer.Dob ? customer.Dob : 'Not provided'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        customer.IsActive
-                          ? 'bg-green-800 text-green-100'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {customer.IsActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <button
-                      onClick={() => handleEdit(customer.CustomerId)}
-                      className="text-blue-600 hover:text-blue-400 mr-2"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-400"
-                      onClick={() => handleDelete(customer.CustomerId)}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <tbody className="bg-white divide-y divide-gray-300">
+                            {currentUsers.map((customer) => (
+                                <motion.tr
+                                    key={customer.CustomerId}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold">
+                                            {customer.PictureUrl ? (
+                                                <img
+                                                    src={customer.PictureUrl}
+                                                    alt={customer.FullName}
+                                                    className="h-10 w-10 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <span>
+                                                    {customer.FullName.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-black">
+                                            {customer.FullName}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm text-gray-700">
+                                            {customer.Email}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            {customer.Gender && customer.Gender !== "Unknown"
+                                                ? customer.Gender
+                                                : "Not specified"}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm text-gray-700">
+                                            {customer.Dob ? customer.Dob : "Not provided"}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${customer.IsActive ? 'bg-green-800 text-green-100' : 'bg-red-100 text-red-800'
+                                                }`}
+                                        >
+                                            {customer.IsActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                        <button
+                                            onClick={() => handleEdit(customer.CustomerId)}
+                                            className="text-blue-600 hover:text-blue-400 mr-2"
+                                        >
+                                            <Edit size={18} />
+                                        </button>
+                                        <button
+                                            className="text-red-600 hover:text-red-400"
+                                            onClick={() => handleDelete(customer.CustomerId)}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </td>
+                                </motion.tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center mt-4 space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 mx-2 rounded-lg ${
-              currentPage === 1
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-200 text-black'
-            }`}
-          >
-            Previous
-          </button>
-
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i + 1}
-              onClick={() => handlePageChange(i + 1)}
-              className={`px-4 py-2 rounded-lg ${
-                currentPage === i + 1
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-black'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className={`px-4 py-2 mx-2 rounded-lg ${
-              currentPage === totalPages
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-200 text-black'
-            }`}
-          >
-            Next
-          </button>
-        </div>
-      </motion.div>
-    </>
-  );
+                {/* Pagination */}
+                <div className="p-4 border-t border-gray-300">
+                    <PaginationAdmin
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        theme="blue"
+                        maxVisiblePages={5}
+                    />
+                </div>
+            </motion.div>
+        </>
+    );
 };
 
 export default UsersTable;

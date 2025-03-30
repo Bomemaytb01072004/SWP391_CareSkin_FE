@@ -29,13 +29,26 @@ function EditProductModal({
 }) {
     if (!editProductState) return null;
 
+    // Thêm danh sách các danh mục phổ biến
+    const popularCategories = [
+        "Cleanser",
+        "Toner",
+        "Moisturiser",
+        "Serum",
+        "Sunscreen",
+    ];
+
     return (
         <div
             className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[9999]"
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-4xl max-h-[100vh] overflow-y-scroll z-[10000]"
+                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-7xl max-h-[100vh] overflow-y-scroll z-[10000]"
+                style={{
+                    top: '10%',
+                    transform: "translateY(-20%)",
+                }}
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
@@ -48,180 +61,216 @@ function EditProductModal({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                    <input
-                        type="text"
-                        placeholder="ProductName"
-                        className="p-2 border border-gray-300 text-gray-900 rounded-lg"
-                        value={editProductState.ProductName || ''}
-                        autoFocus
-                        onChange={(e) =>
-                            setEditProduct({ ...editProductState, ProductName: e.target.value })
-                        }
-                    />
-                    <input
-                        type="text"
-                        placeholder="Category"
-                        className="p-2 border border-gray-300 text-gray-900 rounded-lg"
-                        value={editProductState.Category || ''}
-                        onChange={(e) =>
-                            setEditProduct({ ...editProductState, Category: e.target.value })
-                        }
-                    />
-
-                    <div className="relative col-span-2">
-                        <label className="block mb-1 text-gray-700 font-semibold">Brand</label>
+                    {/* Product Name */}
+                    <div className="flex flex-col">
+                        <label className="block mb-1 text-gray-700 font-semibold">
+                            Product Name
+                        </label>
                         <input
                             type="text"
-                            placeholder="Search brand name..."
-                            className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg"
-                            value={brandNameInputEdit}
+                            placeholder="ProductName"
+                            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                            value={editProductState.ProductName || ''}
+                            autoFocus
+                            onChange={(e) =>
+                                setEditProduct({ ...editProductState, ProductName: e.target.value })
+                            }
+                        />
+                    </div>
+
+                    {/* Category - Updated with suggestions */}
+                    <div className="flex flex-col relative">
+                        <label className="block mb-1 text-gray-700 font-semibold">
+                            Category
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Category"
+                            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                            value={editProductState.Category || ''}
                             onChange={(e) => {
                                 const val = e.target.value;
-                                setBrandNameInputEdit(val);
-                                setShowBrandSuggestionsEdit(!!val);
-                                setEditProduct((prev) => ({
-                                    ...prev,
-                                    BrandName: val,
-                                }));
+                                setEditProduct({ ...editProductState, Category: val });
+                                // Hiển thị gợi ý khi có giá trị
+                                setShowBrandSuggestionsEdit(true); // Sử dụng state hiện có cho brand
                             }}
                         />
-                        {showBrandSuggestionsEdit && brandNameInputEdit && (
-                            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto z-10">
-                                {brandList
-                                    .filter((b) =>
-                                        b.Name.toLowerCase().includes(brandNameInputEdit.toLowerCase())
+                        {showBrandSuggestionsEdit && editProductState.Category && (
+                            <ul className="absolute mt-[70px] w-full text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
+                                {popularCategories
+                                    .filter((cat) =>
+                                        cat.toLowerCase().includes(editProductState.Category.toLowerCase())
                                     )
-                                    .map((brand) => (
+                                    .map((category, index) => (
                                         <li
-                                            key={brand.BrandId}
+                                            key={index}
                                             className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
-                                                setEditProduct((prev) => ({
-                                                    ...prev,
-                                                    BrandName: brand.Name,
-                                                    BrandId: brand.BrandId,
-                                                }));
-                                                setBrandNameInputEdit(brand.Name);
+                                                setEditProduct({ ...editProductState, Category: category });
                                                 setShowBrandSuggestionsEdit(false);
                                             }}
                                         >
-                                            {brand.Name}
+                                            {category}
                                         </li>
                                     ))}
                             </ul>
                         )}
                     </div>
+                </div>
 
-                    <div className="relative col-span-2">
-                        <label className="block mb-1 text-gray-700 font-semibold">Image</label>
-                        <div className="flex flex-row items-center gap-4">
-                            {previewUrlEdit ? (
-                                <a
-                                    href={previewUrlEdit}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block w-40 h-40 border border-gray-300"
-                                >
-                                    <img
-                                        src={previewUrlEdit}
-                                        alt="Preview new upload"
-                                        className="w-full h-full object-cover rounded"
-                                    />
-                                </a>
-                            ) : editProductState.PictureUrl ? (
-                                <Link
-                                    to={editProductState.PictureUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-block w-40 h-40 border border-gray-300"
-                                >
-                                    <img
-                                        src={editProductState.PictureUrl}
-                                        alt="Current product image"
-                                        className="w-full h-full object-cover rounded"
-                                    />
-                                </Link>
-                            ) : (
-                                <span className="text-sm text-gray-500">No image available</span>
-                            )}
+                <div className="relative col-span-2">
+                    <label className="block mb-1 text-gray-700 font-semibold">Brand</label>
+                    <input
+                        type="text"
+                        placeholder="Search brand name..."
+                        className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg mb-3"
+                        value={brandNameInputEdit}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setBrandNameInputEdit(val);
+                            setShowBrandSuggestionsEdit(!!val);
+                            setEditProduct((prev) => ({
+                                ...prev,
+                                BrandName: val,
+                            }));
+                        }}
+                    />
+                    {showBrandSuggestionsEdit && brandNameInputEdit && (
+                        <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-50">
+                            {brandList
+                                .filter((b) =>
+                                    b.Name.toLowerCase().includes(brandNameInputEdit.toLowerCase())
+                                )
+                                .map((brand) => (
+                                    <li
+                                        key={brand.BrandId}
+                                        className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() => {
+                                            setEditProduct((prev) => ({
+                                                ...prev,
+                                                BrandName: brand.Name,
+                                                BrandId: brand.BrandId,
+                                            }));
+                                            setBrandNameInputEdit(brand.Name);
+                                            setShowBrandSuggestionsEdit(false);
+                                        }}
+                                    >
+                                        {brand.Name}
+                                    </li>
+                                ))}
+                        </ul>
+                    )}
+                </div>
 
-                            <label
-                                htmlFor="file-upload-edit"
-                                className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
+                <div className="relative col-span-2">
+                    <label className="block mb-1 text-gray-700 font-semibold">Image</label>
+                    <div className="flex flex-row items-center gap-4 mb-3">
+                        {previewUrlEdit ? (
+                            <a
+                                href={previewUrlEdit}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block w-40 h-40 border border-gray-300"
                             >
-                                <span className="text-2xl text-gray-400">+</span>
-                                <span className="text-sm text-gray-500 mt-1">
-                                    Replace product image
-                                </span>
-                            </label>
+                                <img
+                                    src={previewUrlEdit}
+                                    alt="Preview new upload"
+                                    className="w-full h-full object-cover rounded"
+                                />
+                            </a>
+                        ) : editProductState.PictureUrl ? (
+                            <Link
+                                to={editProductState.PictureUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block w-40 h-40 border border-gray-300"
+                            >
+                                <img
+                                    src={editProductState.PictureUrl}
+                                    alt="Current product image"
+                                    className="w-full h-full object-cover rounded"
+                                />
+                            </Link>
+                        ) : (
+                            <span className="text-sm text-gray-500">No image available</span>
+                        )}
 
-                            <input
-                                id="file-upload-edit"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                        const file = e.target.files[0];
-                                        setEditProduct((prev) => ({
-                                            ...prev,
-                                            PictureFile: file,
-                                        }));
-                                        const preview = URL.createObjectURL(file);
-                                        setPreviewUrlEdit(preview);
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-2 relative col-span-2">
-                        <label className="block mb-1 text-gray-700 font-semibold">
-                            Additional images
+                        <label
+                            htmlFor="file-upload-edit"
+                            className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
+                        >
+                            <span className="text-2xl text-gray-400">+</span>
+                            <span className="text-sm text-gray-500 mt-1">
+                                Replace product image
+                            </span>
                         </label>
-                        <div className="flex flex-row items-center gap-4">
-                            {previewUrlAdditionalImagesEditState.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    {previewUrlAdditionalImagesEditState.map((url, index) => (
-                                        <div
-                                            key={index}
-                                            className="relative w-40 h-40 border border-gray-300 rounded overflow-hidden"
-                                        >
-                                            <div className="inline-block w-40 h-40">
-                                                <img
-                                                    src={url}
-                                                    alt={`Additional ${index}`}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveExistingAdditionalImage(index)}
-                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
 
-                            <label
-                                htmlFor="file-upload-additional-edit"
-                                className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
-                            >
-                                <span className="text-2xl text-gray-400">+</span>
-                                <span className="text-sm text-gray-500 mt-1">Add more image</span>
-                            </label>
-                            <input
-                                id="file-upload-additional-edit"
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                onChange={handleAdditionalImagesChangeEdit}
-                            />
-                        </div>
+                        <input
+                            id="file-upload-edit"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    const file = e.target.files[0];
+                                    setEditProduct((prev) => ({
+                                        ...prev,
+                                        PictureFile: file,
+                                    }));
+                                    const preview = URL.createObjectURL(file);
+                                    setPreviewUrlEdit(preview);
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+
+                <div className="mt-2 relative col-span-2">
+                    <label className="block mb-1 text-gray-700 font-semibold">
+                        Additional images
+                    </label>
+                    <div className="flex flex-row items-center gap-4 mb-3">
+                        {previewUrlAdditionalImagesEditState.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {previewUrlAdditionalImagesEditState.map((url, index) => (
+                                    <div
+                                        key={index}
+                                        className="relative w-40 h-40 border border-gray-300 rounded overflow-hidden"
+                                    >
+                                        <div className="inline-block w-40 h-40">
+                                            <img
+                                                src={url}
+                                                alt={`Additional ${index}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveExistingAdditionalImage(index)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <label
+                            htmlFor="file-upload-additional-edit"
+                            className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
+                        >
+                            <span className="text-2xl text-gray-400">+</span>
+                            <span className="text-sm text-gray-500 mt-1">Add more image</span>
+                        </label>
+                        <input
+                            id="file-upload-additional-edit"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleAdditionalImagesChangeEdit}
+                        />
                     </div>
                 </div>
 
@@ -281,7 +330,7 @@ function EditProductModal({
                             />
 
                             {item.showSuggestions && item.TypeName && (
-                                <ul className="absolute left-0 right-0 z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                                <ul className="absolute mt-20 left-0 right-0 z-100 bg-white border border-gray-300 rounded-lg shadow-lg max-w-[940px] max-h-40 overflow-y-auto">
                                     {skinTypeList
                                         .filter((s) =>
                                             s.TypeName.toLowerCase().includes(item.TypeName.toLowerCase())
@@ -341,40 +390,48 @@ function EditProductModal({
                     </div>
                     {editProductState.Variations?.map((variation, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="number"
-                                step="any"
-                                placeholder="Ml"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={variation.Ml}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.Variations];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Ml: parseFloat(e.target.value) || 0,
-                                        };
-                                        return { ...prev, Variations: updated };
-                                    })
-                                }
-                            />
-                            <input
-                                type="number"
-                                step="any"
-                                placeholder="Price"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={variation.Price}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.Variations];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Price: parseFloat(e.target.value) || 0,
-                                        };
-                                        return { ...prev, Variations: updated };
-                                    })
-                                }
-                            />
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Ml</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    placeholder="Ml"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={variation.Ml}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.Variations];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Ml: parseFloat(e.target.value) || 0,
+                                            };
+                                            return { ...prev, Variations: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Price</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    placeholder="Price"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={variation.Price}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.Variations];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Price: parseFloat(e.target.value) || 0,
+                                            };
+                                            return { ...prev, Variations: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
                             <button
                                 onClick={() => {
                                     handleRemoveEditVariation(index)
@@ -411,38 +468,44 @@ function EditProductModal({
                     </div>
                     {editProductState.MainIngredients?.map((ing, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="text"
-                                placeholder="IngredientName"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={ing.IngredientName}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.MainIngredients];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            IngredientName: e.target.value,
-                                        };
-                                        return { ...prev, MainIngredients: updated };
-                                    })
-                                }
-                            />
-                            <input
-                                type="text"
-                                placeholder="Description"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={ing.Description}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.MainIngredients];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Description: e.target.value,
-                                        };
-                                        return { ...prev, MainIngredients: updated };
-                                    })
-                                }
-                            />
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Ingredient Name</label>
+                                <textarea
+                                    placeholder="IngredientName"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded h-24 resize-none overflow-auto"
+                                    value={ing.IngredientName}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.MainIngredients];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                IngredientName: e.target.value,
+                                            };
+                                            return { ...prev, MainIngredients: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Description</label>
+                                <textarea
+                                    placeholder="Description"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded h-24 resize-none overflow-auto"
+                                    value={ing.Description}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.MainIngredients];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Description: e.target.value,
+                                            };
+                                            return { ...prev, MainIngredients: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
                             <button
                                 onClick={() => {
                                     handleRemoveEditMainIngredient(index)
@@ -475,22 +538,25 @@ function EditProductModal({
                     </div>
                     {editProductState.DetailIngredients?.map((ing, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="text"
-                                placeholder="IngredientName"
-                                className="w-full p-1 border border-gray-300 text-gray-900 rounded"
-                                value={ing.IngredientName}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.DetailIngredients];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            IngredientName: e.target.value,
-                                        };
-                                        return { ...prev, DetailIngredients: updated };
-                                    })
-                                }
-                            />
+                            <div className="flex flex-col w-full">
+                                <label className="text-sm font-medium text-gray-700">Ingredient Name</label>
+                                <textarea
+                                    placeholder="IngredientName"
+                                    className="w-full p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={ing.IngredientName}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.DetailIngredients];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                IngredientName: e.target.value,
+                                            };
+                                            return { ...prev, DetailIngredients: updated };
+                                        })
+                                    }
+                                    rows={2}
+                                />
+                            </div>
                             <button
                                 onClick={() => {
                                     handleRemoveEditDetailIngredient(index)
@@ -523,39 +589,47 @@ function EditProductModal({
                     </div>
                     {editProductState.Usages?.map((usage, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
-                            <input
-                                type="number"
-                                step="any"
-                                placeholder="Step"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={usage.Step}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.Usages];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Step: parseInt(e.target.value) || 1,
-                                        };
-                                        return { ...prev, Usages: updated };
-                                    })
-                                }
-                            />
-                            <input
-                                type="text"
-                                placeholder="Instruction"
-                                className="w-1/2 p-1 border border-gray-300 text-gray-900 rounded"
-                                value={usage.Instruction}
-                                onChange={(e) =>
-                                    setEditProduct((prev) => {
-                                        const updated = [...prev.Usages];
-                                        updated[index] = {
-                                            ...updated[index],
-                                            Instruction: e.target.value,
-                                        };
-                                        return { ...prev, Usages: updated };
-                                    })
-                                }
-                            />
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Step</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    placeholder="Step"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={usage.Step}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.Usages];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Step: parseInt(e.target.value) || 1,
+                                            };
+                                            return { ...prev, Usages: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
+                            <div className="flex flex-col w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Instruction</label>
+                                <input
+                                    type="text"
+                                    placeholder="Instruction"
+                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    value={usage.Instruction}
+                                    onChange={(e) =>
+                                        setEditProduct((prev) => {
+                                            const updated = [...prev.Usages];
+                                            updated[index] = {
+                                                ...updated[index],
+                                                Instruction: e.target.value,
+                                            };
+                                            return { ...prev, Usages: updated };
+                                        })
+                                    }
+                                />
+                            </div>
+
                             <button
                                 onClick={() => {
                                     handleRemoveEditUsage(index)

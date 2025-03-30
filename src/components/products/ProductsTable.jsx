@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import CreateProductModal from './CreateProductModal';
 import EditProductModal from './EditProductModal';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 import {
   createProduct,
@@ -506,59 +507,59 @@ const getProductStatusBadge = (product) => {
     }
   };
 
-  const renderPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 3;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  // const renderPageNumbers = () => {
+  //   const pages = [];
+  //   const maxVisiblePages = 3;
+  //   let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  //   let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
+  //   if (endPage - startPage + 1 < maxVisiblePages) {
+  //     startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  //   }
 
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key="page-1"
-          onClick={() => handlePageChange(1)}
-          className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-700'}`}
-        >
-          1
-        </button>
-      );
-      if (startPage > 2) {
-        pages.push(<span key="start-ellipsis" className="px-2 py-2">...</span>);
-      }
-    }
+  //   if (startPage > 1) {
+  //     pages.push(
+  //       <button
+  //         key="page-1"
+  //         onClick={() => handlePageChange(1)}
+  //         className={`px-4 py-2 rounded-lg ${currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-700'}`}
+  //       >
+  //         1
+  //       </button>
+  //     );
+  //     if (startPage > 2) {
+  //       pages.push(<span key="start-ellipsis" className="px-2 py-2">...</span>);
+  //     }
+  //   }
 
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={`page-${i}`}
-          onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
-        >
-          {i}
-        </button>
-      );
-    }
+  //   for (let i = startPage; i <= endPage; i++) {
+  //     pages.push(
+  //       <button
+  //         key={`page-${i}`}
+  //         onClick={() => handlePageChange(i)}
+  //         className={`px-4 py-2 rounded-lg ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+  //       >
+  //         {i}
+  //       </button>
+  //     );
+  //   }
 
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        pages.push(<span key="end-ellipsis" className="px-2 py-2">...</span>);
-      }
-      pages.push(
-        <button
-          key={`page-${totalPages}`}
-          onClick={() => handlePageChange(totalPages)}
-          className={`px-4 py-2 rounded-lg ${currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
-        >
-          {totalPages}
-        </button>
-      );
-    }
-    return pages;
-  };
+  //   if (endPage < totalPages) {
+  //     if (endPage < totalPages - 1) {
+  //       pages.push(<span key="end-ellipsis" className="px-2 py-2">...</span>);
+  //     }
+  //     pages.push(
+  //       <button
+  //         key={`page-${totalPages}`}
+  //         onClick={() => handlePageChange(totalPages)}
+  //         className={`px-4 py-2 rounded-lg ${currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+  //       >
+  //         {totalPages}
+  //       </button>
+  //     );
+  //   }
+  //   return pages;
+  // };
 
   return (
     <motion.div
@@ -736,29 +737,13 @@ const getProductStatusBadge = (product) => {
         </table>
       </div>
 
-      <div className="flex justify-center mt-4 space-x-2">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 mx-2 rounded-lg ${currentPage === 1
-            ? 'bg-gray-100 text-gray-700 cursor-not-allowed'
-            : 'bg-gray-100 text-gray'
-            }`}
-        >
-          Previous
-        </button>
-        {renderPageNumbers()}
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 mx-2 rounded-lg ${currentPage === totalPages
-            ? 'bg-gray-100 text-gray-700 cursor-not-allowed'
-            : 'bg-gray-100 text-gray'
-            }`}
-        >
-          Next
-        </button>
-      </div>
+      <PaginationAdmin
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        theme="blue"
+        maxVisiblePages={8}
+      />
 
       <div className="mt-10 grid grid-col-1 lg:grid-cols-2 gap-8 z-0">
         <SalesTrendChart />

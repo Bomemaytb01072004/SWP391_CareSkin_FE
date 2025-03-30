@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import CreatePromotionModal from './CreatePromotionModal';
 import EditPromotionModal from './EditPromotionModal';
 import ProductDiscountModal from './ProductDiscountModal';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 import {
   createPromotion,
@@ -193,7 +194,7 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
       EndDate: promotion.EndDate,
       ApplicableProducts: promotion.ApplicableProducts || []
     };
-    
+
     console.log('Opening edit modal with state:', editState);
     setEditPromotion(editState);
     setIsEditModalOpen(true);
@@ -201,10 +202,10 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
 
   const handleEdit = async () => {
     if (!editPromotionState) return;
-    
+
     // Log the current state for debugging
     console.log('Editing promotion with state:', editPromotionState);
-    
+
     if (
       !editPromotionState.Name ||
       !editPromotionState.StartDate ||
@@ -222,7 +223,7 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         ...editPromotionState,
         PromotionName: editPromotionState.Name, // Map Name to PromotionName for API
       };
-      
+
       const updated = await updatePromotion(editPromotionState.PromotionId, promotionData);
       setLocalPromotions((prev) => prev.map((p) => (p.PromotionId === updated.PromotionId ? updated : p)));
       toast.success('Promotion updated successfully!');
@@ -464,13 +465,6 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
                   >
                     <Power size={18} />
                   </button>
-                  {/* <button
-                    className="text-red-600 hover:text-red-500"
-                    onClick={() => handleDelete(promotion.PromotionId)}
-                    title="Delete promotion"
-                  >
-                    <Trash2 size={18} />
-                  </button> */}
                 </td>
               </motion.tr>
             ))}
@@ -478,28 +472,14 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         </table>
       </div>
 
-      <div className="flex justify-center mt-4 space-x-2">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 mx-2 rounded-lg ${
-            currentPage === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-black'
-          }`}
-        >
-          Previous
-        </button>
-        {renderPageNumbers()}
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === Math.ceil(filteredPromotions.length / productsPerPage)}
-          className={`px-4 py-2 mx-2 rounded-lg ${
-            currentPage === Math.ceil(filteredPromotions.length / productsPerPage)
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gray-200 text-black'
-          }`}
-        >
-          Next
-        </button>
+      <div className="p-4 border-t border-gray-300 flex justify-center">
+        <PaginationAdmin
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredPromotions.length / productsPerPage)}
+          onPageChange={handlePageChange}
+          theme="blue"
+          maxVisiblePages={5}
+        />
       </div>
     </motion.div>
   );

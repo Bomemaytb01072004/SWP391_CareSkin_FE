@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import CreateBlogModal from "./CreateBlogModal";
 import EditBlogModal from "./EditBlogModal";
 import ViewBlogModal from "./ViewBlogModal";
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 import { createBlog, updateBlog, deleteBlog } from "../../utils/api";
 
@@ -119,7 +120,7 @@ const BlogsTable = ({ blogs, refetchBlogs }) => {
         }
       } catch (error) {
         console.error("Failed to delete blog:", error);
-    console.log("Blog ID to delete:", id); // Log giá trị id để kiểm tra
+        console.log("Blog ID to delete:", id); // Log giá trị id để kiểm tra
         toast.error("Error deleting blog!");
       }
     }
@@ -321,37 +322,18 @@ const BlogsTable = ({ blogs, refetchBlogs }) => {
           </table>
         </div>
       </div>
-
       {filteredBlogs.length > blogsPerPage && (
-        <div className="flex justify-center mt-4">
-          <nav className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="px-3 py-1 rounded-md bg-gray-100 text-black hover:bg-gray-200 disabled:opacity-50"
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-            {Array.from({ length: Math.ceil(filteredBlogs.length / blogsPerPage) }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => handlePageChange(i + 1)}
-                className={`px-3 py-1 rounded-md ${currentPage === i + 1 ? "bg-blue-600 text-white" : "bg-gray-100 text-black hover:bg-gray-200"
-                  }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              className="px-3 py-1 rounded-md bg-gray-100 text-black hover:bg-gray-200 disabled:opacity-50"
-              disabled={currentPage === Math.ceil(filteredBlogs.length / blogsPerPage)}
-            >
-              Next
-            </button>
-          </nav>
-        </div>
-      )}
+          <div className="mb-20 p-4 flex justify-center">
+            <PaginationAdmin
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredBlogs.length / blogsPerPage)}
+              onPageChange={handlePageChange}
+              theme="blue"
+              maxVisiblePages={5}
+            />
+          </div>
+        )}
+      
 
       {isModalOpen && (
         <CreateBlogModal
