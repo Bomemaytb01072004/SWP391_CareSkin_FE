@@ -296,23 +296,20 @@ export const updateQuestion = async (questionId, questionData) => {
 // Delete question
 export const deleteQuestion = async (questionId) => {
   try {
-    const response = await fetch(`${Q_A_URL}/questions/${questionId}`, {
-      method: "DELETE",
+    const response = await fetch(`${API_BASE_URL}/Q_A/questions/${questionId}`, {
+      method: 'DELETE',
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      try {
-        const errorData = JSON.parse(errorText);
-        throw new Error(errorData.message || `Failed to delete question`);
-      } catch (e) {
-        throw new Error(`Failed to delete question: ${errorText || response.statusText}`);
-      }
+      console.error(`Failed to delete question: ${errorText}`);
+      throw new Error(`Failed to delete question: ${response.statusText}`);
     }
 
-    return await response.json();
+    console.log(`Question with ID ${questionId} deleted successfully`);
+    return response; // Trả về phản hồi để kiểm tra
   } catch (error) {
-    console.error("Error deleting question:", error);
+    console.error('Error in deleteQuestion API:', error);
     throw error;
   }
 };
@@ -423,6 +420,10 @@ export const deleteAnswer = async (answerId) => {
     const response = await fetch(`${Q_A_URL}/answers/${answerId}`, {
       method: "DELETE",
     });
+
+    if (response.status === 204) {
+      return;
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -10,6 +10,8 @@ import { CheckCircle2, XCircle, HelpCircle, BarChart } from "lucide-react";
 
 import QuizzesTable from "../../components/quizzes/QuizzesTable";
 import { fetchQuizzes } from "../../utils/apiQ_A";
+import { fetchQuizById } from "../../utils/apiQ_A";
+
 
 const QuizzesPage = () => {
   const [filterStatus, setFilterStatus] = useState("all");
@@ -23,9 +25,9 @@ const QuizzesPage = () => {
     queryKey: ["quizzes"],
     queryFn: fetchQuizzes,
   });
-
-  if (quizzesLoading) return <div>Loading...</div>;
-  if (quizzesError) return <div>Error fetching data</div>;
+  
+  if (quizzesLoading ) return <div>Loading...</div>;
+  if (quizzesError ) return <div>Error fetching data</div>;
 
   // Filter quizzes based on status
   const filteredQuizzes = filterStatus === "all"
@@ -92,7 +94,7 @@ const QuizzesPage = () => {
           </div>
 
           <div className="bg-white shadow-lg rounded-xl p-2 border border-gray-300">
-            <QuizzesTable quizzes={filteredQuizzes} refetchQuizzes={refetchQuizzes} />
+            <QuizzesTable quizzes={filteredQuizzes} quizById={fetchQuizById} refetchQuizzes={refetchQuizzes} />
           </div>
         </main>
       </div>

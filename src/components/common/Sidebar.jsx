@@ -52,9 +52,7 @@ const SIDEBAR_ITEMS = [
 	{ name: "Orders", icon: ShoppingCart, color: "#F97316", href: "/admin/orders" },
 	{ name: "Blogs", icon: ScrollText, color: "#8B5CF6", href: "/admin/blogs" },
 	{ name: "Quizzes", icon: FileText , color: "#06B6D4", href: "/admin/quizzes" },
-	// { name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/admin/analytics" },
 	{ name: "Promotions", icon: TicketPercent, color: "#E11D48", href: "/admin/promotions" },
-	// { name: "Settings", icon: Settings, color: "#64748B", href: "/admin/settings" },
 ];
 
 const Sidebar = () => {
@@ -65,7 +63,7 @@ const Sidebar = () => {
 		<motion.div
 			className={`relative z-10 transition-all duration-300 ease-in-out flex-shrink-0 ${isSidebarOpen ? "w-64" : "w-20"
 				}`}
-			animate={{ width: isSidebarOpen ? 256 : 80 }}
+			animate={{ width: isSidebarOpen ? 256 : 100 }}
 		>
 			<div className='h-full bg-white backdrop-blur-md text-black p-4 flex flex-col border-r border-gray-300'>
 				<motion.button
@@ -77,21 +75,21 @@ const Sidebar = () => {
 					<Menu size={24} />
 				</motion.button>
 
-				<nav className='mt-8 flex-grow'>
+				<nav className="mt-8 flex-grow overflow-y-auto max-h-screen">
 					{SIDEBAR_ITEMS.map((item) => {
 						if (item.children) {
 							return (
 								<div key={item.name}>
 									<motion.div
 										onClick={() => setIsProductsOpen(!isProductsOpen)}
-										className='flex items-center justify-between p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2 cursor-pointer'
+										className="flex items-center justify-between p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2 cursor-pointer"
 									>
-										<div className='flex items-center'>
+										<div className="flex items-center">
 											<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 											<AnimatePresence>
 												{isSidebarOpen && (
 													<motion.span
-														className='ml-4 whitespace-nowrap'
+														className="ml-4 whitespace-nowrap"
 														initial={{ opacity: 0, width: 0 }}
 														animate={{ opacity: 1, width: "auto" }}
 														exit={{ opacity: 0, width: 0 }}
@@ -113,26 +111,38 @@ const Sidebar = () => {
 									</motion.div>
 
 									<AnimatePresence>
-										{isProductsOpen && isSidebarOpen && (
+										{isProductsOpen && (
 											<motion.div
 												initial={{ opacity: 0, height: 0 }}
 												animate={{ opacity: 1, height: "auto" }}
 												exit={{ opacity: 0, height: 0 }}
 												transition={{ duration: 0.2 }}
+												className={`${isSidebarOpen ? "" : "absolute left-full  ml-1 top-40 bg-white shadow-lg rounded-lg p-2"}`}
 											>
 												{item.children.map((child) => (
 													<Link key={child.href} to={child.href}>
-														<motion.div className='flex items-center p-4 ml-3 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2'>
+														<motion.div
+															className={`flex items-center p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2 ${
+																isSidebarOpen ? "ml-3" : ""
+															}`}
+														>
+															{/* Hiển thị icon luôn luôn */}
 															<child.icon size={20} style={{ color: child.color, minWidth: "20px" }} />
-															<motion.span
-																className='ml-4 whitespace-nowrap'
-																initial={{ opacity: 0, width: 0 }}
-																animate={{ opacity: 1, width: "auto" }}
-																exit={{ opacity: 0, width: 0 }}
-																transition={{ duration: 0.2, delay: 0.3 }}
-															>
-																{child.name}
-															</motion.span>
+
+															{/* Hiển thị text có điều kiện theo isSidebarOpen */}
+															<AnimatePresence>
+																{isSidebarOpen && (
+																	<motion.span
+																		className="ml-4 whitespace-nowrap"
+																		initial={{ opacity: 0, width: 0 }}
+																		animate={{ opacity: 1, width: "auto" }}
+																		exit={{ opacity: 0, width: 0 }}
+																		transition={{ duration: 0.2, delay: 0.3 }}
+																	>
+																		{child.name}
+																	</motion.span>
+																)}
+															</AnimatePresence>
 														</motion.div>
 													</Link>
 												))}
@@ -144,12 +154,12 @@ const Sidebar = () => {
 						} else {
 							return (
 								<Link key={item.href} to={item.href}>
-									<motion.div className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2'>
+									<motion.div className="flex items-center p-4 text-sm font-medium rounded-lg hover:bg-blue-300 transition-colors mb-2">
 										<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 										<AnimatePresence>
 											{isSidebarOpen && (
 												<motion.span
-													className='ml-4 whitespace-nowrap'
+													className="ml-4 whitespace-nowrap"
 													initial={{ opacity: 0, width: 0 }}
 													animate={{ opacity: 1, width: "auto" }}
 													exit={{ opacity: 0, width: 0 }}

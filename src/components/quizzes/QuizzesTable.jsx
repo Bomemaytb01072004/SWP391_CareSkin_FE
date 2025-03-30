@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Search, Trash2, PlusCircle, Eye, Power } from 'lucide-react';
+import { Edit, Search, Trash2, PlusCircle, Eye, } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 import CreateQuizModal from './CreateQuizModal';
@@ -12,7 +12,7 @@ import {
   deleteQuiz,
 } from '../../utils/apiQ_A';
 
-const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
+const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) => {
   // -----------------------------------
   // 1) State
   // -----------------------------------
@@ -23,6 +23,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
   const [quizzesPerPage] = useState(8);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [filteredQuizzes, setFilteredQuizzes] = useState([]);
+  const [quizDetails, setQuizDetails] = useState({});
 
   // Edit Quiz
   const [editQuizState, setEditQuiz] = useState(null);
@@ -38,7 +39,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);      // create quiz
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // edit quiz
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); // view quiz
 
   // -----------------------------------
@@ -50,6 +50,38 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
       setLocalQuizzes(quizzes);
     }
   }, [quizzes]);
+
+
+  // Fetch quiz details for displayed quizzes
+  useEffect(() => {
+    const fetchAllQuizDetails = async () => {
+      if (!displayedQuizzes || !quizById) return;
+  
+      try {
+        // Sử dụng Promise.all để gọi đồng thời API cho tất cả quiz trong displayedQuizzes
+        const results = await Promise.all(
+          displayedQuizzes.map((quiz) => quizById(quiz.QuizId))
+        );
+        
+        // Xây dựng đối tượng chứa chi tiết quiz từ kết quả trả về
+        const details = {};
+        displayedQuizzes.forEach((quiz, index) => {
+          const quizDetail = results[index];
+          details[quiz.QuizId] = {
+            questionCount: quizDetail.Questions?.length || 0,
+          };
+        });
+        
+        setQuizDetails(details);
+      } catch (error) {
+        console.error('Error fetching quiz details using Promise.all:', error);
+      }
+    };
+  
+    fetchAllQuizDetails();
+  }, [displayedQuizzes, quizById]);
+  
+  
 
   // Handle search
   useEffect(() => {
@@ -128,30 +160,14 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     setCurrentPage(page);
   };
 
-  // Toggle quiz active status
-  const handleToggleActive = async (quiz) => {
-    try {
-      const updatedQuiz = { ...quiz, IsActive: !quiz.IsActive };
-      await updateQuiz(quiz.QuizId, updatedQuiz);
-
-      // Refetch quizzes from the server
-      refetchQuizzes();
-
-      toast.success(`Quiz ${updatedQuiz.IsActive ? 'activated' : 'deactivated'} successfully!`);
-    } catch (error) {
-      console.error('Failed to toggle quiz status:', error);
-      toast.error('Error updating quiz status!');
-    }
-  };
-
   // Delete quiz
   const handleDelete = async (quizId) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
       try {
         await deleteQuiz(quizId);
 
-        // Refetch quizzes from the server instead of updating local state
         refetchQuizzes();
+        refetchQuizById(quizId);
 
         toast.success('Quiz deleted successfully!');
       } catch (error) {
@@ -161,11 +177,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     }
   };
 
-  // Open Edit modal
-  const handleOpenEditModal = (quiz) => {
-    setEditQuiz({ ...quiz });
-    setIsEditModalOpen(true);
-  };
 
   // Open View modal
   const handleOpenViewModal = (quiz) => {
@@ -173,43 +184,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
     setIsViewModalOpen(true);
   };
 
-  // Submit Edit
-  const handleEdit = async () => {
-    if (!editQuizState) return;
-    if (
-      !editQuizState.Title ||
-      !editQuizState.Description
-    ) {
-      toast.error(
-        'Please fill in all required fields: Title and Description'
-      );
-      return;
-    }
-
-    try {
-      const updated = await updateQuiz(editQuizState.QuizId, {
-        Title: editQuizState.Title,
-        Description: editQuizState.Description,
-        IsActive: editQuizState.IsActive
-      });
-
-      // Update localQuizzes
-      setLocalQuizzes((prev) =>
-        prev.map((quiz) => (quiz.QuizId === updated.QuizId ? updated : quiz))
-      );
-
-      setIsEditModalOpen(false);
-      toast.success('Quiz updated successfully!');
-      refetchQuizzes();
-    } catch (error) {
-      console.error('Failed to update quiz:', error);
-      toast.error('Error updating quiz!');
-    }
-  };
-
   // Add a new quiz
   const handleAddQuiz = async () => {
-    if (!newQuiz.Title || !newQuiz.Description || !newQuiz.Questions || newQuiz.Questions.length === 0) {
+    if (!newQuiz.Title || !newQuiz.Description) {
       toast.error('Please fill in all required fields and add at least one question');
       return;
     }
@@ -233,6 +210,11 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
       if (refetchQuizzes) {
         refetchQuizzes();
       }
+
+      if (refetchQuizById) {
+        refetchQuizById();
+      }
+
     } catch (error) {
       console.error('Failed to create quiz:', error);
       toast.error('Error creating quiz!');
@@ -289,7 +271,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Description
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">
                   Questions
                 </th>
                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-black uppercase tracking-wider">
@@ -303,7 +285,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
             <tbody className="bg-white divide-y divide-gray-300">
               {displayedQuizzes && displayedQuizzes.length > 0 ? (
                 displayedQuizzes.map((quiz) => (
-                  <tr key={quiz.Id} className="hover:bg-gray-100 transition-colors">
+                  <tr key={quiz.QuizId} className="hover:bg-gray-100 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {quiz.Title}
                     </td>
@@ -316,12 +298,12 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                       }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-black text-center">
-                      {quiz.Questions ? quiz.Questions.length : 0}
+                      {quizDetails[quiz.QuizId]?.questionCount || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex justify-center">
                         <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${quiz.IsActive ? 'bg-green-200 text-green-800' : 'bg-red-100 text-red-800'
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${quiz.IsActive ? 'bg-green-200 text-green-800' : 'bg-red-900 text-red-100'
                             }`}
                         >
                           {quiz.IsActive ? 'Active' : 'Inactive'}
@@ -333,9 +315,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
                         <button
                           className="text-blue-600 hover:text-blue-800"
                           onClick={() => handleOpenViewModal(quiz)}
-                          title="View quiz"
+                          title="Edit & View quiz"
                         >
-                          <Eye size={18} />
+                          <Edit size={18} />
                         </button>
                         <button
                           className="text-red-600 hover:text-red-800"
@@ -408,7 +390,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes }) => {
           onClose={() => setIsModalOpen(false)}
         />
       )}
-
 
       {/* View Quiz Modal */}
       {isViewModalOpen && (
