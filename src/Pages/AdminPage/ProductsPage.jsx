@@ -5,7 +5,7 @@ import Header from '../../components/common/Header';
 import StatCard from '../../components/common/StatCard';
 import { ToastContainer } from 'react-toastify';
 
-import { AlertTriangle, DollarSign, Package, TrendingUp, XCircle } from "lucide-react";
+import { DollarSign, Package, TrendingUp, XCircle } from "lucide-react";
 
 import ProductsTable from "../../components/products/ProductsTable";
 import { fetchProducts } from "../../utils/api";

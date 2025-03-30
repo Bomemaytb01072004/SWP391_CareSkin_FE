@@ -4,6 +4,7 @@ import { Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { fetchOrders } from '../../utils/api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
   const [orders, setOrders] = useState([]);
@@ -98,14 +99,14 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         prevOrders.map((order) =>
           order.orderId === orderId
             ? {
-                ...order,
-                statusId: newStatusId,
-                status: Object.keys(statusClasses)[newStatusId - 1],
-              }
+              ...order,
+              statusId: newStatusId,
+              status: Object.keys(statusClasses)[newStatusId - 1],
+            }
             : order
         )
       );
-      
+
       // Show success toast with status name
       const newStatusName = Object.keys(statusClasses)[newStatusId - 1];
       toast.success(`Order #${orderId} status updated to ${newStatusName}`, {
@@ -116,11 +117,11 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         pauseOnHover: true,
         draggable: true,
       });
-      
+
       setEditingOrder(null);
     } catch (error) {
       console.error('Failed to update order status:', error);
-      
+
       // Show error toast
       toast.error(`Failed to update order: ${error.message}`, {
         position: "top-right",
@@ -222,81 +223,6 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
     }
   };
 
-  const renderPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 3;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key={1}
-          onClick={() => handlePageChange(1)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          1
-        </button>
-      );
-      if (startPage > 2) {
-        pages.push(
-          <span key="start-ellipsis" className="px-2 py-2">
-            ...
-          </span>
-        );
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === i
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        pages.push(
-          <span key="end-ellipsis" className="px-2 py-2">
-            ...
-          </span>
-        );
-      }
-      pages.push(
-        <button
-          key={totalPages}
-          onClick={() => handlePageChange(totalPages)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          {totalPages}
-        </button>
-      );
-    }
-
-    return pages;
-  };
-
   return (
     <motion.div
       className="bg-white backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-300"
@@ -316,7 +242,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         pauseOnHover
         theme="light"
       />
-      
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-black">Order List</h2>
         <div className="relative">
@@ -434,7 +360,7 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
                     className="text-red-400 hover:text-red-300"
                     onClick={() => cancelOrder(order.orderId)}
                   >
-                     <Trash2 size={18} />
+                    <Trash2 size={18} />
                   </button>
                 </td>
               </motion.tr>
@@ -443,32 +369,14 @@ const OrdersTable = ({ setOrderStats, setViewingOrder, setOrderDetails }) => {
         </table>
       </div>
 
-      <div className="flex justify-center mt-4 space-x-2">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 mx-2 rounded-lg ${
-            currentPage === 1
-              ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-              : 'bg-gray-700 text-white'
-          }`}
-        >
-          Previous
-        </button>
-
-        {renderPageNumbers()}
-
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 mx-2 rounded-lg ${
-            currentPage === totalPages
-              ? 'bg-gray-500 text-gray-300 cursor-not-allowed'
-              : 'bg-gray-700 text-white'
-          }`}
-        >
-          Next
-        </button>
+      <div className="p-4 border-t border-gray-700 flex justify-center">
+        <PaginationAdmin
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          theme="blue"
+          maxVisiblePages={5}
+        />
       </div>
     </motion.div>
   );

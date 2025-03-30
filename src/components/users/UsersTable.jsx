@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Search, Trash2, Edit } from "lucide-react";
 import { fetchCustomers } from "../../utils/api";
 import EditUserForm from "./EditUserForm";
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 const UsersTable = ({ customers }) => {
     const [localCustomers, setLocalCustomers] = useState([]);
@@ -14,7 +15,7 @@ const UsersTable = ({ customers }) => {
 
     useEffect(() => {
         setLocalCustomers(customers);
-      }, [customers]);
+    }, [customers]);
 
     useEffect(() => {
         (async () => {
@@ -231,7 +232,7 @@ const UsersTable = ({ customers }) => {
                                             className="text-red-600 hover:text-red-400"
                                             onClick={() => handleDelete(customer.CustomerId)}
                                         >
-                                             <Trash2 size={18} />
+                                            <Trash2 size={18} />
                                         </button>
                                     </td>
                                 </motion.tr>
@@ -241,41 +242,14 @@ const UsersTable = ({ customers }) => {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex justify-center mt-4 space-x-2">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`px-4 py-2 mx-2 rounded-lg ${currentPage === 1
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-gray-200 text-black"
-                            }`}
-                    >
-                        Previous
-                    </button>
-
-                    {[...Array(totalPages)].map((_, i) => (
-                        <button
-                            key={i + 1}
-                            onClick={() => handlePageChange(i + 1)}
-                            className={`px-4 py-2 rounded-lg ${currentPage === i + 1
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-black"
-                                }`}
-                        >
-                            {i + 1}
-                        </button>
-                    ))}
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`px-4 py-2 mx-2 rounded-lg ${currentPage === totalPages
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-gray-200 text-black"
-                            }`}
-                    >
-                        Next
-                    </button>
+                <div className="p-4 border-t border-gray-300">
+                    <PaginationAdmin
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        theme="blue"
+                        maxVisiblePages={5}
+                    />
                 </div>
             </motion.div>
         </>

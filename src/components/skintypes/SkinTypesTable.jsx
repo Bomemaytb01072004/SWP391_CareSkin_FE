@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import CreateSkinTypeModal from './CreateSkinTypeModal';
 import EditSkinTypeModal from './EditSkinTypeModal';
 import ViewSkinTypeModal from './ViewSkinTypeModal';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 import {
   createSkinType,
@@ -21,7 +22,8 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
   const [displayedSkinTypes, setDisplayedSkinTypes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [skinTypesPerPage] = useState(8);
+  const [totalPages, setTotalPages] = useState(0);
+  const [skinTypesPerPage] = useState(5);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [filteredSkinTypes, setFilteredSkinTypes] = useState([]);
 
@@ -59,7 +61,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
 
     const term = searchTerm.toLowerCase();
     let filtered = [...localSkinTypes];
-    
+
     if (term) {
       filtered = localSkinTypes.filter(
         (skinType) =>
@@ -67,7 +69,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
           (skinType.Description && skinType.Description.toLowerCase().includes(term))
       );
     }
-    
+
     setFilteredSkinTypes(filtered);
     setCurrentPage(1);
   }, [searchTerm, localSkinTypes]);
@@ -83,15 +85,15 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
 
   useEffect(() => {
     if (!filteredSkinTypes || filteredSkinTypes.length === 0) return;
-    
+
     let sortableSkinTypes = [...filteredSkinTypes];
-    
+
     if (sortConfig.key) {
       sortableSkinTypes.sort((a, b) => {
         if (sortConfig.key === 'TypeName') {
           const valueA = (a[sortConfig.key] || '').toLowerCase();
           const valueB = (b[sortConfig.key] || '').toLowerCase();
-          
+
           if (sortConfig.direction === 'ascending') {
             return valueA.localeCompare(valueB);
           } else {
@@ -100,18 +102,18 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
         } else if (sortConfig.key === 'MinScore' || sortConfig.key === 'MaxScore') {
           const valueA = a[sortConfig.key] || 0;
           const valueB = b[sortConfig.key] || 0;
-          
+
           if (sortConfig.direction === 'ascending') {
             return valueA - valueB;
           } else {
             return valueB - valueA;
           }
         }
-        
+
         return 0;
       });
     }
-    
+
     // Calculate pagination
     const indexOfLastSkinType = currentPage * skinTypesPerPage;
     const indexOfFirstSkinType = indexOfLastSkinType - skinTypesPerPage;
@@ -119,7 +121,8 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
       indexOfFirstSkinType,
       indexOfLastSkinType
     );
-    
+    const totalPages = filteredSkinTypes ? Math.ceil(filteredSkinTypes.length / skinTypesPerPage) : 0;
+
     setDisplayedSkinTypes(currentSkinTypes);
   }, [filteredSkinTypes, currentPage, skinTypesPerPage, sortConfig]);
 
@@ -144,12 +147,12 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
     try {
       const updatedSkinType = { ...skinType, IsActive: !skinType.IsActive };
       await updateSkinType(skinType.SkinTypeId, updatedSkinType);
-      
+
       // Update local state
-      setLocalSkinTypes(prev => 
+      setLocalSkinTypes(prev =>
         prev.map(st => st.SkinTypeId === skinType.SkinTypeId ? { ...st, IsActive: !st.IsActive } : st)
       );
-      
+
       toast.success(`Skin type ${updatedSkinType.IsActive ? 'activated' : 'deactivated'} successfully!`);
     } catch (error) {
       console.error('Failed to toggle skin type status:', error);
@@ -215,7 +218,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
 
       setIsEditModalOpen(false);
       toast.success('Skin type updated successfully!');
-      
+
       // Refresh the skin types data
       if (refetchSkinTypes) {
         refetchSkinTypes();
@@ -246,7 +249,7 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
     try {
       const createdSkinType = await createSkinType(newSkinType);
       setLocalSkinTypes((prev) => [...prev, createdSkinType]);
-      
+
       // Reset form
       setNewSkinType({
         TypeName: '',
@@ -255,10 +258,10 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
         Description: '',
         IsActive: true
       });
-      
+
       setIsModalOpen(false);
       toast.success('Skin type created successfully!');
-      
+
       // Refresh the skin types data
       if (refetchSkinTypes) {
         refetchSkinTypes();
@@ -306,8 +309,8 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
           <table className="min-w-full divide-y bg-white">
             <thead className="bg-white">
               <tr>
-                <th 
-                  scope="col" 
+                <th
+                  scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('TypeName')}
                 >
@@ -316,8 +319,8 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                     <span>{getSortDirectionIcon('TypeName')}</span>
                   </div>
                 </th>
-                <th 
-                  scope="col" 
+                <th
+                  scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('MinScore')}
                 >
@@ -326,8 +329,8 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                     <span>{getSortDirectionIcon('MinScore')}</span>
                   </div>
                 </th>
-                <th 
-                  scope="col" 
+                <th
+                  scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
                   onClick={() => requestSort('MaxScore')}
                 >
@@ -361,19 +364,18 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
                       {skinType.MaxScore}
                     </td>
                     <td className="px-6 py-4 text-sm text-black">
-                      {skinType.Description ? 
-                        (skinType.Description.length > 50 ? 
-                          `${skinType.Description.substring(0, 50)}...` : 
-                          skinType.Description) : 
+                      {skinType.Description ?
+                        (skinType.Description.length > 50 ?
+                          `${skinType.Description.substring(0, 50)}...` :
+                          skinType.Description) :
                         'No description'
                       }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex justify-center">
-                        <span 
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            skinType.IsActive ? 'bg-green-800 text-green-100' : 'bg-red-100 text-red-800'
-                          }`}
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${skinType.IsActive ? 'bg-green-800 text-green-100' : 'bg-red-100 text-red-800'
+                            }`}
                         >
                           {skinType.IsActive ? 'Active' : 'Inactive'}
                         </span>
@@ -423,47 +425,21 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
             </tbody>
           </table>
         </div>
+        {filteredSkinTypes && filteredSkinTypes.length > skinTypesPerPage && (
+          <div className="flex justify-center">
+            <PaginationAdmin
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredSkinTypes.length / skinTypesPerPage)}
+              onPageChange={handlePageChange}
+              theme="blue"
+              maxVisiblePages={5}
+            />
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
-      {filteredSkinTypes && filteredSkinTypes.length > skinTypesPerPage && (
-        <div className="flex justify-center mt-4">
-          <nav className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="px-3 py-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-            {Array.from(
-              { length: Math.ceil(filteredSkinTypes.length / skinTypesPerPage) },
-              (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === i + 1
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              className="px-3 py-1 rounded-md bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50"
-              disabled={
-                currentPage === Math.ceil(filteredSkinTypes.length / skinTypesPerPage)
-              }
-            >
-              Next
-            </button>
-          </nav>
-        </div>
-      )}
+
 
       {/* Create Skin Type Modal */}
       {isModalOpen && (

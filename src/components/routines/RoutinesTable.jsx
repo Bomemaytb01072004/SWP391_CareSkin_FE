@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { Edit, Trash2, Search, Eye, Layers, Plus } from 'lucide-react';
 import { deleteRoutine } from '../../utils/apiOfRoutine';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,77 +63,6 @@ const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) 
   const indexOfLastRoutine = currentPage * routinesPerPage;
   const indexOfFirstRoutine = indexOfLastRoutine - routinesPerPage;
   const displayedRoutines = filteredRoutines.slice(indexOfFirstRoutine, indexOfLastRoutine);
-
-  const renderPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 3;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key="page-1"
-          onClick={() => handlePageChange(1)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-          }`}
-        >
-          1
-        </button>
-      );
-
-      if (startPage > 2) {
-        pages.push(
-          <span key="ellipsis-1" className="px-4 py-2 text-gray-400">
-            ...
-          </span>
-        );
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <button
-          key={`page-${i}`}
-          onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) {
-        pages.push(
-          <span key="ellipsis-2" className="px-4 py-2 text-gray-400">
-            ...
-          </span>
-        );
-      }
-
-      pages.push(
-        <button
-          key={`page-${totalPages}`}
-          onClick={() => handlePageChange(totalPages)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? 'bg-blue-600 text-white' : 'bg-gray-200 text-black'
-          }`}
-        >
-          {totalPages}
-        </button>
-      );
-    }
-
-    return pages;
-  };
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -250,24 +180,15 @@ const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) 
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="p-4 border-t border-gray-300 flex justify-center space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-black disabled:opacity-50"
-          >
-            Previous
-          </button>
-          {renderPageNumbers()}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-black disabled:opacity-50"
-          >
-            Next
-          </button>
+        <div className="p-4 border-t border-gray-300 flex justify-center">
+          <PaginationAdmin
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            theme="blue"
+            maxVisiblePages={5}
+          />
         </div>
       )}
     </div>

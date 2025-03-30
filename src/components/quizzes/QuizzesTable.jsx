@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 import CreateQuizModal from './CreateQuizModal';
 import ViewQuizModal from './ViewQuizModal';
+import PaginationAdmin from '../Pagination/PaginationAdmin';
 
 import {
   createQuiz,
@@ -13,9 +14,7 @@ import {
 } from '../../utils/apiQ_A';
 
 const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) => {
-  // -----------------------------------
-  // 1) State
-  // -----------------------------------
+
   const [localQuizzes, setLocalQuizzes] = useState([]);
   const [displayedQuizzes, setDisplayedQuizzes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,11 +24,8 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
   const [filteredQuizzes, setFilteredQuizzes] = useState([]);
   const [quizDetails, setQuizDetails] = useState({});
 
-  // Edit Quiz
-  const [editQuizState, setEditQuiz] = useState(null);
   const [viewQuizState, setViewQuiz] = useState(null);
 
-  // Create Quiz
   const [newQuiz, setNewQuiz] = useState({
     Title: '',
     Description: '',
@@ -37,14 +33,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     Questions: []
   });
 
-  // Modals
-  const [isModalOpen, setIsModalOpen] = useState(false);      // create quiz
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false); // view quiz
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
-  // -----------------------------------
-  // 2) Effects
-  // -----------------------------------
-  // Map quizzes to localQuizzes
   useEffect(() => {
     if (quizzes) {
       setLocalQuizzes(quizzes);
@@ -52,18 +43,15 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
   }, [quizzes]);
 
 
-  // Fetch quiz details for displayed quizzes
   useEffect(() => {
     const fetchAllQuizDetails = async () => {
       if (!displayedQuizzes || !quizById) return;
-  
+
       try {
-        // Sử dụng Promise.all để gọi đồng thời API cho tất cả quiz trong displayedQuizzes
         const results = await Promise.all(
           displayedQuizzes.map((quiz) => quizById(quiz.QuizId))
         );
-        
-        // Xây dựng đối tượng chứa chi tiết quiz từ kết quả trả về
+
         const details = {};
         displayedQuizzes.forEach((quiz, index) => {
           const quizDetail = results[index];
@@ -71,19 +59,18 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
             questionCount: quizDetail.Questions?.length || 0,
           };
         });
-        
+
         setQuizDetails(details);
       } catch (error) {
         console.error('Error fetching quiz details using Promise.all:', error);
       }
     };
-  
+
     fetchAllQuizDetails();
   }, [displayedQuizzes, quizById]);
-  
-  
 
-  // Handle search
+
+
   useEffect(() => {
     if (!localQuizzes) return;
 
@@ -102,7 +89,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     setCurrentPage(1);
   }, [searchTerm, localQuizzes]);
 
-  // Handle sorting
   const requestSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -133,7 +119,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       });
     }
 
-    // Calculate pagination
     const indexOfLastQuiz = currentPage * quizzesPerPage;
     const indexOfFirstQuiz = indexOfLastQuiz - quizzesPerPage;
     const currentQuizzes = sortableQuizzes.slice(
@@ -144,7 +129,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     setDisplayedQuizzes(currentQuizzes);
   }, [filteredQuizzes, currentPage, quizzesPerPage, sortConfig]);
 
-  // Get sort direction icon
   const getSortDirectionIcon = (key) => {
     if (sortConfig.key !== key) {
       return null;
@@ -152,22 +136,17 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     return sortConfig.direction === 'ascending' ? '↑' : '↓';
   };
 
-  // -----------------------------------
-  // 3) Handlers
-  // -----------------------------------
   const handlePageChange = (page) => {
     if (page < 1 || page > Math.ceil(filteredQuizzes.length / quizzesPerPage)) return;
     setCurrentPage(page);
   };
 
-  // Delete quiz
   const handleDelete = async (quizId) => {
     if (window.confirm('Are you sure you want to delete this quiz?')) {
       try {
         await deleteQuiz(quizId);
 
         refetchQuizzes();
-        refetchQuizById(quizId);
 
         toast.success('Quiz deleted successfully!');
       } catch (error) {
@@ -178,13 +157,11 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
   };
 
 
-  // Open View modal
   const handleOpenViewModal = (quiz) => {
     setViewQuiz(quiz.QuizId);
     setIsViewModalOpen(true);
   };
 
-  // Add a new quiz
   const handleAddQuiz = async () => {
     if (!newQuiz.Title || !newQuiz.Description) {
       toast.error('Please fill in all required fields and add at least one question');
@@ -195,7 +172,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       const createdQuiz = await createQuiz(newQuiz);
       setLocalQuizzes((prev) => [...prev, createdQuiz]);
 
-      // Reset form
       setNewQuiz({
         Title: '',
         Description: '',
@@ -206,7 +182,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       setIsModalOpen(false);
       toast.success('Quiz created successfully!');
 
-      // Refresh the quizzes data
       if (refetchQuizzes) {
         refetchQuizzes();
       }
@@ -221,14 +196,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     }
   };
 
-  // -----------------------------------
-  // 4) Render Table
-  // -----------------------------------
   return (
     <div className="space-y-6 bg-white text-black p-4">
-      {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-        {/* Search Bar */}
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
           <input
@@ -240,7 +210,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
           />
         </div>
 
-        {/* Add Quiz Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -252,7 +221,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
         </motion.button>
       </div>
 
-      {/* Quizzes Table */}
       <div className="overflow-hidden rounded-xl border border-gray-300">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-300">
@@ -342,46 +310,18 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
         </div>
       </div>
 
-      {/* Pagination */}
       {filteredQuizzes && filteredQuizzes.length > quizzesPerPage && (
-        <div className="flex justify-center mt-4">
-          <nav className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="px-3 py-1 rounded-md bg-white text-black border border-gray-300 hover:bg-gray-200 disabled:opacity-50"
-              disabled={currentPage === 1}
-            >
-              Previous
-            </button>
-            {Array.from(
-              { length: Math.ceil(filteredQuizzes.length / quizzesPerPage) },
-              (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded-md border border-gray-300 ${currentPage === i + 1
-                    ? 'bg-blue-200 text-blue-800'
-                    : 'bg-white text-black hover:bg-gray-200'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              className="px-3 py-1 rounded-md bg-white text-black border border-gray-300 hover:bg-gray-200 disabled:opacity-50"
-              disabled={
-                currentPage === Math.ceil(filteredQuizzes.length / quizzesPerPage)
-              }
-            >
-              Next
-            </button>
-          </nav>
+        <div className="p-4 flex justify-center">
+          <PaginationAdmin
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredQuizzes.length / quizzesPerPage)}
+            onPageChange={handlePageChange}
+            theme="blue"
+            maxVisiblePages={5}
+          />
         </div>
       )}
 
-      {/* Create Quiz Modal */}
       {isModalOpen && (
         <CreateQuizModal
           newQuiz={newQuiz}
@@ -391,7 +331,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
         />
       )}
 
-      {/* View Quiz Modal */}
       {isViewModalOpen && (
         <ViewQuizModal
           quizId={viewQuizState}

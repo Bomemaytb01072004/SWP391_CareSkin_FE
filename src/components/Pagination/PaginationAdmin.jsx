@@ -17,7 +17,6 @@ const PaginationAdmin = ({
   theme = 'blue',
   maxVisiblePages = 5
 }) => {
-  // If only one page, don't show pagination
   if (totalPages <= 1) return null;
 
   const themeStyles = {
@@ -49,79 +48,150 @@ const PaginationAdmin = ({
   const renderPageNumbers = () => {
     const pages = [];
     
-    // Calculate start and end page numbers to display
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    // Adjust if we're near the end
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    // Always show first page
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key={1}
-          onClick={() => handlePageChange(1)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === 1 ? styles.active : styles.inactive
-          }`}
-        >
-          1
-        </button>
-      );
-      
-      // Show ellipsis if needed
-      if (startPage > 2) {
+    // Trường hợp số trang ít, hiển thị tất cả
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
         pages.push(
-          <span key="start-ellipsis" className="px-2 py-2">
-            ...
-          </span>
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === i ? styles.active : styles.inactive
+            }`}
+          >
+            {i}
+          </button>
         );
       }
+      return pages;
     }
-
-    // Add page numbers between start and end
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === 1 || i === totalPages) continue; // Skip first and last as they're handled separately
-      pages.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === i ? styles.active : styles.inactive
-          }`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    // Always show last page
-    if (endPage < totalPages) {
-      // Show ellipsis if needed
+    
+    // Trường hợp nhiều trang, hiển thị có chọn lọc
+    
+    // 1. Luôn hiển thị trang 1
+    pages.push(
+      <button
+        key={1}
+        onClick={() => handlePageChange(1)}
+        className={`px-4 py-2 rounded-lg ${
+          currentPage === 1 ? styles.active : styles.inactive
+        }`}
+      >
+        1
+      </button>
+    );
+    
+    // 2. Xác định vị trí trang hiện tại và thêm dấu "..." hoặc số trang
+    let startPage, endPage;
+    
+    if (currentPage <= 4) {
+      // Gần trang đầu: hiển thị 1 2 3 4 5 ... 20
+      startPage = 2;
+      endPage = 5;
+      
+      // Thêm các trang từ startPage đến endPage
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === i ? styles.active : styles.inactive
+            }`}
+          >
+            {i}
+          </button>
+        );
+      }
+      
+      // Thêm dấu "..." nếu cần
       if (endPage < totalPages - 1) {
         pages.push(
-          <span key="end-ellipsis" className="px-2 py-2">
+          <span key="ellipsis-end" className="px-2 py-2">
             ...
           </span>
         );
       }
+    } 
+    else if (currentPage >= totalPages - 3) {
+      // Gần trang cuối: hiển thị 1 ... 16 17 18 19 20
       
+      // Thêm dấu "..." sau trang 1
       pages.push(
-        <button
-          key={totalPages}
-          onClick={() => handlePageChange(totalPages)}
-          className={`px-4 py-2 rounded-lg ${
-            currentPage === totalPages ? styles.active : styles.inactive
-          }`}
-        >
-          {totalPages}
-        </button>
+        <span key="ellipsis-start" className="px-2 py-2">
+          ...
+        </span>
       );
+      
+      // Thêm 4 trang cuối
+      startPage = totalPages - 4;
+      endPage = totalPages - 1;
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === i ? styles.active : styles.inactive
+            }`}
+          >
+            {i}
+          </button>
+        );
+      }
+    } 
+    else {
+      // Ở giữa: hiển thị 1 ... 8 9 10 ... 20
+      
+      // Thêm dấu "..." sau trang 1
+      pages.push(
+        <span key="ellipsis-start" className="px-2 py-2">
+          ...
+        </span>
+      );
+      
+      // Hiển thị trang hiện tại và 1 trang trước/sau
+      startPage = Math.max(2, currentPage - 1);
+      endPage = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === i ? styles.active : styles.inactive
+            }`}
+          >
+            {i}
+          </button>
+        );
+      }
+      
+      // Thêm dấu "..." trước trang cuối
+      if (endPage < totalPages - 1) {
+        pages.push(
+          <span key="ellipsis-end" className="px-2 py-2">
+            ...
+          </span>
+        );
+      }
     }
-
+    
+    // 3. Luôn hiển thị trang cuối cùng
+    pages.push(
+      <button
+        key={totalPages}
+        onClick={() => handlePageChange(totalPages)}
+        className={`px-4 py-2 rounded-lg ${
+          currentPage === totalPages ? styles.active : styles.inactive
+        }`}
+      >
+        {totalPages}
+      </button>
+    );
+    
     return pages;
   };
 
