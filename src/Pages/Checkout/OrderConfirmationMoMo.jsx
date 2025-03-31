@@ -8,6 +8,7 @@ import {
   faTimesCircle,
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const OrderConfirmationMoMo = () => {
   const location = useLocation();
