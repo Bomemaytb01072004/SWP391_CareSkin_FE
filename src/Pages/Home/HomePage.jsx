@@ -112,49 +112,130 @@ function HomePage() {
           fetchProducts(),
         ]);
 
+        // Filter to only active products first
+        const activeProducts = productsData.filter(
+          (product) => product.IsActive === true
+        );
+
         // Object to store first matching product image for each skin type
         const skinTypeProductImageMap = {};
 
-        // Filter products that have **exactly one** skin type
-        const filteredProducts = productsData.filter(
+        // Track which product images have already been used to avoid duplication
+        const usedProductImages = new Set();
+
+        // Filter products that have EXACTLY one skin type
+        const productsWithOneSkinType = activeProducts.filter(
           (product) =>
             product.ProductForSkinTypes &&
             Array.isArray(product.ProductForSkinTypes) &&
-            product.ProductForSkinTypes.length === 1 // Only products with exactly one skin type
+            product.ProductForSkinTypes.length === 1 // EXACTLY one skin type
         );
 
-        // Iterate over filtered products and map images to corresponding skin types
-        filteredProducts.forEach((product) => {
-          const skinTypeId = product.ProductForSkinTypes[0].SkinTypeId; // Get the single skin type ID
-          if (!skinTypeProductImageMap[skinTypeId]) {
-            // Store the first product image found
-            if (product.PictureUrl && product.PictureUrl.trim() !== '') {
-              skinTypeProductImageMap[skinTypeId] = product.PictureUrl;
-            }
+        console.log(
+          'Products with exactly one skin type:',
+          productsWithOneSkinType.length
+        );
+
+        // First pass - assign products that have EXACTLY one skin type
+        productsWithOneSkinType.forEach((product) => {
+          const skinTypeId = product.ProductForSkinTypes[0].SkinTypeId;
+
+          // If we don't have an image for this skin type yet, use this product's image
+          if (
+            !skinTypeProductImageMap[skinTypeId] &&
+            product.PictureUrl &&
+            product.PictureUrl.trim() !== ''
+          ) {
+            skinTypeProductImageMap[skinTypeId] = product.PictureUrl;
+            usedProductImages.add(product.PictureUrl);
+            console.log(
+              `Found dedicated image for skin type ${skinTypeId}: ${product.PictureUrl.substring(0, 30)}...`
+            );
           }
         });
 
-        // Process skin types, adding product count and selected images
-        const enhancedSkinTypes = skinTypeData.map((skinType) => {
-          const productCount = productsData.filter(
-            (product) =>
-              product.ProductForSkinTypes &&
-              product.ProductForSkinTypes.some(
-                (p) => p.SkinTypeId === skinType.SkinTypeId
-              )
-          ).length;
+        // Second pass - for any skin types that still don't have images,
+        // use products with multiple skin types but avoid reusing images
+        const productsWithMultipleSkinTypes = activeProducts.filter(
+          (product) =>
+            product.ProductForSkinTypes &&
+            Array.isArray(product.ProductForSkinTypes) &&
+            product.ProductForSkinTypes.length > 1 && // Multiple skin types
+            product.PictureUrl &&
+            !usedProductImages.has(product.PictureUrl) // Not already used
+        );
 
-          return {
-            id: skinType.SkinTypeId,
-            title: skinType.TypeName,
-            image:
-              skinTypeProductImageMap[skinType.SkinTypeId] ||
-              '/images/skintypes/default.jpg', // Use the matched product image or a default
-            description: `Products specially formulated for ${skinType.TypeName.toLowerCase()}`,
-            products: productCount,
-          };
+        productsWithMultipleSkinTypes.forEach((product) => {
+          product.ProductForSkinTypes.forEach((skinTypeRelation) => {
+            const skinTypeId = skinTypeRelation.SkinTypeId;
+
+            // Only assign if this skin type doesn't have an image AND
+            // the product image hasn't been used elsewhere
+            if (
+              !skinTypeProductImageMap[skinTypeId] &&
+              !usedProductImages.has(product.PictureUrl)
+            ) {
+              skinTypeProductImageMap[skinTypeId] = product.PictureUrl;
+              usedProductImages.add(product.PictureUrl);
+              console.log(
+                `Found shared image for skin type ${skinTypeId}: ${product.PictureUrl.substring(0, 30)}...`
+              );
+            }
+          });
         });
 
+        // Default images for skin types
+        const skinTypeDefaults = {
+          // Add specific IDs for your skin types
+          // e.g., "5": "/images/skintypes/combination.jpg"
+        };
+
+        // Process skin types, adding product count and selected images
+        // First, filter only active skin types
+        const activeSkinTypes = skinTypeData.filter(
+          (skinType) => skinType.IsActive === true
+        );
+
+        // Debugging active skin types
+        console.log(
+          'Active skin types:',
+          activeSkinTypes.map((st) => `${st.TypeName} (${st.SkinTypeId})`)
+        );
+
+        // Then process only these active skin types
+        const enhancedSkinTypes = activeSkinTypes
+          .map((skinType) => {
+            // Count products for this skin type
+            const productCount = activeProducts.filter(
+              (product) =>
+                product.ProductForSkinTypes &&
+                product.ProductForSkinTypes.some(
+                  (p) => p.SkinTypeId === skinType.SkinTypeId
+                )
+            ).length;
+
+            // Skip skin types with no products
+            if (productCount === 0) return null;
+
+            // Skip test skin types (case insensitive)
+            if (skinType.TypeName.toLowerCase().includes('test')) return null;
+
+            return {
+              id: skinType.SkinTypeId,
+              title: skinType.TypeName,
+              image:
+                skinTypeProductImageMap[skinType.SkinTypeId] ||
+                skinTypeDefaults[skinType.SkinTypeId] ||
+                '/images/skintypes/default.jpg',
+              description: `Products specially formulated for ${skinType.TypeName.toLowerCase()}`,
+              products: productCount,
+            };
+          })
+          .filter(Boolean); // Remove null entries
+
+        console.log(
+          `Found ${enhancedSkinTypes.length} active skin types with products`
+        );
         setSkinTypes(enhancedSkinTypes);
       } catch (error) {
         console.error('Error fetching skin type products:', error);
