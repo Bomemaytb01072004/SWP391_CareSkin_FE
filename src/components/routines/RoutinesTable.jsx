@@ -12,10 +12,8 @@ const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) 
   const routinesPerPage = 8;
 
   useEffect(() => {
-    // Sort routines by ID in descending order (newest first)
     const sorted = Array.isArray(routines) ? [...routines].sort((a, b) => b.RoutineId - a.RoutineId) : [];
     
-    // Then filter by search term
     const term = searchTerm.toLowerCase();
     const filtered = sorted.filter(
       (routine) => 
@@ -147,7 +145,7 @@ const RoutinesTable = ({ routines, onEdit, onView, onCreate, refetchRoutines }) 
                       <button
                         onClick={() => onView(routine)}
                         className="text-blue-600 hover:text-blue-400 p-1 rounded-full hover:bg-gray-200 transition"
-                        title="View Routine"
+                        title="View & Edit Step Routine"
                       >
                         <Eye size={18} />
                       </button>

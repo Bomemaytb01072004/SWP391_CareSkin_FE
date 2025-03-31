@@ -61,7 +61,7 @@ const BrandsPage = () => {
 
 	return (
 		<>
-			<ToastContainer position="top-right" autoClose={3000} />
+			<ToastContainer position="top-right" autoClose={3000} style={{ zIndex: 9999 }} />
 
 			<div className='flex-1 overflow-auto relative bg-white'>
 				<Header title='Brands' />

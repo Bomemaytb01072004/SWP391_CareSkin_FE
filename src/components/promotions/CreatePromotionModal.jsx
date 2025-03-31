@@ -1,55 +1,29 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { toast } from 'react-toastify';
 
-const CreatePromotionModal = ({ newPromotion, setNewPromotion, products, handleAddPromotion, onClose }) => {
-  const [selectedProducts, setSelectedProducts] = useState([]);
-
+const CreatePromotionModal = ({ newPromotion, setNewPromotion, handleAddPromotion, onClose }) => {
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewPromotion((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setNewPromotion({ ...newPromotion, [name]: value });
   };
 
-  const handlePromotionTypeChange = (e) => {
-    const value = parseInt(e.target.value);
-    setNewPromotion(prev => ({
-      ...prev,
-      PromotionType: value
-    }));
-  };
-
-  const handleProductSelection = (e) => {
-    const productId = parseInt(e.target.value);
-    const isChecked = e.target.checked;
-    
-    if (isChecked) {
-      setSelectedProducts(prev => [...prev, productId]);
-      setNewPromotion(prev => ({
-        ...prev,
-        ApplicableProducts: [...prev.ApplicableProducts, productId]
-      }));
-    } else {
-      setSelectedProducts(prev => prev.filter(id => id !== productId));
-      setNewPromotion(prev => ({
-        ...prev,
-        ApplicableProducts: prev.ApplicableProducts.filter(id => id !== productId)
-      }));
-    }
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    setNewPromotion({ ...newPromotion, [name]: value });
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-black">Create New Promotion</h2>
           <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-black mb-1">
               Promotion Name <span className="text-red-500">*</span>
@@ -57,10 +31,9 @@ const CreatePromotionModal = ({ newPromotion, setNewPromotion, products, handleA
             <input
               type="text"
               name="PromotionName"
-              value={newPromotion.PromotionName}
+              value={newPromotion.PromotionName || ''}
               onChange={handleInputChange}
-              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter promotion name"
+              className="w-full bg-gray-100 text-black px-3 py-2 rounded-md border border-gray-300"
               required
             />
           </div>
@@ -69,67 +42,78 @@ const CreatePromotionModal = ({ newPromotion, setNewPromotion, products, handleA
             <label className="block text-sm font-medium text-black mb-1">
               Promotion Type <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div 
-                className={`p-3 rounded-lg border-2 cursor-pointer ${newPromotion.PromotionType === 1 
-                  ? 'border-blue-500 bg-blue-100' 
-                  : 'border-gray-300 hover:border-gray-400'}`}
-                onClick={() => setNewPromotion(prev => ({ ...prev, PromotionType: 1 }))}
+                className={`border ${newPromotion.PromotionType === 1 ? 'border-blue-500 bg-blue-50' : 'border-gray-300'} rounded-lg p-3 cursor-pointer transition-colors`}
+                onClick={() => setNewPromotion({...newPromotion, PromotionType: 1})}
               >
-                <div className="flex items-center mb-1">
+                <div className="flex items-center">
                   <input 
                     type="radio" 
                     checked={newPromotion.PromotionType === 1} 
                     onChange={() => {}} 
                     className="mr-2"
                   />
-                  <span className="font-medium text-black">Product Discount</span>
+                  <div>
+                    <p className="font-medium text-black">Product Discount</p>
+                    <p className="text-xs text-gray-600">Apply discount to specific products</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Apply discount directly to specific products. Customers will see discounted prices on product pages.
-                </p>
               </div>
               
               <div 
-                className={`p-3 rounded-lg border-2 cursor-pointer ${newPromotion.PromotionType === 2 
-                  ? 'border-green-500 bg-green-100' 
-                  : 'border-gray-300 hover:border-gray-400'}`}
-                onClick={() => setNewPromotion(prev => ({ ...prev, PromotionType: 2 }))}
+                className={`border ${newPromotion.PromotionType === 2 ? 'border-blue-500 bg-blue-50' : 'border-gray-300'} rounded-lg p-3 cursor-pointer transition-colors`}
+                onClick={() => setNewPromotion({...newPromotion, PromotionType: 2})}
               >
-                <div className="flex items-center mb-1">
+                <div className="flex items-center">
                   <input 
                     type="radio" 
                     checked={newPromotion.PromotionType === 2} 
-                    onChange={() => {}} 
-                    className="mr-2"
+                    onChange={() => {}}
+                    className="mr-2" 
                   />
-                  <span className="font-medium text-black">Order Discount</span>
+                  <div>
+                    <p className="font-medium text-black">Order Discount</p>
+                    <p className="text-xs text-gray-600">Apply discount to entire orders</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Customers can apply this promotion during checkout to their entire order.
-                </p>
               </div>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-black mb-1">
-              Discount Percentage <span className="text-red-500">*</span>
+              Description
             </label>
-            <input
-              type="number"
-              name="DiscountPercent"
-              value={newPromotion.DiscountPercent}
+            <textarea
+              name="Description"
+              value={newPromotion.Description || ''}
               onChange={handleInputChange}
-              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter discount percentage"
-              min="0"
-              max="100"
-              required
+              className="w-full bg-gray-100 text-black px-3 py-2 rounded-md border border-gray-300 h-24"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Discount Percentage <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center">
+              <input
+                type="number"
+                name="DiscountPercent"
+                value={newPromotion.DiscountPercent || ''}
+                onChange={handleInputChange}
+                className="w-full bg-gray-100 text-black px-3 py-2 rounded-md border border-gray-300"
+                min="0"
+                max="100"
+                step="0.01"
+                required
+              />
+              <span className="ml-2 text-black">%</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-black mb-1">
                 Start Date <span className="text-red-500">*</span>
@@ -137,12 +121,13 @@ const CreatePromotionModal = ({ newPromotion, setNewPromotion, products, handleA
               <input
                 type="date"
                 name="StartDate"
-                value={newPromotion.StartDate}
-                onChange={handleInputChange}
-                className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={newPromotion.StartDate || ''}
+                onChange={handleDateChange}
+                className="w-full bg-gray-100 text-black px-3 py-2 rounded-md border border-gray-300"
                 required
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-black mb-1">
                 End Date <span className="text-red-500">*</span>
@@ -150,46 +135,34 @@ const CreatePromotionModal = ({ newPromotion, setNewPromotion, products, handleA
               <input
                 type="date"
                 name="EndDate"
-                value={newPromotion.EndDate}
-                onChange={handleInputChange}
-                className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={newPromotion.EndDate || ''}
+                onChange={handleDateChange}
+                className="w-full bg-gray-100 text-black px-3 py-2 rounded-md border border-gray-300"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-black mb-1">
-              Applicable Products
-            </label>
-            <div className="max-h-60 overflow-y-auto bg-gray-100 rounded-lg p-3 border border-gray-300">
-              {products.length > 0 ? (
-                products.map((product) => (
-                  <div key={product.ProductId} className="flex items-center mb-2">
-                    <input
-                      type="checkbox"
-                      id={`product-${product.ProductId}`}
-                      value={product.ProductId}
-                      checked={selectedProducts.includes(product.ProductId)}
-                      onChange={handleProductSelection}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <label htmlFor={`product-${product.ProductId}`} className="ml-2 block text-sm text-black">
-                      {product.ProductName}
-                    </label>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-600 text-sm">No products available</p>
-              )}
+          {newPromotion.PromotionType === 1 && (
+            <div className="bg-blue-50 p-3 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> To apply this promotion to specific products, please use the "Manage Product Discounts" feature after creating the promotion.
+              </p>
             </div>
-          </div>
+          )}
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end space-x-3 pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+            >
+              Cancel
+            </button>
             <button
               type="button"
               onClick={handleAddPromotion}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Create Promotion
             </button>

@@ -73,7 +73,7 @@ const ProductsPageAdmin = () => {
 
     return (
         <>
-            <ToastContainer position="top-right" autoClose={3000} />
+            <ToastContainer position="top-right" autoClose={5000} style={{zIndex: 10000}} />
 
             <div className='flex-1 overflow-auto relative bg-white text-black'>
                 <Header title='Products' />

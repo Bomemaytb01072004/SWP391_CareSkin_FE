@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 import Header from "../../components/common/Header";
 import StatCard from "../../components/common/StatCard";
@@ -20,6 +21,8 @@ const BlogsPage = () => {
         queryKey: ["blogs"],
         queryFn: fetchBlogs,
     });
+
+    const [filterStatus, setFilterStatus] = useState("all");
 
     if (blogsLoading)
         return (
@@ -47,6 +50,12 @@ const BlogsPage = () => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         return publishDate >= thirtyDaysAgo && blog.IsPublished;
     }).length;
+
+    const filteredBlogs = filterStatus === "all"
+    ? blogs
+    : blogs.filter(quiz =>
+      filterStatus === "active" ? quiz.IsActive : !quiz.IsActive
+    );
 
     return (
         <>
@@ -89,9 +98,39 @@ const BlogsPage = () => {
                         />
                     </motion.div>
 
+                    <div className="flex space-x-4 mb-6">
+                        <button
+                            className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "all"
+                                ? "bg-purple-300 text-black"
+                                : "bg-gray-300 text-black hover:bg-gray-100"
+                                }`}
+                            onClick={() => setFilterStatus("all")}
+                        >
+                            All Skin Types
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "active"
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-300 text-black hover:bg-gray-100"
+                                }`}
+                            onClick={() => setFilterStatus("active")}
+                        >
+                            Active
+                        </button>
+                        <button
+                            className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "inactive"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-300 text-black hover:bg-gray-100"
+                                }`}
+                            onClick={() => setFilterStatus("inactive")}
+                        >
+                            Inactive
+                        </button>
+                    </div>
+
                     {/* Blogs Table */}
                     <div className="bg-white shadow-lg rounded-xl p-6 border border-gray-300">
-                        <BlogsTable blogs={blogs} refetchBlogs={refetchBlogs}/>
+                        <BlogsTable blogs={filteredBlogs} refetchBlogs={refetchBlogs} />
                     </div>
                 </main>
             </div>
