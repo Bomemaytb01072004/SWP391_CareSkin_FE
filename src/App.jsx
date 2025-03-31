@@ -23,6 +23,7 @@ import ResetPasswordPage from './Pages/UserProfile/ResetPasswordPage';
 import AboutPage from './Pages/About/AboutPage';
 import GuestUnauthorizedPage from './Pages/Unauthorized/GuestUnauthorizedPage';
 import ContactPage from './Pages/Contact/ContactPage';
+import FAQPage from './Pages/FAQ/FAQPage';
 export default function App() {
   return (
     <AuthProvider>
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/products" element={<ProductsPage />} />{' '}
           {/* <Route path="/product/:id" element={<ProductDetailedPage />} />{' '} */}
           <Route path="/product/:slug" element={<ProductDetailedPage />} />{' '}
+          <Route path="/faq" element={<FAQPage />} />
           <Route path="/cart" element={<CartPage />} />{' '}
           <Route path="/blogs" element={<BlogPage />} />{' '}
           <Route path="/about" element={<AboutPage />} />{' '}

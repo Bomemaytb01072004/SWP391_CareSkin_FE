@@ -57,6 +57,7 @@ function Footer() {
   const helpLinks = [
     { name: 'Track Your Order', path: '/profile?tab=Order History' },
     { name: 'Contact Us', path: '/contact' },
+    { name: 'FAQs', path: '/faq' },
   ];
 
   return (

@@ -17,6 +17,10 @@ const CartPage = () => {
   const [cartMergedFlag, setCartMergedFlag] = useState(
     localStorage.getItem('cartMerged') === 'true'
   );
+
+  // Track if cart was already received from Navbar
+  const [receivedFromNavbar, setReceivedFromNavbar] = useState(false);
+
   useEffect(() => {
     setSelectedItems((prevSelected) =>
       prevSelected.filter((id) => cart.some((item) => item.ProductId === id))
@@ -32,6 +36,7 @@ const CartPage = () => {
     const handleNavbarCartUpdate = (event) => {
       if (event.detail && event.detail.cart) {
         setCart(event.detail.cart);
+        setReceivedFromNavbar(true); // Mark that we've received cart from Navbar
         console.log('Cart updated from Navbar:', event.detail.cart);
       }
     };
@@ -41,42 +46,46 @@ const CartPage = () => {
 
     // Initial cart fetch - only if not already received from Navbar
     const fetchInitialCart = async () => {
-      if (cart.length === 0) {
-        if (CustomerId) {
-          try {
-            const response = await fetch(
-              `${backendUrl}/api/Cart/customer/${CustomerId}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
+      // Skip fetching if we already have cart data from Navbar
+      if (cart.length > 0 && receivedFromNavbar) {
+        console.log('Using cart data from Navbar, skipping fetch');
+        return;
+      }
 
-            if (!response.ok)
-              throw new Error(`Error fetching cart: ${response.status}`);
+      if (CustomerId) {
+        try {
+          const response = await fetch(
+            `${backendUrl}/api/Cart/customer/${CustomerId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
 
-            const cartData = await response.json();
+          if (!response.ok)
+            throw new Error(`Error fetching cart: ${response.status}`);
 
-            // Process cart data consistently with Navbar
-            const updatedCart = cartData.map((item) => ({
-              ...item,
-              ProductVariations: Array.isArray(item.ProductVariations)
-                ? item.ProductVariations
-                : [],
-              SalePrice:
-                item.ProductVariations?.find(
-                  (v) => v.ProductVariationId === item.ProductVariationId
-                )?.SalePrice ?? item.Price,
-            }));
+          const cartData = await response.json();
 
-            setCart(updatedCart);
-          } catch (error) {
-            console.error('Error fetching cart from server:', error);
-            setCart([]);
-          }
-        } else {
-          const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
-          setCart(storedCart);
+          // Process cart data consistently with Navbar
+          const updatedCart = cartData.map((item) => ({
+            ...item,
+            ProductVariations: Array.isArray(item.ProductVariations)
+              ? item.ProductVariations
+              : [],
+            SalePrice:
+              item.ProductVariations?.find(
+                (v) => v.ProductVariationId === item.ProductVariationId
+              )?.SalePrice ?? item.Price,
+          }));
+
+          setCart(updatedCart);
+        } catch (error) {
+          console.error('Error fetching cart from server:', error);
+          setCart([]);
         }
+      } else {
+        const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+        setCart(storedCart);
       }
     };
 
@@ -86,13 +95,13 @@ const CartPage = () => {
     return () => {
       window.removeEventListener('navbarCartUpdated', handleNavbarCartUpdate);
     };
-  }, [CustomerId, token]);
+  }, [CustomerId, token, cart.length, receivedFromNavbar]);
 
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId');
     const token = localStorage.getItem('token');
 
-    // ✅ Part 1: Logged-in Users (Remove from API first)
+    // Part 1: Logged-in Users (Remove from API first)
     if (CustomerId && token) {
       try {
         console.log(`Removing CartId: ${cartId} from API...`);
@@ -113,7 +122,7 @@ const CartPage = () => {
 
         console.log('Item removed from API successfully');
 
-        // ✅ Remove from local state & sync localStorage as backup
+        // Remove from local state & sync localStorage as backup
         setCart((prevCart) => {
           const updatedCart = prevCart.filter((item) => item.CartId !== cartId);
           localStorage.setItem('cart', JSON.stringify(updatedCart));
@@ -126,7 +135,7 @@ const CartPage = () => {
       return; // Stop execution after API request
     }
 
-    // ✅ Part 2: Guest Users (Remove from LocalStorage only)
+    // Part 2: Guest Users (Remove from LocalStorage only)
     if (!productId || !productVariationId) {
       console.error(
         'Error: Missing productId or productVariationId for local cart removal.'
@@ -198,7 +207,7 @@ const CartPage = () => {
             `Failed to update quantity (ProductId: ${cartItem.ProductId})`
           );
 
-        // ✅ Ensure ProductVariations exists before calling `.find()`
+        // Ensure ProductVariations exists before calling `.find()`
         const updatedCart = cart.map((item) =>
           item.ProductId === productId
             ? {
@@ -429,27 +438,6 @@ const CartPage = () => {
     navigate('/checkout');
   };
 
-  // Comment out or remove mergeLocalCartWithAPI since Navbar handles merging
-  // const mergeLocalCartWithAPI = async () => {
-  //   // ...existing merge code...
-  // };
-
-  useEffect(() => {
-    // Remove the local cart merging call; let Navbar handle it.
-    if (CustomerId && token) {
-      // const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-      // if (localCart.length > 0) {
-      //   mergeLocalCartWithAPI();
-      // }
-
-      const pendingCheckout =
-        localStorage.getItem('pendingCheckout') === 'true';
-      if (pendingCheckout) {
-        // ...existing code...
-      }
-    }
-  }, [CustomerId, token]);
-
   useEffect(() => {
     const handleCartUpdated = () => {
       // Re-fetch cart data when cart is updated elsewhere
@@ -469,7 +457,7 @@ const CartPage = () => {
       (v) => v.ProductVariationId === item.ProductVariationId
     );
 
-    const basePrice = selectedVariation?.Price || item.Price || 0; // ✅ Use selected variation price
+    const basePrice = selectedVariation?.Price || item.Price || 0;
     return total + basePrice * (item.Quantity || 1);
   }, 0);
 
@@ -482,7 +470,7 @@ const CartPage = () => {
     const salePrice =
       selectedVariation?.SalePrice && selectedVariation?.SalePrice > 0
         ? selectedVariation.SalePrice
-        : basePrice; // If no sale price, use base price
+        : basePrice;
 
     return total + (basePrice - salePrice) * (item.Quantity || 1);
   }, 0);
@@ -611,14 +599,14 @@ const CartPage = () => {
                         handleQuantityChange(item.ProductId, item.Quantity - 1)
                       }
                       className="bg-gray-200 px-3 py-1 text-gray-700 hover:bg-gray-300"
-                      disabled={(item.Quantity ?? 1) <= 1} // ✅ Prevents it from always being disabled
+                      disabled={(item.Quantity ?? 1) <= 1}
                     >
                       -
                     </button>
 
                     <input
                       type="number"
-                      value={item.Quantity ?? 1} // ✅ Ensure Quantity is never undefined
+                      value={item.Quantity ?? 1}
                       min="1"
                       className="w-12 text-center text-gray-700 border-x outline-none"
                       onChange={(e) => {
@@ -656,7 +644,7 @@ const CartPage = () => {
                         item.ProductId,
                         item.ProductVariationId
                       )
-                    } // Updated to use CartId
+                    }
                   >
                     Remove
                   </button>
