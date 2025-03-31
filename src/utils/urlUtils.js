@@ -50,3 +50,52 @@ export const extractProductId = (slug) => {
 
   return null;
 };
+
+/**
+ * Generates an SEO-friendly URL slug for a blog post
+ * @param {Object} blogData - Blog object with Title and BlogId
+ * @returns {string} URL-friendly slug
+ */
+export const generateBlogSlug = (blogData) => {
+  if (!blogData || !blogData.Title || blogData.Title === 'string') {
+    return blogData?.BlogId || '';
+  }
+
+  // Create URL-friendly string from blog title
+  const titleSlug = blogData.Title.toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special chars except spaces and hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ''); // Trim hyphens from start and end
+
+  // Combine title and ID for uniqueness
+  return `${titleSlug}-${blogData.BlogId}`;
+};
+
+/**
+ * Extracts the blog ID from a URL slug
+ * @param {string} slug - The URL slug (e.g., "skincare-tips-for-winter-123")
+ * @returns {string|null} The blog ID or null if not found
+ */
+export const extractBlogId = (slug) => {
+  if (!slug) return null;
+
+  // Try to extract ID from the end of the slug (after the last hyphen)
+  const matches = slug.match(/-(\d+)$/);
+  if (matches && matches[1]) {
+    return matches[1];
+  }
+
+  // Fallback: check if the entire slug is a number
+  if (!isNaN(slug) && parseInt(slug) > 0) {
+    return slug;
+  }
+
+  // Additional fallback for any numeric part at the end
+  const numericPart = slug.match(/(\d+)$/);
+  if (numericPart && numericPart[1]) {
+    return numericPart[1];
+  }
+
+  return null;
+};

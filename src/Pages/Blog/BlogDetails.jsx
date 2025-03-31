@@ -18,13 +18,15 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import ReactMarkdown from 'react-markdown'; // We'll keep this for Markdown support
 import styles from './Blog.module.css'; // Import the CSS module
+import { extractBlogId, generateBlogSlug } from '../../utils/urlUtils'; // Add import for the extraction utility
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function BlogDetails() {
-  // Rest of your component state and hooks remain the same
-  const [readingProgress, setReadingProgress] = useState(0);
-  const { blogId } = useParams();
+  const { blogSlug } = useParams();
+  const blogId = extractBlogId(blogSlug); // Update how the blog ID is obtained from params
   const navigate = useNavigate();
+  const [readingProgress, setReadingProgress] = useState(0);
   const [blog, setBlog] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
@@ -1077,10 +1079,11 @@ function BlogDetails() {
                       </p>
 
                       <Link
-                        to={`/blog/${relatedBlog.BlogId}`}
+                        to={`/blog/${generateBlogSlug(relatedBlog)}`}
                         className="mt-auto group inline-flex items-center justify-center text-emerald-600 font-medium hover:text-emerald-700 transition-colors"
+                        aria-label={`Read full article about ${relatedBlog.Title}`}
                       >
-                        Read More
+                        Read article
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform"
