@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -10,17 +10,16 @@ function EditProductModal({
     setBrandNameInputEdit,
     showBrandSuggestionsEdit,
     setShowBrandSuggestionsEdit,
+    showCategorySuggestions,
+    setShowCategorySuggestions,
     previewUrlEdit,
     setPreviewUrlEdit,
     previewUrlAdditionalImagesEditState,
-    setPreviewUrlAdditionalImagesEditState,
     handleRemoveExistingAdditionalImage,
     handleAdditionalImagesChangeEdit,
     handleEdit,
     onClose,
     skinTypeList,
-
-
     handleRemoveEditVariation,
     handleRemoveEditSkinType,
     handleRemoveEditUsage,
@@ -29,7 +28,6 @@ function EditProductModal({
 }) {
     if (!editProductState) return null;
 
-    // Thêm danh sách các danh mục phổ biến
     const popularCategories = [
         "Cleanser",
         "Toner",
@@ -38,17 +36,95 @@ function EditProductModal({
         "Sunscreen",
     ];
 
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!editProductState.ProductName?.trim()) {
+            newErrors.ProductName = 'Product name is required';
+        } else if (editProductState.ProductName.trim().length < 3) {
+            newErrors.ProductName = 'Product name must be at least 3 characters';
+        } else if (editProductState.ProductName.trim().length > 100) {
+            newErrors.ProductName = 'Product name must be less than 100 characters';
+        }
+
+        if (!editProductState.Category?.trim()) {
+            newErrors.Category = 'Category is required';
+        }
+
+        const selectedBrand = brandList.find(
+            b => b.Name.toLowerCase() === brandNameInputEdit.toLowerCase()
+        );
+        if (!selectedBrand) {
+            newErrors.Brand = 'Please select from suggestions or create a new brand in Brands page';
+        }
+
+        if (!editProductState.ProductForSkinTypes || editProductState.ProductForSkinTypes.length === 0) {
+            newErrors.SkinTypes = 'At least one Skin Type is required';
+        } else {
+            const skinTypesErrors = [];
+            let hasInvalidSkinType = false;
+
+            editProductState.ProductForSkinTypes.forEach((st, index) => {
+                if (!st.TypeName || !skinTypeList.some(
+                    skinType => skinType.TypeName.toLowerCase() === st.TypeName.toLowerCase()
+                )) {
+                    if (!skinTypesErrors[index]) skinTypesErrors[index] = {};
+                    skinTypesErrors[index].TypeName = 'Please select from suggestions or create a new skin type in Skin Types page';
+                    hasInvalidSkinType = true;
+                }
+            });
+
+            if (hasInvalidSkinType) {
+                newErrors.ProductForSkinTypes = skinTypesErrors;
+            }
+        }
+
+        if (!editProductState.Variations || editProductState.Variations.length === 0) {
+            newErrors.Variations = 'At least one variation is required';
+        } else {
+            const variationErrors = [];
+            let hasVariationError = false;
+
+            editProductState.Variations.forEach((variation, index) => {
+                const varError = {};
+                if (variation.Ml <= 0) {
+                    varError.Ml = 'Volume must be greater than 0';
+                    hasVariationError = true;
+                }
+                if (variation.Price <= 0) {
+                    varError.Price = 'Price must be greater than 0';
+                    hasVariationError = true;
+                }
+                if (Object.keys(varError).length > 0) {
+                    variationErrors[index] = varError;
+                }
+            });
+
+            if (hasVariationError) {
+                newErrors.Variations = variationErrors;
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const onSubmitEdit = () => {
+        if (!validateForm()) {
+            return;
+        }
+        handleEdit();
+    };
+
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[9999]"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center overflow-y-auto backdrop-blur-md"
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-7xl max-h-[100vh] overflow-y-scroll z-[10000]"
-                style={{
-                    top: '10%',
-                    transform: "translateY(-20%)",
-                }}
+                className="relative mt-5 bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-7xl max-h-[90vh] overflow-y-scroll m-4"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
@@ -61,41 +137,44 @@ function EditProductModal({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                    {/* Product Name */}
                     <div className="flex flex-col">
                         <label className="block mb-1 text-gray-700 font-semibold">
-                            Product Name
+                            Product Name <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             placeholder="ProductName"
-                            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                            className={`p-2 border ${errors.ProductName ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
                             value={editProductState.ProductName || ''}
                             autoFocus
                             onChange={(e) =>
                                 setEditProduct({ ...editProductState, ProductName: e.target.value })
                             }
                         />
+                        {errors.ProductName && (
+                            <p className="text-red-500 text-sm mt-1">{errors.ProductName}</p>
+                        )}
                     </div>
 
-                    {/* Category - Updated with suggestions */}
                     <div className="flex flex-col relative">
                         <label className="block mb-1 text-gray-700 font-semibold">
-                            Category
+                            Category <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             placeholder="Category"
-                            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                            className={`p-2 border ${errors.Category ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
                             value={editProductState.Category || ''}
                             onChange={(e) => {
                                 const val = e.target.value;
                                 setEditProduct({ ...editProductState, Category: val });
-                                // Hiển thị gợi ý khi có giá trị
-                                setShowBrandSuggestionsEdit(true); // Sử dụng state hiện có cho brand
+                                setShowCategorySuggestions(!!val);
                             }}
                         />
-                        {showBrandSuggestionsEdit && editProductState.Category && (
+                        {errors.Category && (
+                            <span className="text-red-500 text-sm">{errors.Category}</span>
+                        )}
+                        {showCategorySuggestions && editProductState.Category && (
                             <ul className="absolute mt-[70px] w-full text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
                                 {popularCategories
                                     .filter((cat) =>
@@ -107,7 +186,7 @@ function EditProductModal({
                                             className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
                                                 setEditProduct({ ...editProductState, Category: category });
-                                                setShowBrandSuggestionsEdit(false);
+                                                setShowCategorySuggestions(false);
                                             }}
                                         >
                                             {category}
@@ -119,11 +198,13 @@ function EditProductModal({
                 </div>
 
                 <div className="relative col-span-2">
-                    <label className="block mb-1 text-gray-700 font-semibold">Brand</label>
+                    <label className="block mb-1 text-gray-700 font-semibold">
+                        Brand <span className="text-red-500">*</span>
+                    </label>
                     <input
                         type="text"
                         placeholder="Search brand name..."
-                        className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg mb-3"
+                        className={`w-full p-2 border ${errors.Brand ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg mb-3`}
                         value={brandNameInputEdit}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -135,11 +216,14 @@ function EditProductModal({
                             }));
                         }}
                     />
+                    {errors.Brand && (
+                        <p className="text-red-500 text-sm mt-1">{errors.Brand}</p>
+                    )}
                     {showBrandSuggestionsEdit && brandNameInputEdit && (
-                        <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-50">
+                        <ul className="absolute left-0 right-0 text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-30">
                             {brandList
                                 .filter((b) =>
-                                    b.Name.toLowerCase().includes(brandNameInputEdit.toLowerCase())
+                                    b.IsActive && b.Name.toLowerCase().includes(brandNameInputEdit.toLowerCase())
                                 )
                                 .map((brand) => (
                                     <li
@@ -225,25 +309,31 @@ function EditProductModal({
                     </div>
                 </div>
 
+
                 <div className="mt-2 relative col-span-2">
                     <label className="block mb-1 text-gray-700 font-semibold">
                         Additional images
                     </label>
                     <div className="flex flex-row items-center gap-4 mb-3">
-                        {previewUrlAdditionalImagesEditState.length > 0 && (
+                        {previewUrlAdditionalImagesEditState && previewUrlAdditionalImagesEditState.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {previewUrlAdditionalImagesEditState.map((url, index) => (
                                     <div
                                         key={index}
                                         className="relative w-40 h-40 border border-gray-300 rounded overflow-hidden"
                                     >
-                                        <div className="inline-block w-40 h-40">
+                                        <Link
+                                            to={url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block w-40 h-40 border border-gray-300"
+                                        >
                                             <img
                                                 src={url}
                                                 alt={`Additional ${index}`}
                                                 className="w-full h-full object-cover"
                                             />
-                                        </div>
+                                        </Link>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveExistingAdditionalImage(index)}
@@ -261,8 +351,13 @@ function EditProductModal({
                             className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-gray-300 cursor-pointer hover:bg-gray-50"
                         >
                             <span className="text-2xl text-gray-400">+</span>
-                            <span className="text-sm text-gray-500 mt-1">Add more image</span>
+                            <span className="text-sm text-gray-500 mt-1">
+                                {previewUrlAdditionalImagesEditState && previewUrlAdditionalImagesEditState.length > 0
+                                    ? "Add additional image"
+                                    : "Upload image"}
+                            </span>
                         </label>
+
                         <input
                             id="file-upload-additional-edit"
                             type="file"
@@ -274,24 +369,9 @@ function EditProductModal({
                     </div>
                 </div>
 
-                <div className="mb-4">
-                    <label className="block mb-1 text-gray-700 font-semibold">
-                        Description
-                    </label>
-                    <textarea
-                        rows={3}
-                        placeholder="Description"
-                        className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg"
-                        value={editProductState.Description || ''}
-                        onChange={(e) =>
-                            setEditProduct({ ...editProductState, Description: e.target.value })
-                        }
-                    />
-                </div>
-
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-semibold text-gray-700">Skin Types</h4>
+                        <h4 className="font-semibold text-gray-700">Skin Types <span className="text-red-500">*</span></h4>
                         <button
                             onClick={() =>
                                 setEditProduct((prev) => ({
@@ -308,12 +388,16 @@ function EditProductModal({
                         </button>
                     </div>
 
+                    {errors.SkinTypes && typeof errors.SkinTypes === 'string' && (
+                        <p className="text-red-500 text-sm mb-2">{errors.SkinTypes}</p>
+                    )}
+
                     {(editProductState.ProductForSkinTypes || []).map((item, index) => (
                         <div key={index} className="relative flex gap-2 mb-2 items-center">
                             <input
                                 type="text"
                                 placeholder="Skin type..."
-                                className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg"
+                                className={`w-full p-2 border ${errors.ProductForSkinTypes?.[index]?.TypeName ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
                                 value={item.TypeName || ""}
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -328,12 +412,15 @@ function EditProductModal({
                                     });
                                 }}
                             />
+                            {errors.ProductForSkinTypes?.[index]?.TypeName && (
+                                <span className="text-red-500 text-sm">{errors.ProductForSkinTypes[index].TypeName}</span>
+                            )}
 
                             {item.showSuggestions && item.TypeName && (
                                 <ul className="absolute mt-20 left-0 right-0 z-100 bg-white border border-gray-300 rounded-lg shadow-lg max-w-[940px] max-h-40 overflow-y-auto">
                                     {skinTypeList
                                         .filter((s) =>
-                                            s.TypeName.toLowerCase().includes(item.TypeName.toLowerCase())
+                                            s.IsActive && s.TypeName.toLowerCase().includes(item.TypeName.toLowerCase())
                                         )
                                         .map((s) => (
                                             <li
@@ -372,7 +459,7 @@ function EditProductModal({
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-semibold text-gray-700">Variations</h4>
+                        <h4 className="font-semibold text-gray-700">Variations <span className="text-red-500">*</span></h4>
                         <button
                             onClick={() =>
                                 setEditProduct((prev) => ({
@@ -388,6 +475,11 @@ function EditProductModal({
                             + Add Variation
                         </button>
                     </div>
+
+                    {errors.Variations && typeof errors.Variations === 'string' && (
+                        <p className="text-red-500 text-sm mb-2">{errors.Variations}</p>
+                    )}
+
                     {editProductState.Variations?.map((variation, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
                             <div className="flex flex-col w-1/2">
@@ -396,7 +488,7 @@ function EditProductModal({
                                     type="number"
                                     step="any"
                                     placeholder="Ml"
-                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    className={`p-1 border ${errors.Variations?.[index]?.Ml ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded`}
                                     value={variation.Ml}
                                     onChange={(e) =>
                                         setEditProduct((prev) => {
@@ -409,6 +501,9 @@ function EditProductModal({
                                         })
                                     }
                                 />
+                                {errors.Variations?.[index]?.Ml && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.Variations[index].Ml}</p>
+                                )}
                             </div>
 
                             <div className="flex flex-col w-1/2">
@@ -417,7 +512,7 @@ function EditProductModal({
                                     type="number"
                                     step="any"
                                     placeholder="Price"
-                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    className={`p-1 border ${errors.Variations?.[index]?.Price ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded`}
                                     value={variation.Price}
                                     onChange={(e) =>
                                         setEditProduct((prev) => {
@@ -430,13 +525,16 @@ function EditProductModal({
                                         })
                                     }
                                 />
+                                {errors.Variations?.[index]?.Price && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.Variations[index].Price}</p>
+                                )}
                             </div>
 
                             <button
                                 onClick={() => {
                                     handleRemoveEditVariation(index)
                                 }}
-                                className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                                className="mt-3  px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
                             </button>
@@ -651,7 +749,7 @@ function EditProductModal({
                     </button>
                     <button
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        onClick={handleEdit}
+                        onClick={onSubmitEdit}
                     >
                         Save Changes
                     </button>

@@ -329,7 +329,6 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         <EditPromotionModal
           editPromotionState={editPromotionState}
           setEditPromotion={setEditPromotion}
-          products={products}
           handleEdit={handleEdit}
           onClose={() => setIsEditModalOpen(false)}
         />
@@ -371,7 +370,6 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         <CreatePromotionModal
           newPromotion={newPromotion}
           setNewPromotion={setNewPromotion}
-          products={products}
           handleAddPromotion={handleAddPromotion}
           onClose={() => setIsModalOpen(false)}
         />

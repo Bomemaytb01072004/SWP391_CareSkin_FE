@@ -170,7 +170,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
 
     try {
       const createdQuiz = await createQuiz(newQuiz);
-      setLocalQuizzes((prev) => [...prev, createdQuiz]);
+      setLocalQuizzes((prev) => [createdQuiz, ...prev]);
+
+      setCurrentPage(1);
 
       setNewQuiz({
         Title: '',

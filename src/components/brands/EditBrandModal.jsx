@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -11,6 +11,75 @@ function EditBrandModal({
   onClose,
   handleUpdate,
 }) {
+  const [nameError, setNameError] = useState('');
+  
+  useEffect(() => {
+    if (editingBrand && editingBrand.Name) {
+      validateBrandName(editingBrand.Name);
+    }
+  }, []);
+  
+  // Validate brand name function
+  const validateBrandName = (name) => {
+    if (!name || name.trim() === '') {
+      setNameError('Brand name is required');
+      return false;
+    }
+    
+    if (name.length < 2) {
+      setNameError('Brand name must be at least 2 characters');
+      return false;
+    }
+    
+    if (name.length > 50) {
+      setNameError('Brand name cannot exceed 50 characters');
+      return false;
+    }
+    
+    // Check for invalid characters
+    const invalidCharsRegex = /[<>{}[\]\\\/]/;
+    if (invalidCharsRegex.test(name)) {
+      setNameError('Brand name contains invalid characters');
+      return false;
+    }
+    
+    setNameError('');
+    return true;
+  };
+
+  // Handle name change with validation
+  const handleNameChange = (e) => {
+    const newName = e.target.value;
+    setEditingBrand({ ...editingBrand, Name: newName });
+    validateBrandName(newName);
+  };
+
+  const handleSubmitUpdate = () => {
+    // Validate name
+    if (!validateBrandName(editingBrand.Name)) {
+      toast.error(nameError, {
+        position: 'top-right',
+        autoClose: 3000
+      });
+      return;
+    }
+
+    // Proceed with update
+    try {
+      handleUpdate();
+      toast.success('Brand updated successfully!', {
+        position: 'top-right',
+        autoClose: 3000
+      });
+    } catch (error) {
+      console.error('Failed to update brand:', error);
+      toast.error('Failed to update brand: ' + (error.message || 'Unknown error'), {
+        position: 'top-right',
+        autoClose: 5000
+      });
+    }
+  };
+
   if (!editingBrand) return null;
 
   return (
@@ -33,47 +102,29 @@ function EditBrandModal({
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Brand Name"
-            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
-            value={editingBrand.Name}
-            autoFocus
-            onChange={(e) =>
-              setEditingBrand({ ...editingBrand, Name: e.target.value })
-            }
-          />
+          <div className="col-span-2 md:col-span-1">
+            <label className="block mb-1 text-gray-700 font-semibold">
+              Brand Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Brand Name"
+              className={`p-2 w-full border ${nameError ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
+              value={editingBrand.Name}
+              autoFocus
+              onChange={handleNameChange}
+              maxLength={50}
+            />
+            {nameError && (
+              <p className="mt-1 text-red-500 text-sm">{nameError}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Brand name must be between 2-50 characters
+            </p>
+          </div>
           
-          {/* Active Status Toggle */}
-          {/* <div className="flex items-center space-x-4">
-            <span className="text-gray-700 font-medium">Status:</span>
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                className={`flex items-center px-3 py-2 rounded-lg ${
-                  editingBrand.IsActive
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                onClick={() => setEditingBrand({ ...editingBrand, IsActive: true })}
-              >
-                <CheckCircle size={18} className="mr-2" />
-                Active
-              </button>
-              <button
-                type="button"
-                className={`flex items-center px-3 py-2 rounded-lg ${
-                  !editingBrand.IsActive
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                onClick={() => setEditingBrand({ ...editingBrand, IsActive: false })}
-              >
-                <XCircle size={18} className="mr-2" />
-                Inactive
-              </button>
-            </div>
-          </div> */}
+          {/* Active Status Toggle - Uncomment if needed */}
+          {/* <div className="flex items-center space-x-4">...</div> */}
 
           <div className="relative col-span-2">
             <label className="block mb-1 text-gray-700 font-semibold">
@@ -145,8 +196,9 @@ function EditBrandModal({
             Cancel
           </button>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            onClick={handleUpdate}
+            className={`px-4 py-2 ${nameError ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg`}
+            onClick={handleSubmitUpdate}
+            disabled={!!nameError}
           >
             Update
           </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Minus, Trash, Save } from 'lucide-react';
+import { X, Save, CheckCircle } from 'lucide-react'; // Import thêm CheckCircle icon
 import { toast } from 'react-toastify';
 import { fetchSkinTypes } from '../../utils/api';
 import { createRoutine, updateRoutine } from '../../utils/apiOfRoutine';
@@ -7,6 +7,8 @@ import { createRoutine, updateRoutine } from '../../utils/apiOfRoutine';
 const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
   const [skinTypes, setSkinTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false); // State mới cho thông báo thành công
+  const [successMessage, setSuccessMessage] = useState(''); // Nội dung thông báo
   const [routineData, setRoutineData] = useState({
     RoutineId: 0,
     RoutineName: '',
@@ -23,7 +25,6 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
     const loadSkinTypes = async () => {
       try {
         const data = await fetchSkinTypes();
-        console.log('Skin Types data:', data);
         setSkinTypes(data);
       } catch (error) {
         console.error('Error loading skin types:', error);
@@ -45,10 +46,9 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
           RoutineStepDTOs: routine.RoutineStepDTOs || []
         });
       } else {
-        // Reset form for create mode
         setRoutineData({
           RoutineId: 0,
-          RoutineName: '',
+          RoutineName: 'Routine for ', // Initialize with the required prefix
           RoutinePeriod: 'morning',
           Description: '',
           SkinTypeId: '',
@@ -61,43 +61,89 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setRoutineData({
-      ...routineData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+    
+    if (name === "RoutineName") {
+      if (!value.startsWith("Routine for ")) {
+        if ("Routine for ".startsWith(value)) {
+          setRoutineData({
+            ...routineData,
+            [name]: "Routine for "
+          });
+        } else {
+          setRoutineData({
+            ...routineData,
+            [name]: "Routine for " + value.replace(/^Routine for /i, '')
+          });
+        }
+      } else {
+        setRoutineData({
+          ...routineData,
+          [name]: value
+        });
+      }
+    } else {
+      setRoutineData({
+        ...routineData,
+        [name]: type === 'checkbox' ? checked : value
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!routineData.RoutineName || !routineData.SkinTypeId || !routineData.RoutinePeriod) {
       toast.error('Please fill all required fields');
       return;
     }
 
+    let finalRoutineName = routineData.RoutineName;
+    if (!finalRoutineName.startsWith("Routine for ")) {
+      finalRoutineName = "Routine for " + finalRoutineName;
+    }
+
+    if (finalRoutineName === "Routine for " || finalRoutineName.trim() === "Routine for") {
+      toast.error('Please complete the routine name after "Routine for "');
+      return;
+    }
+
+    if (!routineData.Description || routineData.Description.length < 20) {
+      toast.error('Description must be at least 20 characters long');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Format data for API
       const formattedData = {
-        RoutineName: routineData.RoutineName,
+        RoutineName: finalRoutineName,
         RoutinePeriod: routineData.RoutinePeriod,
         Description: routineData.Description,
-        SkinTypeId: parseInt(routineData.SkinTypeId, 10)
+        SkinTypeId: parseInt(routineData.SkinTypeId, 10),
+        IsActive: routineData.IsActive
       };
 
+      // Gọi API dựa trên mode
       if (isEditMode) {
         await updateRoutine(routine.RoutineId, formattedData);
-        toast.success('Routine updated successfully!');
       } else {
         await createRoutine(formattedData);
-        toast.success('Routine created successfully!');
       }
       
-      if (refetchRoutines) {
-        refetchRoutines();
+      // Gọi refetchRoutines trước khi đóng modal
+      if (typeof refetchRoutines === 'function') {
+        await refetchRoutines();
       }
+
+      // Đóng modal ngay lập tức
       onClose();
+      
+      // Sau đó hiển thị toast sau khi modal đã đóng
+      const message = isEditMode ? 'Routine updated successfully!' : 'Routine created successfully!';
+      toast.success(message, {
+        position: 'top-right',
+        autoClose: 5000
+      });
     } catch (error) {
       console.error('Error saving routine:', error);
       toast.error(`Failed to ${isEditMode ? 'update' : 'create'} routine: ${error.message}`);
@@ -111,6 +157,14 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
       <div className="relative bg-white text-black rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {showSuccess && (
+          <div className="absolute inset-0 bg-white bg-opacity-95 flex flex-col items-center justify-center z-10 p-6 rounded-lg">
+            <CheckCircle size={64} className="text-green-500 mb-4" />
+            <h3 className="text-xl font-bold text-green-700 mb-2">{successMessage}</h3>
+            <p className="text-gray-600">Redirecting...</p>
+          </div>
+        )}
+
         <div className="flex justify-between items-center p-4 border-b border-gray-300">
           <h3 className="text-xl font-semibold">
             {isEditMode ? 'Edit Routine' : 'Create New Routine'}
@@ -124,11 +178,10 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Information */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
-                Routine Name *
+                Routine Name * <span className="text-xs text-gray-500">(must start with "Routine for")</span>
               </label>
               <input
                 type="text"
@@ -136,9 +189,12 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
                 value={routineData.RoutineName}
                 onChange={handleInputChange}
                 className="w-full px-2 py-2 bg-gray-100 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                placeholder="Enter routine name"
+                placeholder="Routine for [skin type] [time period]"
                 required
               />
+              {!routineData.RoutineName.startsWith("Routine for ") && (
+                <p className="text-red-500 text-xs mt-1">Name must start with "Routine for"</p>
+              )}
             </div>
 
             <div>
@@ -154,8 +210,7 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
               >
                 <option value="">Select Period</option>
                 <option value="morning">Morning</option>
-                <option value="evening">Night</option>
-                {/* <option value="all-day">All Day</option> */}
+                <option value="evening">Evening</option>
               </select>
             </div>
 
@@ -171,11 +226,13 @@ const RoutineModal = ({ isOpen, onClose, routine = null, refetchRoutines }) => {
                 required
               >
                 <option value="">Select Skin Type</option>
-                {skinTypes.map((type) => (
-                  <option key={type.SkinTypeId} value={type.SkinTypeId}>
-                    {type.TypeName}
-                  </option>
-                ))}
+                {skinTypes
+                  .filter((type) => type.IsActive)
+                  .map((type) => (
+                    <option key={type.SkinTypeId} value={type.SkinTypeId}>
+                      {type.TypeName}
+                    </option>
+                  ))}
               </select>
             </div>
 

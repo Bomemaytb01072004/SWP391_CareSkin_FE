@@ -70,12 +70,12 @@ const OrdersPage = () => {
         prevOrders.map((order) =>
           order.orderId === orderId
             ? {
-                ...order,
-                customer: updatedOrderData.Name,
-                phone: updatedOrderData.Phone,
-                address: updatedOrderData.Address,
-                promotionId: updatedOrderData.PromotionId,
-              }
+              ...order,
+              customer: updatedOrderData.Name,
+              phone: updatedOrderData.Phone,
+              address: updatedOrderData.Address,
+              promotionId: updatedOrderData.PromotionId,
+            }
             : order
         )
       );
@@ -146,11 +146,11 @@ const OrdersPage = () => {
 
       {/* Order Details Modal */}
       {viewingOrder && orderDetails && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-60 backdrop-blur-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-100 bg-opacity-50 backdrop-blur-md">
           <div className="bg-white p-6 rounded-lg shadow-xl w-[90%] max-w-2xl relative">
             {/* Close Button */}
             <button
-              className="absolute top-3 right-4 text-gray-100 hover:text-gray-700 text-xl"
+              className="absolute top-3 right-4 text-gray-900 hover:text-gray-700 text-xl"
               onClick={() => {
                 setViewingOrder(null);
                 setEditingOrderInfo(null);
@@ -175,11 +175,15 @@ const OrdersPage = () => {
                     <strong>Customer:</strong> {orderDetails.Name}
                   </p>
                   <p>
+                    <strong>Address:</strong> {orderDetails.Address}
+                  </p>
+                  <p>
                     <strong>Phone:</strong> {orderDetails.Phone}
                   </p>
                   <p>
-                    <strong>Address:</strong> {orderDetails.Address}
+                    <strong>Email:</strong> {orderDetails.Email}
                   </p>
+
                   <p>
                     <strong>Order Date:</strong> {orderDetails.OrderDate}
                   </p>
@@ -234,7 +238,7 @@ const OrdersPage = () => {
 
                 {/* Edit and Close Buttons */}
                 <div className="flex justify-between items-center gap-3 mt-5">
-                  <button
+                  {/* <button
                     className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-blue-500 hover:bg-blue-600 shadow-md transition-all duration-300"
                     onClick={() => {
                       setOrderForm({
@@ -247,7 +251,7 @@ const OrdersPage = () => {
                     }}
                   >
                     Edit
-                  </button>
+                  </button> */}
 
                   <button
                     className="flex-1 px-6 py-3 rounded-md text-white font-medium bg-red-500 hover:bg-red-600 shadow-md transition-all duration-300"

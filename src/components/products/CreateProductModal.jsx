@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -10,6 +10,8 @@ function CreateProductModal({
     setBrandNameInput,
     showSuggestions,
     setShowSuggestions,
+    showCategorySuggestions,
+    setShowCategorySuggestions,
     skinTypeList,
 
     previewUrlNewUpload,
@@ -19,6 +21,11 @@ function CreateProductModal({
     handleRemoveAdditionalImage,
     handleAdditionalImagesChange,
     handleAddProduct,
+    handleRemoveSkinType,
+    handleRemoveVariation,
+    handleRemoveMainIngredient,
+    handleRemoveDetailIngredient,
+    handleRemoveUsage,
 
     onClose,
 }) {
@@ -30,17 +37,100 @@ function CreateProductModal({
         "Sunscreen",
     ];
 
+    const [errors, setErrors] = useState({});
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!newProduct.ProductName?.trim()) {
+            newErrors.ProductName = 'Product name is required';
+        } else if (newProduct.ProductName.trim().length < 3) {
+            newErrors.ProductName = 'Product name must be at least 3 characters';
+        } else if (newProduct.ProductName.trim().length > 100) {
+            newErrors.ProductName = 'Product name must be less than 100 characters';
+        }
+
+        if (!newProduct.Category?.trim()) {
+            newErrors.Category = 'Category is required';
+        }
+
+        const selectedBrand = brandList.find(
+            b => b.Name.toLowerCase() === brandNameInput.toLowerCase()
+        );
+        if (!selectedBrand) {
+            newErrors.Brand = 'Please select from suggestions or create a new brand in Brands page';
+        }
+
+        if (!newProduct.PictureFile) {
+            newErrors.PictureFile = 'Product image is required';
+        }
+
+        if (!newProduct.ProductForSkinTypes || newProduct.ProductForSkinTypes.length === 0) {
+            newErrors.SkinTypes = 'At least one Skin Type is required';
+        } else {
+            const skinTypesErrors = [];
+            let hasInvalidSkinType = false;
+
+            newProduct.ProductForSkinTypes.forEach((st, index) => {
+                if (!st.TypeName || !skinTypeList.some(
+                    skinType => skinType.TypeName.toLowerCase() === st.TypeName.toLowerCase()
+                )) {
+                    if (!skinTypesErrors[index]) skinTypesErrors[index] = {};
+                    skinTypesErrors[index].TypeName = 'Please select from suggestions or create a new skin type in Skin Types page';
+                    hasInvalidSkinType = true;
+                }
+            });
+
+            if (hasInvalidSkinType) {
+                newErrors.ProductForSkinTypes = skinTypesErrors;
+            }
+        }
+
+        if (!newProduct.Variations || newProduct.Variations.length === 0) {
+            newErrors.Variations = 'At least one variation is required';
+        } else {
+            const variationErrors = [];
+            let hasVariationError = false;
+
+            newProduct.Variations.forEach((variation, index) => {
+                const varError = {};
+                if (variation.Ml <= 0) {
+                    varError.Ml = 'Volume must be greater than 0';
+                    hasVariationError = true;
+                }
+                if (variation.Price <= 0) {
+                    varError.Price = 'Price must be greater than 0';
+                    hasVariationError = true;
+                }
+                if (Object.keys(varError).length > 0) {
+                    variationErrors[index] = varError;
+                }
+            });
+
+            if (hasVariationError) {
+                newErrors.Variations = variationErrors;
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const onSubmitProduct = () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        handleAddProduct();
+    };
+
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[9999]"
+            className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center overflow-y-auto backdrop-blur-md"
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-7xl max-h-[100vh] overflow-y-scroll z-[10000]"
-                style={{
-                    top: '10%',
-                    transform: "translateY(-20%)",
-                }}
+                className="relative mt-5 bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-7xl max-h-[90vh] overflow-y-scroll m-4"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
@@ -54,18 +144,21 @@ function CreateProductModal({
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="flex flex-col">
                         <label className="block mb-1 text-gray-700 font-semibold">
-                            Product Name
+                            Product Name <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             placeholder="ProductName"
-                            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
+                            className={`p-2 border ${errors.ProductName ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
                             value={newProduct.ProductName || ""}
                             autoFocus
                             onChange={(e) =>
                                 setNewProduct({ ...newProduct, ProductName: e.target.value })
                             }
                         />
+                        {errors.ProductName && (
+                            <p className="text-red-500 text-sm mt-1">{errors.ProductName}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col relative">
@@ -78,10 +171,13 @@ function CreateProductModal({
                             onChange={(e) => {
                                 const val = e.target.value;
                                 setNewProduct({ ...newProduct, Category: val });
-                                setShowSuggestions(!!val);
+                                setShowCategorySuggestions(!!val);
                             }}
                         />
-                        {showSuggestions && newProduct.Category && (
+                        {errors.Category && (
+                            <span className="text-red-500 text-sm">{errors.Category}</span>
+                        )}
+                        {showCategorySuggestions && newProduct.Category && (
                             <ul className="absolute mt-[70px] w-full text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
                                 {popularCategories
                                     .filter((cat) =>
@@ -93,7 +189,7 @@ function CreateProductModal({
                                             className="px-2 py-1 hover:bg-gray-100 cursor-pointer"
                                             onClick={() => {
                                                 setNewProduct({ ...newProduct, Category: category });
-                                                setShowSuggestions(false); // Ẩn gợi ý sau khi chọn
+                                                setShowCategorySuggestions(false);
                                             }}
                                         >
                                             {category}
@@ -106,12 +202,12 @@ function CreateProductModal({
 
                 <div className="relative col-span-2">
                     <label className="block mb-1 text-gray-700 font-semibold">
-                        Brand
+                        Brand <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         placeholder="Search brand name..."
-                        className="w-full p-2 border border-gray-300 text-gray-900 rounded-lg mb-3"
+                        className={`w-full p-2 border ${errors.Brand ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg mb-3`}
                         value={brandNameInput}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -119,6 +215,9 @@ function CreateProductModal({
                             setShowSuggestions(!!val);
                         }}
                     />
+                    {errors.Brand && (
+                        <p className="text-red-500 text-sm mt-1">{errors.Brand}</p>
+                    )}
                     {showSuggestions && brandNameInput && (
                         <ul className="absolute left-0 right-0 text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-30">
                             {brandList
@@ -211,6 +310,9 @@ function CreateProductModal({
                             }}
                         />
                     </div>
+                    {errors.PictureFile && (
+                        <span className="text-red-500 text-sm">{errors.PictureFile}</span>
+                    )}
                 </div>
 
                 <div className="mt-2 relative col-span-2">
@@ -331,7 +433,9 @@ function CreateProductModal({
                                     });
                                 }}
                             />
-
+                            {errors.ProductForSkinTypes?.[index]?.TypeName && (
+                                <span className="text-red-500 text-sm">{errors.ProductForSkinTypes[index].TypeName}</span>
+                            )}
                             {st.showSuggestions && st.TypeName && (
                                 <ul className="absolute left-0 right-0 top-12 text-gray-900 bg-white border border-gray-300 rounded-lg shadow-lg max-w-[932px] max-h-40 overflow-y-auto z-10">
                                     {skinTypeList
@@ -362,14 +466,7 @@ function CreateProductModal({
                             )}
 
                             <button
-                                onClick={() => {
-                                    setNewProduct((prev) => ({
-                                        ...prev,
-                                        ProductForSkinTypes: prev.ProductForSkinTypes.filter(
-                                            (_, i) => i !== index
-                                        ),
-                                    }));
-                                }}
+                                onClick={() => handleRemoveSkinType(index)}
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
@@ -396,6 +493,11 @@ function CreateProductModal({
                             + Add Variation
                         </button>
                     </div>
+                    
+                    {errors.Variations && typeof errors.Variations === 'string' && (
+                        <p className="text-red-500 text-sm mb-2">{errors.Variations}</p>
+                    )}
+                    
                     {newProduct.Variations.map((variation, index) => (
                         <div key={index} className="flex gap-2 mb-2 items-center">
                             <div className="flex flex-col w-1/2">
@@ -403,7 +505,7 @@ function CreateProductModal({
                                 <input
                                     type="number"
                                     placeholder="Ml"
-                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    className={`p-1 border ${errors.Variations?.[index]?.Ml ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded`}
                                     value={variation.Ml}
                                     onChange={(e) =>
                                         setNewProduct((prev) => {
@@ -416,6 +518,9 @@ function CreateProductModal({
                                         })
                                     }
                                 />
+                                {errors.Variations?.[index]?.Ml && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.Variations[index].Ml}</p>
+                                )}
                             </div>
 
                             <div className="flex flex-col w-1/2">
@@ -423,7 +528,7 @@ function CreateProductModal({
                                 <input
                                     type="number"
                                     placeholder="Price"
-                                    className="p-1 border border-gray-300 text-gray-900 rounded"
+                                    className={`p-1 border ${errors.Variations?.[index]?.Price ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded`}
                                     value={variation.Price}
                                     onChange={(e) =>
                                         setNewProduct((prev) => {
@@ -436,22 +541,19 @@ function CreateProductModal({
                                         })
                                     }
                                 />
+                                {errors.Variations?.[index]?.Price && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.Variations[index].Price}</p>
+                                )}
                             </div>
 
                             <button
-                                onClick={() =>
-                                    setNewProduct((prev) => ({
-                                        ...prev,
-                                        Variations: prev.Variations.filter((_, i) => i !== index),
-                                    }))
-                                }
+                                onClick={() => handleRemoveVariation(index)}
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
                             </button>
                         </div>
                     ))}
-
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
@@ -519,14 +621,7 @@ function CreateProductModal({
                             </div>
 
                             <button
-                                onClick={() =>
-                                    setNewProduct((prev) => ({
-                                        ...prev,
-                                        MainIngredients: prev.MainIngredients.filter(
-                                            (_, i) => i !== index
-                                        ),
-                                    }))
-                                }
+                                onClick={() => handleRemoveMainIngredient(index)}
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
@@ -576,14 +671,7 @@ function CreateProductModal({
                                 />
                             </div>
                             <button
-                                onClick={() =>
-                                    setNewProduct((prev) => ({
-                                        ...prev,
-                                        DetailIngredients: prev.DetailIngredients.filter(
-                                            (_, i) => i !== index
-                                        ),
-                                    }))
-                                }
+                                onClick={() => handleRemoveDetailIngredient(index)}
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
@@ -654,12 +742,7 @@ function CreateProductModal({
                             </div>
 
                             <button
-                                onClick={() =>
-                                    setNewProduct((prev) => ({
-                                        ...prev,
-                                        Usages: prev.Usages.filter((_, i) => i !== index),
-                                    }))
-                                }
+                                onClick={() => handleRemoveUsage(index)}
                                 className="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
                             >
                                 Remove
@@ -677,7 +760,7 @@ function CreateProductModal({
                     </button>
                     <button
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        onClick={handleAddProduct}
+                        onClick={onSubmitProduct}
                     >
                         Submit
                     </button>

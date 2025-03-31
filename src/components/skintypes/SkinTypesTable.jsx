@@ -248,9 +248,10 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
 
     try {
       const createdSkinType = await createSkinType(newSkinType);
-      setLocalSkinTypes((prev) => [...prev, createdSkinType]);
-
-      // Reset form
+      setLocalSkinTypes((prev) => [createdSkinType, ...prev]);
+      
+      setCurrentPage(1);
+      
       setNewSkinType({
         TypeName: '',
         MinScore: 0,
@@ -258,10 +259,10 @@ const SkinTypesTable = ({ skinTypes, refetchSkinTypes }) => {
         Description: '',
         IsActive: true
       });
-
+      
       setIsModalOpen(false);
       toast.success('Skin type created successfully!');
-
+      
       // Refresh the skin types data
       if (refetchSkinTypes) {
         refetchSkinTypes();

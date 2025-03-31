@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createBrand } from '../../utils/api';
 
 function CreateBrandModal({
-
   newBrand,
   setNewBrand,
   previewUrlNewUploadBrand,
@@ -13,11 +12,53 @@ function CreateBrandModal({
   onClose,
   refetchBrands,
 }) {
+  const [nameError, setNameError] = useState('');
+
+  // Validate brand name function
+  const validateBrandName = (name) => {
+    if (!name || name.trim() === '') {
+      return 'Brand name is required';
+    }
+    
+    if (name.length < 2) {
+      return 'Brand name must be at least 2 characters';
+    }
+    
+    if (name.length > 50) {
+      return 'Brand name cannot exceed 50 characters';
+    }
+    
+    // Check for invalid characters (optional)
+    const invalidCharsRegex = /[<>{}[\]\\\/]/;
+    if (invalidCharsRegex.test(name)) {
+      return 'Brand name contains invalid characters';
+    }
+    
+    return '';
+  };
+
+  // Handle name change with validation
+  const handleNameChange = (e) => {
+    const newName = e.target.value;
+    setNewBrand({ ...newBrand, Name: newName });
+    setNameError(validateBrandName(newName));
+  };
+
   const handleAddBrand = async () => {
-    if (!newBrand.Name || !newBrand.PictureFile) {
-      toast.error('Please fill in required fields: Name, Upload file image of Brand');
+    // Validate name
+    const nameValidationError = validateBrandName(newBrand.Name);
+    if (nameValidationError) {
+      toast.error(nameValidationError);
+      setNameError(nameValidationError);
       return;
     }
+
+    // Validate image
+    if (!newBrand.PictureFile) {
+      toast.error('Please upload a brand image');
+      return;
+    }
+
     try {
       await createBrand(newBrand);
       toast.success('Brand created successfully!');
@@ -53,18 +94,26 @@ function CreateBrandModal({
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Brand Name"
-            className="p-2 border border-gray-300 text-gray-900 rounded-lg"
-            value={newBrand.Name}
-            autoFocus
-            onChange={(e) => setNewBrand({ ...newBrand, Name: e.target.value })}
-          />
+          <div className="col-span-2 md:col-span-1">
+            <label className="block mb-1 text-gray-700 font-semibold">
+              Brand Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Brand Name"
+              className={`p-2 w-full border ${nameError ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-lg`}
+              value={newBrand.Name}
+              autoFocus
+              onChange={handleNameChange}
+            />
+            {nameError && (
+              <p className="mt-1 text-red-500 text-sm">{nameError}</p>
+            )}
+          </div>
 
           <div className="relative col-span-2">
             <label className="block mb-1 text-gray-700 font-semibold">
-              Brand Image
+              Brand Image <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-row items-center gap-4">
               {previewUrlNewUploadBrand ? (
@@ -142,8 +191,9 @@ function CreateBrandModal({
             Cancel
           </button>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className={`px-4 py-2 ${nameError ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg`}
             onClick={handleAddBrand}
+            disabled={!!nameError}
           >
             Submit
           </button>
