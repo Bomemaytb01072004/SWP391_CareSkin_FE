@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = 'http://careskinbeauty.shop:4456/api/Product';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const NewArrivals = () => {
   const [products, setProducts] = useState([]);
@@ -16,7 +16,9 @@ const NewArrivals = () => {
     const controller = new AbortController();
     const fetchProducts = async () => {
       try {
-        const res = await fetch(API_URL, { signal: controller.signal });
+        const res = await fetch(`${backendUrl}/api/Product`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error('Failed to fetch products');
 
         const data = await res.json();

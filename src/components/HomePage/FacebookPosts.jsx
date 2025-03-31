@@ -14,8 +14,7 @@ const FacebookPosts = () => {
       try {
         // This is where the error is happening - we need to change the field aliases
         // Note: You should move this token to an environment variable or backend
-        const accessToken =
-          'EAAJU70izSNQBOz06caEGVVVTldNDZBhEGXS5x0X8B4ScX7rvuPZAN4pjGvdq6bifjZAE1Rg9o0aqH1bKOBzBesjfVRQbBgZAELS6q6Iq2n5ERVebsDmnwTojU6L0lxvQunBnPe5cKDbSir4LWGQ2tpuk929LbHoZBEdTJrxbeaqKHTY2p5Me8dZA8TZAAqdGozV';
+        const accessToken = import.meta.env.VITE_FACEBOOK2_APP_ID;
         const pageId = '616836648173383';
 
         // Changed field aliases to avoid naming conflicts with Graph API
@@ -301,9 +300,11 @@ const FacebookPosts = () => {
           href="https://www.facebook.com/profile.php?id=61573863226824"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors duration-300"
+          className="inline-block px-6 py-3 bg-emerald-800 text-white rounded-lg font-medium hover:bg-emerald-900 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          aria-label="View more posts on our Facebook page (opens in new tab)"
         >
           View More on Facebook
+          <span className="sr-only">(opens in new tab)</span>
         </a>
       </motion.div>
     </section>

@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
 
 function ProductList({ products }) {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   const [cart, setCart] = useState(() => {
     const storedCart = localStorage.getItem('cart');
     return storedCart ? JSON.parse(storedCart) : [];
@@ -92,17 +94,14 @@ function ProductList({ products }) {
         ProductVariationId: firstVariation?.ProductVariationId,
         Quantity: 1,
       };
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/add`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(newCartItem),
-        }
-      );
+      const response = await fetch(`${backendUrl}/api/Cart/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newCartItem),
+      });
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API Response Error:', errorData);
@@ -110,7 +109,7 @@ function ProductList({ products }) {
       }
       console.log('Cart successfully updated in API!');
       const cartResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/Cart/customer/${CustomerId}`,
+        `${backendUrl}/api/Cart/customer/${CustomerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!cartResponse.ok) {

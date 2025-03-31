@@ -13,6 +13,7 @@ import { Formik, useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../../context/AuthContext';
 import styles from './LoginPage.module.css';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const LoginPage = () => {
   const [rightPanelActive, setRightPanelActive] = useState(false);
@@ -183,19 +184,16 @@ const LoginPage = () => {
     onSubmit: async (values) => {
       const { username, password } = values;
       try {
-        const response = await fetch(
-          'http://careskinbeauty.shop:4456/api/Auth/Login',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              UserName: username,
-              Password: password,
-            }),
-          }
-        );
+        const response = await fetch(`${backendUrl}/api/Auth/Login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            UserName: username,
+            Password: password,
+          }),
+        });
 
         const data = await response.json();
 
@@ -274,7 +272,7 @@ const LoginPage = () => {
         formData.append('ConfirmPassword', confirmPassword);
 
         const registerResponse = await fetch(
-          'http://careskinbeauty.shop:4456/api/Customer/register',
+          `${backendUrl}/api/Customer/register`,
           {
             method: 'POST',
             body: formData,

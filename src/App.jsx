@@ -26,54 +26,54 @@ import ContactPage from './Pages/Contact/ContactPage';
 export default function App() {
   return (
     <AuthProvider>
+      {' '}
       <Router>
+        {' '}
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/joinus" element={<LoginPage />} />
-          <Route path="/skinquiz" element={<SkinQuizPage />} />
-          <Route path="/skinroutine" element={<SkinRoutinePage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/product/:id" element={<ProductDetailedPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/blogs" element={<BlogPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          {' '}
+          {/* Public Routes */} <Route path="/" element={<HomePage />} />{' '}
+          <Route path="/login" element={<LoginPage />} />{' '}
+          <Route path="/joinus" element={<LoginPage />} />{' '}
+          <Route path="/skinquiz" element={<SkinQuizPage />} />{' '}
+          <Route path="/skinroutine" element={<SkinRoutinePage />} />{' '}
+          <Route path="/products" element={<ProductsPage />} />{' '}
+          {/* <Route path="/product/:id" element={<ProductDetailedPage />} />{' '} */}
+          <Route path="/product/:slug" element={<ProductDetailedPage />} />{' '}
+          <Route path="/cart" element={<CartPage />} />{' '}
+          <Route path="/blogs" element={<BlogPage />} />{' '}
+          <Route path="/about" element={<AboutPage />} />{' '}
+          <Route path="/checkout" element={<CheckoutPage />} />{' '}
+          <Route path="/contact" element={<ContactPage />} />{' '}
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />{' '}
           <Route
             path="/momo-confirmation"
             element={<OrderConfirmationMoMo />}
-          />
+          />{' '}
           <Route
             path="/zalo-confirmation"
             element={<OrderConfirmationZalo />}
-          />
-          <Route path="/blog/:blogId" element={<BlogDetails />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-
+          />{' '}
+          <Route path="/blog/:blogId" element={<BlogDetails />} />{' '}
+          <Route path="/reset-password" element={<ResetPasswordPage />} />{' '}
           <Route
             path="/compare/:product1/:product2"
             element={<CompareProduct />}
-          />
-
-          {/* Protected User Routes */}
+          />{' '}
+          {/* Protected User Routes */}{' '}
           <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<UserProfile />} />
-          </Route>
-
-          {/* Admin Routes - Protected by Admin Role */}
+            {' '}
+            <Route path="/profile" element={<UserProfile />} />{' '}
+          </Route>{' '}
+          {/* Admin Routes - Protected by Admin Role */}{' '}
           <Route element={<ProtectedRoute requireAdmin={true} />}>
-            <Route path="/admin/*" element={<Admin />} />
-          </Route>
-
-          {/* Error Pages */}
-          <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          <Route path="/guest" element={<GuestUnauthorizedPage />} />
-        </Routes>
-      </Router>
+            {' '}
+            <Route path="/admin/*" element={<Admin />} />{' '}
+          </Route>{' '}
+          {/* Error Pages */}{' '}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />{' '}
+          <Route path="/guest" element={<GuestUnauthorizedPage />} />{' '}
+        </Routes>{' '}
+      </Router>{' '}
     </AuthProvider>
   );
 }

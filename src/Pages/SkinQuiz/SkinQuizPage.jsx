@@ -10,6 +10,8 @@ import GuestUnauthorizedPage from '../../Pages/Unauthorized/GuestUnauthorizedPag
 
 const SkinQuizPage = () => {
   const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
   const [stage, setStage] = useState('start');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -91,7 +93,7 @@ const SkinQuizPage = () => {
     try {
       // Check if user has done the quiz before
       const checkResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/UserQuizAttempt/customer/${customerId}?includeHistories=false`,
+        `${backendUrl}/api/UserQuizAttempt/customer/${customerId}?includeHistories=false`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -118,20 +120,17 @@ const SkinQuizPage = () => {
       setQuizId(selectedQuizId);
 
       // Create a new quiz attempt
-      const createResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/UserQuizAttempt`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            CustomerId: parseInt(customerId),
-            QuizId: selectedQuizId,
-          }),
-        }
-      );
+      const createResponse = await fetch(`${backendUrl}/api/UserQuizAttempt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          CustomerId: parseInt(customerId),
+          QuizId: selectedQuizId,
+        }),
+      });
 
       if (!createResponse.ok) {
         throw new Error('Failed to create quiz attempt');
@@ -185,10 +184,9 @@ const SkinQuizPage = () => {
       const token = localStorage.getItem('token');
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await fetch(
-        `http://careskinbeauty.shop:4456/api/Quiz/${quizId}`,
-        { headers }
-      );
+      const response = await fetch(`${backendUrl}/api/Quiz/${quizId}`, {
+        headers,
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch quiz questions: ${response.status}`);
@@ -449,7 +447,7 @@ const SkinQuizPage = () => {
 
       // 1. Submit answers to history endpoint
       const historyResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/History/attempt/${userQuizAttemptId}`,
+        `${backendUrl}/api/History/attempt/${userQuizAttemptId}`,
         {
           method: 'POST',
           headers: {
@@ -470,21 +468,18 @@ const SkinQuizPage = () => {
 
       // 2. Get final results from Results API
       console.log('Fetching final skin type results...');
-      const resultResponse = await fetch(
-        `http://careskinbeauty.shop:4456/api/Result`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            CustomerId: parseInt(customerId),
-            QuizId: quizId,
-            UserQuizAttemptId: userQuizAttemptId,
-          }),
-        }
-      );
+      const resultResponse = await fetch(`${backendUrl}/api/Result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          CustomerId: parseInt(customerId),
+          QuizId: quizId,
+          UserQuizAttemptId: userQuizAttemptId,
+        }),
+      });
 
       if (!resultResponse.ok) {
         throw new Error(
