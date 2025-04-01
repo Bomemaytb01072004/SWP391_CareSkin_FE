@@ -11,6 +11,7 @@ import {
   createQuiz,
   updateQuiz,
   deleteQuiz,
+  fetchQuizById,
 } from '../../utils/apiQ_A';
 
 const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) => {
@@ -20,7 +21,6 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [quizzesPerPage] = useState(8);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [filteredQuizzes, setFilteredQuizzes] = useState([]);
   const [quizDetails, setQuizDetails] = useState({});
 
@@ -38,7 +38,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
 
   useEffect(() => {
     if (quizzes) {
-      setLocalQuizzes(quizzes);
+      // Sắp xếp quizzes với ID lớn nhất (mới nhất) lên đầu
+      const sortedQuizzes = [...quizzes].sort((a, b) => b.QuizId - a.QuizId);
+      setLocalQuizzes(sortedQuizzes);
     }
   }, [quizzes]);
 
@@ -48,8 +50,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       if (!displayedQuizzes || !quizById) return;
 
       try {
+        // Sử dụng fetchQuizById từ apiQ_A.js thay vì quizById từ props
         const results = await Promise.all(
-          displayedQuizzes.map((quiz) => quizById(quiz.QuizId))
+          displayedQuizzes.map((quiz) => fetchQuizById(quiz.QuizId))
         );
 
         const details = {};
@@ -62,14 +65,12 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
 
         setQuizDetails(details);
       } catch (error) {
-        console.error('Error fetching quiz details using Promise.all:', error);
+        console.error('Error fetching quiz details:', error);
       }
     };
 
     fetchAllQuizDetails();
   }, [displayedQuizzes, quizById]);
-
-
 
   useEffect(() => {
     if (!localQuizzes) return;
@@ -85,56 +86,63 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       );
     }
 
+    // Luôn sắp xếp filtered theo QuizId giảm dần
+    filtered.sort((a, b) => b.QuizId - a.QuizId);
+    
     setFilteredQuizzes(filtered);
     setCurrentPage(1);
   }, [searchTerm, localQuizzes]);
 
-  const requestSort = (key) => {
-    let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setSortConfig({ key, direction });
-  };
-
   useEffect(() => {
     if (!filteredQuizzes || filteredQuizzes.length === 0) return;
 
-    let sortableQuizzes = [...filteredQuizzes];
-
-    if (sortConfig.key) {
-      sortableQuizzes.sort((a, b) => {
-        if (sortConfig.key === 'Title') {
-          const valueA = (a[sortConfig.key] || '').toLowerCase();
-          const valueB = (b[sortConfig.key] || '').toLowerCase();
-
-          if (sortConfig.direction === 'ascending') {
-            return valueA.localeCompare(valueB);
-          } else {
-            return valueB.localeCompare(valueA);
-          }
-        }
-
-        return 0;
-      });
-    }
-
     const indexOfLastQuiz = currentPage * quizzesPerPage;
     const indexOfFirstQuiz = indexOfLastQuiz - quizzesPerPage;
-    const currentQuizzes = sortableQuizzes.slice(
+    const currentQuizzes = filteredQuizzes.slice(
       indexOfFirstQuiz,
       indexOfLastQuiz
     );
 
     setDisplayedQuizzes(currentQuizzes);
-  }, [filteredQuizzes, currentPage, quizzesPerPage, sortConfig]);
+  }, [filteredQuizzes, currentPage, quizzesPerPage]);
 
-  const getSortDirectionIcon = (key) => {
-    if (sortConfig.key !== key) {
-      return null;
-    }
-    return sortConfig.direction === 'ascending' ? '↑' : '↓';
-  };
+  useEffect(() => {
+    // Hàm xử lý sự kiện khi câu hỏi thay đổi
+    const handleQuizQuestionsChanged = async (e) => {
+      const { quizId, newQuestionCount } = e.detail;
+      
+      // Cập nhật trực tiếp quizDetails
+      setQuizDetails(prev => ({
+        ...prev,
+        [quizId]: {
+          ...prev[quizId],
+          questionCount: newQuestionCount
+        }
+      }));
+      
+      // Tùy chọn: Fetch lại chi tiết quiz từ API
+      try {
+        const updatedQuiz = await fetchQuizById(quizId);
+        setQuizDetails(prev => ({
+          ...prev,
+          [quizId]: {
+            ...prev[quizId],
+            questionCount: updatedQuiz.Questions?.length || 0
+          }
+        }));
+      } catch (error) {
+        console.error('Error fetching updated quiz:', error);
+      }
+    };
+    
+    // Đăng ký lắng nghe sự kiện
+    window.addEventListener('quizQuestionsChanged', handleQuizQuestionsChanged);
+    
+    // Hủy đăng ký khi component unmount
+    return () => {
+      window.removeEventListener('quizQuestionsChanged', handleQuizQuestionsChanged);
+    };
+  }, []);
 
   const handlePageChange = (page) => {
     if (page < 1 || page > Math.ceil(filteredQuizzes.length / quizzesPerPage)) return;
@@ -145,9 +153,7 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     if (window.confirm('Are you sure you want to delete this quiz?')) {
       try {
         await deleteQuiz(quizId);
-
         refetchQuizzes();
-
         toast.success('Quiz deleted successfully!');
       } catch (error) {
         console.error('Failed to delete quiz:', error);
@@ -156,24 +162,47 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
     }
   };
 
-
   const handleOpenViewModal = (quiz) => {
     setViewQuiz(quiz.QuizId);
     setIsViewModalOpen(true);
   };
 
   const handleAddQuiz = async () => {
-    if (!newQuiz.Title || !newQuiz.Description) {
-      toast.error('Please fill in all required fields and add at least one question');
+    // Validate Title và Description
+    const errors = [];
+    
+    if (!newQuiz.Title) {
+      errors.push("Title is required");
+    } else if (!newQuiz.Title.startsWith("Quiz")) {
+      errors.push("Title must start with 'Quiz'");
+    }
+    
+    if (!newQuiz.Description) {
+      errors.push("Description is required");
+    } else if (newQuiz.Description.length < 20) {
+      errors.push("Description must be at least 20 characters long");
+    }
+    
+    if (errors.length > 0) {
+      toast.error(errors.join('\n'));
       return;
     }
-
+    
     try {
       const createdQuiz = await createQuiz(newQuiz);
+      
+      setSearchTerm('');
+      
+      // Thêm quiz mới vào đầu danh sách
       setLocalQuizzes((prev) => [createdQuiz, ...prev]);
-
+      
+      // Cập nhật filtered quizzes để hiển thị quiz mới
+      setFilteredQuizzes((prev) => [createdQuiz, ...prev]);
+      
+      // Đặt về trang đầu tiên để thấy quiz mới
       setCurrentPage(1);
-
+      
+      // Reset form
       setNewQuiz({
         Title: '',
         Description: '',
@@ -184,12 +213,9 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
       setIsModalOpen(false);
       toast.success('Quiz created successfully!');
 
+      // Refetch dữ liệu từ server để đồng bộ
       if (refetchQuizzes) {
         refetchQuizzes();
-      }
-
-      if (refetchQuizById) {
-        refetchQuizById();
       }
 
     } catch (error) {
@@ -228,15 +254,8 @@ const QuizzesTable = ({ quizzes, refetchQuizzes, quizById, refetchQuizById }) =>
           <table className="min-w-full divide-y divide-gray-300">
             <thead className="bg-white">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort('Title')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Title</span>
-                    <span>{getSortDirectionIcon('Title')}</span>
-                  </div>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                  Title
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Description
