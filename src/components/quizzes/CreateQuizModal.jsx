@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 
 const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
@@ -11,106 +11,72 @@ const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
       { OptionText: '', IsCorrect: false }
     ]
   });
+  
+  const [errors, setErrors] = useState({
+    Title: '',
+    Description: ''
+  });
 
-  // Handle input changes for quiz details
+  const [isFormValid, setIsFormValid] = useState(false);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewQuiz((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Handle checkbox changes
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setNewQuiz((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
-
-  // Handle question text change
-  const handleQuestionTextChange = (e) => {
-    const { value } = e.target;
-    setCurrentQuestion(prev => ({
-      ...prev,
-      QuestionText: value
-    }));
+    setNewQuiz({ ...newQuiz, [name]: value });
+    validateField(name, value);
   };
   
-  // Handle option text change
-  const handleOptionTextChange = (index, value) => {
-    setCurrentQuestion(prev => {
-      const newOptions = [...prev.Options];
-      newOptions[index] = { ...newOptions[index], OptionText: value };
-      return { ...prev, Options: newOptions };
-    });
-  };
-  
-  // Handle option correctness change
-  const handleOptionCorrectChange = (index) => {
-    setCurrentQuestion(prev => {
-      const newOptions = prev.Options.map((option, i) => ({
-        ...option,
-        IsCorrect: i === index
-      }));
-      return { ...prev, Options: newOptions };
-    });
-  };
-  
-  // Add question to quiz
-  const addQuestionToQuiz = () => {
-    // Validate question
-    if (!currentQuestion.QuestionText.trim()) {
-      alert('Please enter a question text');
-      return;
+  const validateField = (name, value) => {
+    let newErrors = { ...errors };
+    
+    switch (name) {
+      case 'Title':
+        if (!value) {
+          newErrors.Title = 'Title is required';
+        } else if (!value.startsWith('Quiz')) {
+          newErrors.Title = 'Title must start with "Quiz"';
+        } else {
+          newErrors.Title = '';
+        }
+        break;
+      
+      case 'Description':
+        if (!value) {
+          newErrors.Description = 'Description is required';
+        } else if (value.length < 20) {
+          newErrors.Description = 'Description must be at least 20 characters';
+        } else {
+          newErrors.Description = '';
+        }
+        break;
+        
+      default:
+        break;
     }
     
-    const filledOptions = currentQuestion.Options.filter(opt => opt.OptionText.trim());
-    if (filledOptions.length < 2) {
-      alert('Please add at least two options');
-      return;
-    }
-    
-    const correctOptions = currentQuestion.Options.filter(opt => opt.IsCorrect && opt.OptionText.trim());
-    if (correctOptions.length !== 1) {
-      alert('Please select exactly one correct answer');
-      return;
-    }
-    
-    // Filter out empty options
-    const validOptions = currentQuestion.Options.filter(opt => opt.OptionText.trim());
-    
-    const newQuestion = {
-      ...currentQuestion,
-      Options: validOptions
-    };
-    
-    setNewQuiz(prev => ({
-      ...prev,
-      Questions: [...(prev.Questions || []), newQuestion]
-    }));
-    
-    // Reset current question form
-    setCurrentQuestion({
-      QuestionText: '',
-      Options: [
-        { OptionText: '', IsCorrect: false },
-        { OptionText: '', IsCorrect: false },
-        { OptionText: '', IsCorrect: false },
-        { OptionText: '', IsCorrect: false }
-      ]
-    });
+    setErrors(newErrors);
   };
   
-  // Remove question from quiz
-  const removeQuestion = (index) => {
-    setNewQuiz(prev => ({
-      ...prev,
-      Questions: prev.Questions.filter((_, i) => i !== index)
-    }));
+  const validateForm = () => {
+    validateField('Title', newQuiz.Title);
+    validateField('Description', newQuiz.Description);
+    return !errors.Title && !errors.Description;
   };
+  
+  const handleSubmit = () => {
+    if (validateForm()) {
+      handleAddQuiz();
+    }
+  };
+  
+  useEffect(() => {
+    const formValid = 
+      newQuiz.Title && 
+      newQuiz.Title.startsWith('Quiz') &&
+      newQuiz.Description &&
+      newQuiz.Description.length >= 20;
+    
+    setIsFormValid(formValid);
+  }, [newQuiz.Title, newQuiz.Description]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -123,7 +89,6 @@ const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
         </div>
 
         <div className="space-y-6">
-          {/* Quiz Title */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
               Quiz Title <span className="text-red-500">*</span>
@@ -133,13 +98,15 @@ const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
               name="Title"
               value={newQuiz.Title}
               onChange={handleInputChange}
-              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter quiz title"
+              className={`w-full bg-gray-100 text-black rounded-lg px-4 py-2 border ${errors.Title ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              placeholder="Enter quiz title (must start with 'Quiz')"
               required
             />
+            {errors.Title && (
+              <p className="text-red-500 text-sm mt-1">{errors.Title}</p>
+            )}
           </div>
 
-          {/* Quiz Description */}
           <div>
             <label className="block text-sm font-medium text-black mb-1">
               Description <span className="text-red-500">*</span>
@@ -149,20 +116,26 @@ const CreateQuizModal = ({ newQuiz, setNewQuiz, handleAddQuiz, onClose }) => {
               value={newQuiz.Description}
               onChange={handleInputChange}
               rows={3}
-              className="w-full bg-gray-100 text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter quiz description"
+              className={`w-full bg-gray-100 text-black rounded-lg px-4 py-2 border ${errors.Description ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              placeholder="Enter quiz description (minimum 20 characters)"
               required
             />
+            {errors.Description && (
+              <p className="text-red-500 text-sm mt-1">{errors.Description}</p>
+            )}
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-gray-500">Min 20 characters</span>
+              <span className={`${newQuiz.Description.length < 20 ? 'text-red-500' : 'text-green-500'}`}>
+                {newQuiz.Description.length}/20
+              </span>
+            </div>
           </div>
 
-         
-
-          {/* Submit Button */}
           <div className="flex justify-end pt-4">
             <button
               type="button"
-              onClick={handleAddQuiz}
-              disabled={!newQuiz.Title || !newQuiz.Description}
+              onClick={handleSubmit}
+              disabled={!isFormValid}
               className="bg-blue-300 hover:bg-blue-400 text-black px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Quiz

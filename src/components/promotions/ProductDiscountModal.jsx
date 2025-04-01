@@ -107,7 +107,9 @@ const ProductDiscountModal = ({ onClose, products, promotions }) => {
                   required
                 >
                   <option value="">Select a product</option>
-                  {products.map((product) => (
+                  {products
+                  .filter((product) => product.IsActive)
+                  .map((product) => (
                     <option key={product.ProductId} value={product.ProductId}>
                       {product.ProductName}
                     </option>

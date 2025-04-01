@@ -47,7 +47,11 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
   }, []);
 
   useEffect(() => {
-    setLocalPromotions(promotions);
+    if (promotions && promotions.length > 0) {
+      // Sắp xếp theo ID giảm dần (giả sử ID lớn hơn = mới hơn)
+      const sortedPromotions = [...promotions].sort((a, b) => b.PromotionId - a.PromotionId);
+      setLocalPromotions(sortedPromotions);
+    }
   }, [promotions]);
 
   useEffect(() => {
@@ -97,6 +101,9 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         }
         return 0;
       });
+    } else {
+      // Sắp xếp mặc định theo ID giảm dần nếu không có sort config
+      sortablePromotions.sort((a, b) => b.PromotionId - a.PromotionId);
     }
 
     // Calculate pagination
@@ -243,7 +250,9 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
     }
     try {
       const created = await createPromotion(newPromotion);
+      
       setLocalPromotions((prev) => [created, ...prev]);
+      
       setIsModalOpen(false);
       setNewPromotion({
         PromotionName: '',
@@ -253,8 +262,15 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         PromotionType: 1,
         ApplicableProducts: []
       });
+      
+      setCurrentPage(1);
+      
+      setSortConfig({ key: null, direction: 'ascending' });
+      
       toast.success('New promotion added successfully!');
-      refetchPromotions();
+      
+      // Chỉ fetch lại khi thực sự cần thiết
+      // refetchPromotions(); // Comment dòng này lại
     } catch (error) {
       toast.error('Failed to add promotion:', error);
     }
