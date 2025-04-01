@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // Import Link component
 import { toast } from 'react-toastify';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
+import { generateProductSlug } from '../../utils/urlUtils';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const CartPage = () => {
@@ -574,11 +576,13 @@ const CartPage = () => {
                   />
 
                   {/* Product Image */}
-                  <img
-                    src={item.PictureUrl}
-                    alt={item.ProductName}
-                    className="w-24 h-28 object-cover ml-3 rounded-md border transform transition duration-300 ease-in-out hover:scale-150"
-                  />
+                  <Link to={`/product/${generateProductSlug(item)}`}>
+                    <img
+                      src={item.PictureUrl}
+                      alt={item.ProductName}
+                      className="w-24 h-28 object-cover ml-3 rounded-md border transform transition duration-300 ease-in-out hover:scale-150 cursor-pointer"
+                    />
+                  </Link>
 
                   {/* Product Details */}
                   <div className="ml-4 flex-1">

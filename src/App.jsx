@@ -14,6 +14,7 @@ import OrderConfirmationMoMo from './Pages/Checkout/OrderConfirmationMoMo';
 import OrderConfirmationZalo from './Pages/Checkout/OrderConfirmationZalo';
 import Admin from './Admin';
 import UserProfile from './Pages/UserProfile/UserProfile';
+import OrderDetails from './Pages/OrderDetails/OrderDetails';
 import BlogPage from './Pages/Blog/BlogPage';
 import BlogDetails from './Pages/Blog/BlogDetails';
 import UnauthorizedPage from './Pages/Unauthorized/UnauthorizedPage';
@@ -65,6 +66,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             {' '}
             <Route path="/profile" element={<UserProfile />} />{' '}
+            <Route path="/order-details" element={<OrderDetails />} />
           </Route>{' '}
           {/* Admin Routes - Protected by Admin Role */}{' '}
           <Route element={<ProtectedRoute requireAdmin={true} />}>

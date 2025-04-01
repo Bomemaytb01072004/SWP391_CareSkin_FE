@@ -14,7 +14,7 @@ function CardProduct({ product, addToCart, addToCompare }) {
           to={`/product/${generateProductSlug(product)}`} // Changed to use the slug
         >
           <img
-            className="w-auto h-auto object-cover"
+            className="w-auto h-auto object-cover cursor-pointer"
             src={product.PictureUrl}
             alt={product.ProductName}
           />

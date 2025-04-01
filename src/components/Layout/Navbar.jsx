@@ -15,6 +15,7 @@ import {
   faHeart,
   faSignOutAlt,
 } from '@fortawesome/free-solid-svg-icons';
+import { generateProductSlug } from '../../utils/urlUtils';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Navbar() {
@@ -636,6 +637,7 @@ function Navbar() {
         className={`bg-white shadow-md fixed top-0 w-full z-50 transition-all duration-300 hidden md:block lg:block ${
           scrollingUp ? 'translate-y-0' : '-translate-y-full'
         }`}
+        style={{ zIndex: 1000 }}
       >
         <Header />
         <div className="mx-auto px-4 lg:px-8 flex items-center justify-between h-16">
@@ -705,7 +707,7 @@ function Navbar() {
                   <button onClick={handleProfileClick} className="relative">
                     <FontAwesomeIcon
                       icon={faUser}
-                      className="text-gray-700 hover:text-emerald-600 text-xl transition-colors hover:scale-110 transition-transform"
+                      className="text-gray-700 hover:text-emerald-600 text-xl transition duration-200 hover:scale-110"
                     />
                     <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                       Sign In
@@ -872,11 +874,13 @@ function Navbar() {
                             exit={{ opacity: 0 }}
                             className="flex items-center gap-3 border-b pb-3 last:border-none"
                           >
-                            <img
-                              src={item.PictureUrl}
-                              alt={item.ProductName}
-                              className="w-16 h-16 object-cover rounded-md shadow-sm"
-                            />
+                            <Link to={`/product/${generateProductSlug(item)}`}>
+                              <img
+                                src={item.PictureUrl}
+                                alt={item.ProductName}
+                                className="w-16 h-16 object-cover rounded-md shadow-sm cursor-pointer"
+                              />
+                            </Link>
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-gray-800 line-clamp-1">
                                 {item.ProductName}
@@ -1150,7 +1154,7 @@ function Navbar() {
               {/* Contact/Social Links */}
               <div className="border-t border-gray-200 p-5">
                 <div className="text-center text-sm text-gray-500">
-                  <p>© 2025 CareSkin</p>
+                  <p> 2025 CareSkin</p>
                   <p className="mt-1">All rights reserved</p>
                 </div>
               </div>

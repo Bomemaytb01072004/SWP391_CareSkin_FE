@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import Navbar from '../../components/Layout/Navbar';
 import Footer from '../../components/Layout/Footer';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import bgImage from '../../assets/bg-login.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -34,13 +34,22 @@ import {
   faEye,
   faEyeSlash,
   faHeadset,
+  faStar,
+  faComment,
+  faTrash,
+  faImage,
+  faAngleDown,
+  faAngleUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { format } from 'date-fns';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import { generateProductSlug } from '../../utils/urlUtils';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const UserProfile = () => {
-  // Keep existing state variables
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [user, setUser] = useState({
     CustomerId: null,
     UserName: '',
@@ -67,20 +76,28 @@ const UserProfile = () => {
   const [orderError, setOrderError] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
 
-  // Add new state variables for order filtering and details
+  // State for user reviews
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState('');
+  const [selectedReviewImages, setSelectedReviewImages] = useState([]);
+  const [reviewLightboxOpen, setReviewLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [expandedReviewId, setExpandedReviewId] = useState(null);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const reviewsPerPage = 5;
+
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Add these pagination state variables near your other state variables
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(4);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  // Add these state variables at the top of your component, near other state variables
   const [resetEmail, setResetEmail] = useState('');
-  const [resetStep, setResetStep] = useState(0); // 0: initial, 1: OTP sent, 2: OTP verified
+  const [resetStep, setResetStep] = useState(0);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState('');
   const [resetOTP, setResetOTP] = useState('');
@@ -88,11 +105,10 @@ const UserProfile = () => {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Add this effect at the top level (not inside renderOrderHistory)
   useEffect(() => {
-    // Reset to page 1 when filters change
     setCurrentPage(1);
   }, [searchTerm, filterStatus]);
+
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
@@ -115,8 +131,6 @@ const UserProfile = () => {
     setCurrentPage(totalPages);
   };
 
-  // Keep existing useEffects and functions...
-
   useEffect(() => {
     if (!token) {
       console.error('No token found. User is not logged in.');
@@ -132,7 +146,7 @@ const UserProfile = () => {
           localStorage.setItem('CustomerId', decodedToken.CustomerId);
         } else {
           console.error('CustomerId not found in token');
-          return; // Stop execution if no CustomerId
+          return;
         }
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -178,7 +192,36 @@ const UserProfile = () => {
     if (activeTab === 'Order History' && CustomerId) {
       fetchOrderHistory();
     }
+
+    if (activeTab === 'My Reviews' && CustomerId) {
+      fetchUserReviews();
+    }
   }, [activeTab, CustomerId]);
+
+  useEffect(() => {
+    if (location.state) {
+      if (location.state.activeTab) {
+        setActiveTab(location.state.activeTab);
+      }
+
+      if (location.state.currentPage)
+        setCurrentPage(location.state.currentPage);
+      if (location.state.searchTerm !== undefined)
+        setSearchTerm(location.state.searchTerm);
+      if (location.state.filterStatus !== undefined)
+        setFilterStatus(location.state.filterStatus);
+      if (location.state.startDate !== undefined)
+        setStartDate(location.state.startDate);
+      if (location.state.endDate !== undefined)
+        setEndDate(location.state.endDate);
+
+      if (location.state.scrollPosition) {
+        setTimeout(() => {
+          window.scrollTo(0, location.state.scrollPosition);
+        }, 100);
+      }
+    }
+  }, [location.state]);
 
   const fetchOrderHistory = async () => {
     setOrderLoading(true);
@@ -198,13 +241,41 @@ const UserProfile = () => {
       }
 
       const data = await response.json();
-      console.log('Orders data structure:', data); // Log to verify the structure
+      console.log('Orders data structure:', data);
       setOrderHistory(data);
     } catch (error) {
       console.error('Error fetching order history:', error);
       setOrderError('Failed to load order history. Please try again later.');
     } finally {
       setOrderLoading(false);
+    }
+  };
+
+  const fetchUserReviews = async () => {
+    setReviewsLoading(true);
+    setReviewsError('');
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/RatingFeedback/RatingFeedback/my-ratings/${CustomerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error fetching reviews: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('User reviews data:', data);
+      setUserReviews(data);
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+      setReviewsError('Failed to load your reviews. Please try again later.');
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -260,12 +331,10 @@ const UserProfile = () => {
       setMessage('Profile updated successfully!');
       setEditMode(false);
 
-      // Update the user state with the new picture if uploaded
       if (selectedFile && responseData.PictureUrl) {
         setUser({ ...user, PictureUrl: responseData.PictureUrl });
       }
 
-      // Clear preview and selected file
       setPreviewImage(null);
       setSelectedFile(null);
     } catch (error) {
@@ -276,20 +345,16 @@ const UserProfile = () => {
     }
   };
 
-  // Toggle expanded order view
   const toggleOrderDetails = (orderId) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
-  // Filter orders based on search and filter status
   const filteredOrders = orderHistory
     .filter((order) => {
-      // Status filtering
       if (filterStatus === 'all') return true;
       return order.OrderStatusId === parseInt(filterStatus);
     })
     .filter((order) => {
-      // Search term filtering
       if (!searchTerm) return true;
       const term = searchTerm.toLowerCase();
       return (
@@ -304,38 +369,29 @@ const UserProfile = () => {
           ))
       );
     })
-    // Add date filtering
     .filter((order) => {
-      // If no dates are selected, return all orders
       if (!startDate && !endDate) return true;
 
-      // Parse the order date
       const orderDate = new Date(order.OrderDate);
 
-      // If we just have a start date, filter orders after that date
       if (startDate && !endDate) {
         return orderDate >= new Date(startDate);
       }
 
-      // If we just have an end date, filter orders before that date
       if (!startDate && endDate) {
-        // Set to end of day for the end date
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
         return orderDate <= endOfDay;
       }
 
-      // If we have both dates, filter orders between those dates
       const startDateTime = new Date(startDate);
       const endDateTime = new Date(endDate);
-      endDateTime.setHours(23, 59, 59, 999); // Include the entire end day
+      endDateTime.setHours(23, 59, 59, 999);
 
       return orderDate >= startDateTime && orderDate <= endDateTime;
     })
-    // Sort orders by OrderId in descending order (highest to lowest)
     .sort((a, b) => b.OrderId - a.OrderId);
 
-  // Updated getStatusDetails function based on OrderStatusId
   const getStatusDetails = (statusId, statusName) => {
     let color = 'bg-gray-100 text-gray-800';
     let icon = faInfoCircle;
@@ -373,7 +429,6 @@ const UserProfile = () => {
     return { color, icon, label };
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     try {
       return format(new Date(dateString), 'MMM dd, yyyy');
@@ -382,12 +437,51 @@ const UserProfile = () => {
     }
   };
 
-  // Update your renderOrderHistory function to include pagination
+  const viewOrderDetails = (orderId) => {
+    const scrollPosition = window.scrollY;
+    navigate(`/order-details?orderId=${orderId}`, {
+      state: {
+        scrollPosition,
+        activeTab,
+        currentPage,
+        searchTerm,
+        filterStatus,
+        startDate,
+        endDate,
+      },
+    });
+  };
+
+  const openLightbox = (images, index) => {
+    setSelectedReviewImages(images);
+    setCurrentImageIndex(index);
+    setReviewLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setReviewLightboxOpen(false);
+    setSelectedReviewImages([]);
+    setCurrentImageIndex(0);
+  };
+
+  const navigateImage = (direction) => {
+    const newIndex = currentImageIndex + direction;
+    if (newIndex >= 0 && newIndex < selectedReviewImages.length) {
+      setCurrentImageIndex(newIndex);
+    }
+  };
+
+  const formatReviewDate = (dateString) => {
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy h:mm a');
+    } catch (error) {
+      return dateString || 'Invalid date';
+    }
+  };
+
   const renderOrderHistory = () => {
-    // Calculate total pages
     const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
-    // Get current orders for display
     const indexOfLastOrder = currentPage * itemsPerPage;
     const indexOfFirstOrder = indexOfLastOrder - itemsPerPage;
     const currentOrders = filteredOrders.slice(
@@ -413,7 +507,6 @@ const UserProfile = () => {
               />
             </div>
 
-            {/* Start Date Input */}
             <input
               type="date"
               value={startDate}
@@ -421,13 +514,13 @@ const UserProfile = () => {
               className="border text-center border-gray-300 max-w-36 rounded-lg py-2 px-1 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
 
-            {/* End Date Input */}
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="border text-center border-gray-300 max-w-36 rounded-lg py-2 px-1 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
+
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
@@ -440,13 +533,13 @@ const UserProfile = () => {
               <option value="4">Completed</option>
               <option value="5">Cancelled</option>
             </select>
+
             <button
               onClick={() => {
                 setStartDate('');
                 setEndDate('');
                 setFilterStatus('all');
                 setSearchTerm('');
-                // Fetch the order history again
                 fetchOrderHistory();
               }}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition duration-200"
@@ -477,7 +570,7 @@ const UserProfile = () => {
                 className="text-red-500 mr-3"
               />
               <div>
-                <p className="font-medium">Failed to load orders</p>
+                <p className="font-medium">Failed to load order history</p>
                 <p>{orderError}</p>
               </div>
             </div>
@@ -511,13 +604,10 @@ const UserProfile = () => {
               {currentOrders.map((order) => (
                 <div
                   key={order.OrderId}
-                  className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition"
+                  className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition cursor-pointer"
+                  onClick={() => viewOrderDetails(order.OrderId)}
                 >
-                  {/* Order Header */}
-                  <div
-                    onClick={() => toggleOrderDetails(order.OrderId)}
-                    className="bg-gray-50 p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer"
-                  >
+                  <div className="bg-gray-50 p-4 flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <div className="text-xs text-gray-500">Order ID</div>
                       <div className="font-medium text-gray-900">
@@ -567,243 +657,7 @@ const UserProfile = () => {
                         </span>
                       )}
                     </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleOrderDetails(order.OrderId);
-                      }}
-                      className="ml-auto"
-                    >
-                      <FontAwesomeIcon
-                        icon={faChevronRight}
-                        className={`text-gray-500 transform transition-transform ${
-                          expandedOrderId === order.OrderId ? 'rotate-90' : ''
-                        }`}
-                      />
-                    </button>
                   </div>
-
-                  {/* Order Details (Expanded) */}
-                  {expandedOrderId === order.OrderId && (
-                    <div className="p-5 border-t border-gray-200">
-                      {/* Order info sections */}
-                      <div className="grid md:grid-cols-2 gap-6 mb-6">
-                        {/* Customer Info */}
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                            <FontAwesomeIcon
-                              icon={faUser}
-                              className="text-gray-500 mr-2"
-                            />
-                            Customer Information
-                          </h4>
-                          <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                            <div className="flex items-start">
-                              <FontAwesomeIcon
-                                icon={faUser}
-                                className="text-gray-400 mt-1 w-5"
-                              />
-                              <div className="ml-2">
-                                <div className="text-sm text-gray-500">
-                                  Name
-                                </div>
-                                <div className="font-medium">{order.Name}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-start">
-                              <FontAwesomeIcon
-                                icon={faEnvelope}
-                                className="text-gray-400 mt-1 w-5"
-                              />
-                              <div className="ml-2">
-                                <div className="text-sm text-gray-500">
-                                  Email
-                                </div>
-                                <div className="font-medium">{order.Email}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-start">
-                              <FontAwesomeIcon
-                                icon={faPhone}
-                                className="text-gray-400 mt-1 w-5"
-                              />
-                              <div className="ml-2">
-                                <div className="text-sm text-gray-500">
-                                  Phone
-                                </div>
-                                <div className="font-medium">{order.Phone}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-start">
-                              <FontAwesomeIcon
-                                icon={faMapMarkerAlt}
-                                className="text-gray-400 mt-1 w-5"
-                              />
-                              <div className="ml-2">
-                                <div className="text-sm text-gray-500">
-                                  Address
-                                </div>
-                                <div className="font-medium">
-                                  {order.Address}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Order Summary */}
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                            <FontAwesomeIcon
-                              icon={faTag}
-                              className="text-gray-500 mr-2"
-                            />
-                            Order Summary
-                          </h4>
-                          <div className="bg-gray-50 p-4 rounded-lg">
-                            <div className="flex justify-between mb-2">
-                              <span className="text-gray-600">Status:</span>
-                              <span className="font-medium">
-                                {order.OrderStatusName}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between mb-2">
-                              <span className="text-gray-600">Subtotal:</span>
-                              <span className="font-medium">
-                                $
-                                {(
-                                  (order.TotalPrice || 0) +
-                                  (order.TotalPriceSale || 0)
-                                ).toFixed(2)}
-                              </span>
-                            </div>
-
-                            {order.TotalPriceSale > 0 && (
-                              <div className="flex justify-between mb-2 text-green-600">
-                                <span>Discount:</span>
-                                <span>
-                                  -${(order.TotalPriceSale || 0).toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-
-                            {order.PromotionName && (
-                              <div className="flex justify-between mb-2">
-                                <span className="text-gray-600">
-                                  Promotion:
-                                </span>
-                                <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium">
-                                  {order.PromotionName}
-                                </span>
-                              </div>
-                            )}
-
-                            <div className="flex justify-between font-bold mt-2 pt-2 border-t border-gray-200">
-                              <span>Total:</span>
-                              <span className="text-emerald-600">
-                                ${(order.TotalPrice || 0).toFixed(2)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Order Products */}
-                      <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                        <FontAwesomeIcon
-                          icon={faBox}
-                          className="text-gray-500 mr-2"
-                        />
-                        Products
-                      </h4>
-
-                      <div className="space-y-3 mb-4">
-                        {order.OrderProducts &&
-                          order.OrderProducts.map((product, idx) => (
-                            <div
-                              key={`${order.OrderId}-product-${idx}`}
-                              className="flex items-center p-3 bg-gray-50 rounded-lg"
-                            >
-                              {/* Product image */}
-                              <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200 bg-white flex-shrink-0">
-                                {product.PictureUrl ? (
-                                  <img
-                                    src={product.PictureUrl}
-                                    alt={product.ProductName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
-                                    No image
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Product info */}
-                              <div className="ml-4 flex-grow">
-                                <h5 className="font-medium text-gray-900">
-                                  {product.ProductName}
-                                </h5>
-                                <div className="text-sm text-gray-500 flex flex-wrap items-center gap-x-3 mt-1">
-                                  <span>Qty: {product.Quantity}</span>
-                                  {product.Price !== product.SalePrice ? (
-                                    <div>
-                                      <span className="line-through mr-1">
-                                        ${(product.Price || 0).toFixed(2)}
-                                      </span>
-                                      <span className="text-emerald-600 font-medium">
-                                        ${(product.SalePrice || 0).toFixed(2)}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <span>
-                                      ${(product.Price || 0).toFixed(2)}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Product subtotal */}
-                              <div className="text-right">
-                                <div className="font-medium text-emerald-600">
-                                  $
-                                  {(
-                                    (product.SalePrice || product.Price || 0) *
-                                    product.Quantity
-                                  ).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex flex-wrap justify-between items-center pt-3 border-t border-gray-200">
-                        <a
-                          href={`/order-details/${order.OrderId}`}
-                          className="text-blue-600 hover:text-blue-800 flex items-center transition"
-                        >
-                          View Order Details
-                          <FontAwesomeIcon
-                            icon={faChevronRight}
-                            className="ml-1 text-xs"
-                          />
-                        </a>
-
-                        {(order.OrderStatusId === 4 ||
-                          order.OrderStatusId === 6) && (
-                          <a
-                            href={`/review/${order.OrderId}`}
-                            className="px-4 py-2 bg-amber-100 text-amber-700 rounded-md hover:bg-amber-200 transition"
-                          >
-                            Write a Review
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -841,7 +695,6 @@ const UserProfile = () => {
                     <FontAwesomeIcon icon={faAngleLeft} />
                   </button>
 
-                  {/* Page buttons - Show max 5 page numbers with current in middle */}
                   {Array.from({ length: Math.min(5, totalPages) }).map(
                     (_, idx) => {
                       let pageNumber;
@@ -905,11 +758,9 @@ const UserProfile = () => {
     );
   };
 
-  // Update renderTabContent to use the new renderOrderHistory function
   const renderTabContent = () => {
     switch (activeTab) {
       case 'Account':
-        // Keep existing Account tab code
         return (
           <>
             <div className="flex justify-between items-center">
@@ -929,7 +780,6 @@ const UserProfile = () => {
               </button>
             </div>
 
-            {/* Keep existing account form */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-gray-600 text-sm font-medium">
@@ -1070,7 +920,11 @@ const UserProfile = () => {
 
             {message && (
               <div
-                className={`mt-4 p-3 rounded-md ${message.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                className={`mt-4 p-3 rounded-md ${
+                  message.includes('Error')
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-green-100 text-green-700'
+                }`}
               >
                 {message}
               </div>
@@ -1080,6 +934,450 @@ const UserProfile = () => {
 
       case 'Order History':
         return renderOrderHistory();
+
+      case 'My Reviews':
+        return (
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+              My Product Reviews
+            </h2>
+
+            {reviewsLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin mr-3">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    size="2x"
+                    className="text-emerald-500"
+                  />
+                </div>
+                <p className="text-emerald-600 font-medium">
+                  Loading your reviews...
+                </p>
+              </div>
+            ) : reviewsError ? (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-5 rounded-lg">
+                <div className="flex items-center">
+                  <FontAwesomeIcon
+                    icon={faExclamationTriangle}
+                    className="text-red-500 mr-3"
+                  />
+                  <div>
+                    <p className="font-medium">Failed to load reviews</p>
+                    <p>{reviewsError}</p>
+                  </div>
+                </div>
+              </div>
+            ) : userReviews.filter((review) => review.IsActive).length === 0 ? (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                  <FontAwesomeIcon
+                    icon={faComment}
+                    className="text-gray-400 text-3xl"
+                  />
+                </div>
+                <h3 className="text-xl font-medium text-gray-700 mb-2">
+                  No Reviews Yet
+                </h3>
+                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                  You haven't reviewed any products yet. Share your experience
+                  with products you've purchased!
+                </p>
+                <a
+                  href="/products"
+                  className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition"
+                >
+                  Browse Products
+                </a>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {userReviews
+                    .filter((review) => review.IsActive)
+                    .slice(
+                      (reviewsPage - 1) * reviewsPerPage,
+                      reviewsPage * reviewsPerPage
+                    )
+                    .map((review) => (
+                      <div
+                        key={review.RatingFeedbackId}
+                        className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition"
+                      >
+                        {/* Review Header - Always Visible */}
+                        <div
+                          className="p-4 flex items-start gap-4 cursor-pointer"
+                          onClick={() =>
+                            toggleReviewExpand(review.RatingFeedbackId)
+                          }
+                        >
+                          {/* Product Image */}
+                          <div className="flex-shrink-0">
+                            <Link
+                              to={`/product/${generateProductSlug({
+                                ProductId: review.ProductId,
+                                ProductName: review.ProductName,
+                              })}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <img
+                                src={
+                                  review.FeedbackImages?.[0]
+                                    ?.FeedbackImageUrl ||
+                                  'https://via.placeholder.com/100x100?text=Product'
+                                }
+                                alt={review.ProductName}
+                                className="w-16 h-16 object-cover rounded-md cursor-pointer"
+                              />
+                            </Link>
+                          </div>
+
+                          {/* Basic Review Info */}
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <Link
+                                to={`/product/${generateProductSlug({
+                                  ProductId: review.ProductId,
+                                  ProductName: review.ProductName,
+                                })}`}
+                                className="text-lg font-semibold text-gray-800 hover:text-emerald-600 transition"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {review.ProductName}
+                              </Link>
+                              <span className="text-sm text-gray-500">
+                                {formatReviewDate(review.CreatedDate)}
+                              </span>
+                            </div>
+
+                            {/* Rating Stars */}
+                            <div className="flex items-center my-1">
+                              {[...Array(5)].map((_, i) => (
+                                <FontAwesomeIcon
+                                  key={i}
+                                  icon={faStar}
+                                  className={`${
+                                    i < review.Rating
+                                      ? 'text-yellow-400'
+                                      : 'text-gray-300'
+                                  } text-lg`}
+                                />
+                              ))}
+                              <span className="ml-2 text-gray-600 font-medium">
+                                {review.Rating}/5
+                              </span>
+                            </div>
+
+                            {/* Preview of Review Text */}
+                            <p className="text-gray-700 line-clamp-1">
+                              {review.FeedBack}
+                            </p>
+
+                            {/* Expand/Collapse Indicator */}
+                            <div className="flex items-center text-emerald-600 mt-1">
+                              <span className="text-sm font-medium">
+                                {expandedReviewId === review.RatingFeedbackId
+                                  ? 'Hide Details'
+                                  : 'Show Details'}
+                              </span>
+                              <FontAwesomeIcon
+                                icon={
+                                  expandedReviewId === review.RatingFeedbackId
+                                    ? faAngleUp
+                                    : faAngleDown
+                                }
+                                className="ml-1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded Content */}
+                        {expandedReviewId === review.RatingFeedbackId && (
+                          <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+                            {/* Full Review Text */}
+                            <div className="mb-3">
+                              <h4 className="text-sm font-medium text-gray-500 mb-1">
+                                Your Review:
+                              </h4>
+                              <p className="text-gray-700">{review.FeedBack}</p>
+                            </div>
+
+                            {/* Review Images */}
+                            {review.FeedbackImages &&
+                              review.FeedbackImages.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    <FontAwesomeIcon
+                                      icon={faImage}
+                                      className="mr-2"
+                                    />
+                                    {review.FeedbackImages.length}{' '}
+                                    {review.FeedbackImages.length === 1
+                                      ? 'Image'
+                                      : 'Images'}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {review.FeedbackImages.slice(0, 5).map(
+                                      (image, index) => (
+                                        <div
+                                          key={image.RatingFeedbackImageId}
+                                          className="relative cursor-pointer"
+                                          onClick={() =>
+                                            openLightbox(
+                                              review.FeedbackImages.map(
+                                                (img) => img.FeedbackImageUrl
+                                              ),
+                                              index
+                                            )
+                                          }
+                                        >
+                                          <img
+                                            src={image.FeedbackImageUrl}
+                                            alt={`Review ${index + 1}`}
+                                            className="w-16 h-16 object-cover rounded-md"
+                                          />
+                                        </div>
+                                      )
+                                    )}
+                                    {review.FeedbackImages.length > 5 && (
+                                      <div
+                                        className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center cursor-pointer"
+                                        onClick={() =>
+                                          openLightbox(
+                                            review.FeedbackImages.map(
+                                              (img) => img.FeedbackImageUrl
+                                            ),
+                                            5
+                                          )
+                                        }
+                                      >
+                                        <span className="text-gray-600 font-medium">
+                                          +{review.FeedbackImages.length - 5}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {Math.ceil(
+                  userReviews.filter((review) => review.IsActive).length /
+                    reviewsPerPage
+                ) > 1 && (
+                  <div className="flex justify-center mt-8">
+                    <nav className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setReviewsPage(1)}
+                        disabled={reviewsPage === 1}
+                        className={`px-2 py-1 rounded ${
+                          reviewsPage === 1
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FontAwesomeIcon icon={faAngleDoubleLeft} />
+                      </button>
+                      <button
+                        onClick={() => setReviewsPage(reviewsPage - 1)}
+                        disabled={reviewsPage === 1}
+                        className={`px-2 py-1 rounded ${
+                          reviewsPage === 1
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FontAwesomeIcon icon={faAngleLeft} />
+                      </button>
+
+                      {[
+                        ...Array(
+                          Math.ceil(
+                            userReviews.filter((review) => review.IsActive)
+                              .length / reviewsPerPage
+                          )
+                        ),
+                      ].map((_, index) => {
+                        const pageNum = index + 1;
+                        // Show current page, first page, last page, and one page before and after current
+                        if (
+                          pageNum === 1 ||
+                          pageNum ===
+                            Math.ceil(
+                              userReviews.filter((review) => review.IsActive)
+                                .length / reviewsPerPage
+                            ) ||
+                          (pageNum >= reviewsPage - 1 &&
+                            pageNum <= reviewsPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setReviewsPage(pageNum)}
+                              className={`w-8 h-8 flex items-center justify-center rounded ${
+                                reviewsPage === pageNum
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        }
+
+                        // Show ellipsis for gaps
+                        if (
+                          (pageNum === 2 && reviewsPage > 3) ||
+                          (pageNum ===
+                            Math.ceil(
+                              userReviews.filter((review) => review.IsActive)
+                                .length / reviewsPerPage
+                            ) -
+                              1 &&
+                            reviewsPage <
+                              Math.ceil(
+                                userReviews.filter((review) => review.IsActive)
+                                  .length / reviewsPerPage
+                              ) -
+                                2)
+                        ) {
+                          return (
+                            <span
+                              key={pageNum}
+                              className="w-8 h-8 flex items-center justify-center text-gray-500"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+
+                        return null;
+                      })}
+
+                      <button
+                        onClick={() => setReviewsPage(reviewsPage + 1)}
+                        disabled={
+                          reviewsPage ===
+                          Math.ceil(
+                            userReviews.filter((review) => review.IsActive)
+                              .length / reviewsPerPage
+                          )
+                        }
+                        className={`px-2 py-1 rounded ${
+                          reviewsPage ===
+                          Math.ceil(
+                            userReviews.filter((review) => review.IsActive)
+                              .length / reviewsPerPage
+                          )
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FontAwesomeIcon icon={faAngleRight} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          setReviewsPage(
+                            Math.ceil(
+                              userReviews.filter((review) => review.IsActive)
+                                .length / reviewsPerPage
+                            )
+                          )
+                        }
+                        disabled={
+                          reviewsPage ===
+                          Math.ceil(
+                            userReviews.filter((review) => review.IsActive)
+                              .length / reviewsPerPage
+                          )
+                        }
+                        className={`px-2 py-1 rounded ${
+                          reviewsPage ===
+                          Math.ceil(
+                            userReviews.filter((review) => review.IsActive)
+                              .length / reviewsPerPage
+                          )
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <FontAwesomeIcon icon={faAngleDoubleRight} />
+                      </button>
+                    </nav>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Image Lightbox */}
+            {reviewLightboxOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+                <div className="relative max-w-4xl w-full">
+                  <button
+                    onClick={closeLightbox}
+                    className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-10"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+
+                  <div className="relative">
+                    <img
+                      src={selectedReviewImages[currentImageIndex]}
+                      alt="Review"
+                      className="mx-auto max-h-[80vh] max-w-full object-contain"
+                    />
+
+                    {selectedReviewImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => navigateImage(-1)}
+                          disabled={currentImageIndex === 0}
+                          className={`absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full ${
+                            currentImageIndex === 0
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'hover:bg-opacity-70'
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faAngleLeft} />
+                        </button>
+
+                        <button
+                          onClick={() => navigateImage(1)}
+                          disabled={
+                            currentImageIndex ===
+                            selectedReviewImages.length - 1
+                          }
+                          className={`absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full ${
+                            currentImageIndex ===
+                            selectedReviewImages.length - 1
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'hover:bg-opacity-70'
+                          }`}
+                        >
+                          <FontAwesomeIcon icon={faAngleRight} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="text-center text-white mt-4">
+                    {selectedReviewImages.length > 1 && (
+                      <p>
+                        {currentImageIndex + 1} / {selectedReviewImages.length}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
 
       case 'Password':
         return (
@@ -1195,7 +1493,7 @@ const UserProfile = () => {
                         onChange={(e) =>
                           setResetOTP(e.target.value.replace(/[^0-9]/g, ''))
                         }
-                        className="w-full border border-gray-300 rounded-md p-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-center tracking-widest"
+                        className="w-full border border-gray-300 rounded-md p-2.5 text-center tracking-widest focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         disabled={resetLoading}
                         placeholder="Enter 6-digit code"
                         maxLength={6}
@@ -1390,42 +1688,23 @@ const UserProfile = () => {
           </div>
         );
 
-      case 'Notification':
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Notification Settings
-            </h2>
-            <p className="text-gray-600">
-              Notification preferences coming soon!
-            </p>
-          </div>
-        );
+      // case 'Notification':
+      //   return (
+      //     <div className="text-center py-12">
+      //       <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+      //         Notification Settings
+      //       </h2>
+      //       <p className="text-gray-600">
+      //         Notification preferences coming soon!
+      //       </p>
+      //     </div>
+      //   );
 
-      default:
-        return null;
+      // default:
+      // return null;
     }
   };
 
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Add this useEffect to handle URL parameters for tab selection
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tabParam = params.get('tab');
-
-    if (
-      tabParam &&
-      ['Account', 'Order History', 'Password', 'Notification'].includes(
-        tabParam
-      )
-    ) {
-      setActiveTab(tabParam);
-    }
-  }, [location.search]);
-
-  // Add these functions within your component
   const handleSendResetOTP = async () => {
     setResetLoading(true);
     setResetError('');
@@ -1452,7 +1731,7 @@ const UserProfile = () => {
         throw new Error(data.message || 'Failed to send reset code');
       }
 
-      setResetStep(1); // Move to OTP verification step
+      setResetStep(1);
     } catch (error) {
       console.error('Password reset error:', error);
       setResetError(
@@ -1492,7 +1771,7 @@ const UserProfile = () => {
         throw new Error(data.message || 'Invalid verification code');
       }
 
-      setResetStep(2); // Move to password reset step
+      setResetStep(2);
     } catch (error) {
       console.error('OTP verification error:', error);
       setResetError(
@@ -1540,12 +1819,10 @@ const UserProfile = () => {
         throw new Error(data.message || 'Failed to reset password');
       }
 
-      // Reset all form fields
       setNewPassword('');
       setConfirmNewPassword('');
       setResetOTP('');
 
-      // Show success message
       setResetStep(3);
     } catch (error) {
       console.error('Password change error:', error);
@@ -1557,16 +1834,22 @@ const UserProfile = () => {
     }
   };
 
-  // Rest of the component remains the same...
+  const toggleReviewExpand = (reviewId) => {
+    if (expandedReviewId === reviewId) {
+      setExpandedReviewId(null);
+    } else {
+      setExpandedReviewId(reviewId);
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div
-        className="min-h-screen flex items-center justify-center bg-cover py-16 bg-center p-4"
+        className="min-h-screen flex items-center justify-center bg-cover py-16 bg-center p-4 mt-24"
         style={{ backgroundImage: `url(${bgImage})` }}
       >
         <div className="w-full max-w-6xl bg-white shadow-lg rounded-xl flex flex-col md:flex-row overflow-hidden">
-          {/* Sidebar - Responsive */}
           <div className="w-full md:w-1/3 bg-gray-50 p-6 border-r border-gray-200">
             <div className="flex flex-col items-center mb-8">
               <div className="relative group mb-3">
@@ -1608,7 +1891,8 @@ const UserProfile = () => {
                     label: 'Order History',
                     icon: faShoppingBag,
                   },
-                  { id: 'Notification', label: 'Notifications', icon: faBell },
+                  { id: 'My Reviews', label: 'My Reviews', icon: faStar },
+                  // { id: 'Notification', label: 'Notifications', icon: faBell },
                 ].map((tab) => (
                   <li key={tab.id}>
                     <button
@@ -1644,7 +1928,6 @@ const UserProfile = () => {
             </div>
           </div>
 
-          {/* Main Content - Responsive */}
           <div className="w-full md:w-2/3 p-6 md:p-8 bg-white">
             {renderTabContent()}
           </div>
