@@ -379,7 +379,7 @@ const PromotionsTable = ({ promotions, refetchPromotions }) => {
         <ProductDiscountModal
           onClose={() => setIsProductDiscountModalOpen(false)}
           products={products}
-          promotions={localPromotions.filter(p => p.PromotionType === 1)} // Only pass Product Discount type promotions
+          promotions={localPromotions.filter(p => p.PromotionType === 1 && p.IsActive)}
         />
       )}
 

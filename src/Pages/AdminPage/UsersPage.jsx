@@ -96,51 +96,49 @@ const UsersPage = () => {
     >
       <Header title="Users" />
 
-      <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
-        {/* STAT CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((card, index) => (
-            <motion.div
-              key={card.title}
-              className="bg-white rounded-xl shadow-lg p-6 border border-gray-200"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {card.title}
-                  </p>
-                  <h3 className="text-2xl font-bold mt-2">{card.value}</h3>
+            <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
+                {/* STAT CARDS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {statCards.map((card, index) => (
+                        <motion.div
+                            key={card.title}
+                            className="bg-white rounded-xl shadow-lg p-6 border border-gray-200"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                                    <h3 className="text-2xl font-bold mt-2">{card.value}</h3>
+                                </div>
+                                <div className={`p-3 rounded-full ${card.color}`}>
+                                    <card.icon className={`w-6 h-6 ${card.iconColor}`} />
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
-                <div className={`p-3 rounded-full ${card.color}`}>
-                  <card.icon className={`w-6 h-6 ${card.iconColor}`} />
+                <div className="flex space-x-4 mb-6">
+                    <button
+                        className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'all' ? "bg-purple-300 text-black" : "bg-gray-300 text-black hover:bg-gray-100"}`}
+                        onClick={() => setActiveFilter("all")}
+                    >
+                        All Users
+                    </button>
+                    <button
+                        className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'active' ? "bg-green-600 text-white" : "bg-gray-300 text-black hover:bg-gray-100"}`}
+                        onClick={() => setActiveFilter("active")}
+                    >
+                        Active
+                    </button>
+                    <button
+                        className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'inactive' ? "bg-red-100 text-red-800" : "bg-gray-300 text-black hover:bg-gray-100"}`}
+                        onClick={() => setActiveFilter("inactive")}
+                    >
+                        Inactive
+                    </button>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        <div className="flex space-x-4 mb-6">
-          <button
-            className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'all' ? 'bg-purple-300 text-black' : 'bg-gray-300 text-black hover:bg-gray-100'}`}
-            onClick={() => setActiveFilter('all')}
-          >
-            All Skin Types
-          </button>
-          <button
-            className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'active' ? 'bg-green-600 text-white' : 'bg-gray-300 text-black hover:bg-gray-100'}`}
-            onClick={() => setActiveFilter('active')}
-          >
-            Active
-          </button>
-          <button
-            className={`px-4 py-2 rounded-lg transition-colors ${activeFilter === 'inactive' ? 'bg-red-100 text-red-800' : 'bg-gray-300 text-black hover:bg-gray-100'}`}
-            onClick={() => setActiveFilter('inactive')}
-          >
-            Inactive
-          </button>
-        </div>
 
         {/* USERS TABLE */}
         <UsersTable customers={filteredCustomers} />
