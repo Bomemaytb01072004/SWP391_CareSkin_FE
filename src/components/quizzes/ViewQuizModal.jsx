@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Edit2, Trash2, Save, Plus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
-  getQuestionsByQuizId,
   createQuestion,
   updateQuestion,
   deleteQuestion,
@@ -11,16 +10,20 @@ import {
   createAnswer,
   updateAnswer,
   updateQuiz,
+  fetchQuizById,
 } from '../../utils/apiQ_A';
-
-// API URL for direct fetching
-const API_QUIZ_URL = 'http://careskinbeauty.shop:4456/api/Quiz';
 
 const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editQuizDetails, setEditQuizDetails] = useState(false);
+
+  // Thêm state errors cho validation
+  const [errors, setErrors] = useState({
+    Title: '',
+    Description: ''
+  });
 
   // Edit states
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -43,6 +46,113 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     Description: '',
     IsActive: false
   });
+  
+  // Thêm state kiểm tra form hợp lệ
+  const [isFormValid, setIsFormValid] = useState(false);
+  
+  // Hàm validate từng trường
+  const validateField = (name, value) => {
+    let newErrors = { ...errors };
+    
+    switch (name) {
+      case 'Title':
+        if (!value) {
+          newErrors.Title = 'Title is required';
+        } else if (!value.startsWith('Quiz')) {
+          newErrors.Title = 'Title must start with "Quiz"';
+        } else {
+          newErrors.Title = '';
+        }
+        break;
+      
+      case 'Description':
+        if (!value) {
+          newErrors.Description = 'Description is required';
+        } else if (value.length < 20) {
+          newErrors.Description = 'Description must be at least 20 characters';
+        } else {
+          newErrors.Description = '';
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    setErrors(newErrors);
+    return newErrors;
+  };
+  
+  // Validate toàn bộ form
+  const validateForm = () => {
+    const titleErrors = validateField('Title', editedQuizDetails.Title);
+    const descErrors = validateField('Description', editedQuizDetails.Description);
+    
+    const newErrors = {
+      ...titleErrors,
+      ...descErrors
+    };
+    
+    setErrors(newErrors);
+    return !newErrors.Title && !newErrors.Description;
+  };
+  
+  // Kiểm tra form validity khi fields thay đổi
+  useEffect(() => {
+    if (editQuizDetails) {
+      const formValid = 
+        editedQuizDetails.Title && 
+        editedQuizDetails.Title.startsWith('Quiz') &&
+        editedQuizDetails.Description &&
+        editedQuizDetails.Description.length >= 20;
+      
+      setIsFormValid(formValid);
+    }
+  }, [editedQuizDetails, editQuizDetails]);
+
+  // Cập nhật hàm handleQuizDetailsChange để validate ngay khi nhập
+  const handleQuizDetailsChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditedQuizDetails(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    validateField(name, type === 'checkbox' ? checked : value);
+  };
+
+  // Cập nhật hàm handleSaveQuizDetails để đảm bảo dữ liệu được cập nhật
+  const handleSaveQuizDetails = async () => {
+    if (!validateForm()) {
+      toast.error('Please correct the errors before saving');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+
+      // Gọi API cập nhật quiz
+      const updatedQuizData = await updateQuiz(quizId, editedQuizDetails);
+
+      // Cập nhật state nội bộ
+      setEditQuizDetails(false);
+      setQuiz({...quiz, ...editedQuizDetails}); // Cập nhật state quiz ngay lập tức
+
+      // Fetch lại dữ liệu chi tiết quiz
+      await fetchQuiz();
+
+      // Đảm bảo refetchQuizzes được gọi và hoàn thành trước khi tiếp tục
+      if (refetchQuizzes) {
+        await refetchQuizzes(); // Thêm await để đảm bảo refetch hoàn thành
+      }
+
+      toast.success('Quiz updated successfully');
+    } catch (error) {
+      console.error('Error updating quiz:', error);
+      toast.error('Failed to update quiz');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch quiz data when quizId changes
   useEffect(() => {
@@ -50,21 +160,11 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
     fetchQuiz();
   }, [quizId]);
 
-  // Fetch quiz data
+  // Updated fetch quiz function
   const fetchQuiz = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_QUIZ_URL}/${quizId}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        try {
-          const errorData = JSON.parse(errorText);
-          throw new Error(errorData.message || 'Failed to fetch quiz by ID');
-        } catch (e) {
-          throw new Error(`Failed to fetch quiz by ID: ${errorText || response.statusText}`);
-        }
-      }
-      const data = await response.json();
+      const data = await fetchQuizById(quizId);
       setQuiz(data);
       setEditedQuizDetails({
         Title: data.Title,
@@ -233,6 +333,20 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
       setEditingAnswers([]);
 
       await fetchQuiz();
+
+      // Emit custom event to notify QuizzesTable
+      window.dispatchEvent(new CustomEvent('quizQuestionsChanged', { 
+        detail: {
+          quizId: quizId,
+          newQuestionCount: quiz.Questions ? quiz.Questions.length : 0
+        }
+      }));
+
+      // Call refetchQuizzes if provided
+      if (refetchQuizzes) {
+        await refetchQuizzes();
+      }
+
       toast.success('Question and answers updated successfully');
     } catch (error) {
       console.error('Error saving question:', error);
@@ -302,6 +416,19 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
           Questions: prev.Questions.filter((q) => q.QuestionsId !== questionId),
         }));
   
+        // Emit custom event to notify QuizzesTable
+        window.dispatchEvent(new CustomEvent('quizQuestionsChanged', { 
+          detail: {
+            quizId: quizId,
+            newQuestionCount: quiz.Questions ? quiz.Questions.length - 1 : 0
+          }
+        }));
+
+        // Call refetchQuizzes if provided
+        if (refetchQuizzes) {
+          await refetchQuizzes();
+        }
+
         toast.success('Question deleted successfully');
       } else {
         toast.error('Failed to delete question');
@@ -358,6 +485,20 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
 
       // Refresh quiz data
       await fetchQuiz();
+
+      // Emit custom event to notify QuizzesTable
+      window.dispatchEvent(new CustomEvent('quizQuestionsChanged', { 
+        detail: {
+          quizId: quizId,
+          newQuestionCount: quiz.Questions ? quiz.Questions.length + 1 : 1
+        }
+      }));
+
+      // Call refetchQuizzes if provided
+      if (refetchQuizzes) {
+        await refetchQuizzes();
+      }
+
       toast.success('Question added successfully');
     } catch (error) {
       console.error('Error adding question:', error);
@@ -422,45 +563,6 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
 
       return newAnswers;
     });
-  };
-
-  // Save quiz details
-  const handleSaveQuizDetails = async () => {
-    try {
-      setLoading(true);
-
-      // Validate
-      if (!editedQuizDetails.Title || !editedQuizDetails.Description) {
-        toast.error('Title and Description are required');
-        return;
-      }
-
-      // Update quiz
-      await updateQuiz(quizId, editedQuizDetails);
-
-      // Reset state
-      setEditQuizDetails(false);
-
-      // Refresh quiz data
-      await fetchQuiz();
-      if (refetchQuizzes) refetchQuizzes();
-
-      toast.success('Quiz updated successfully');
-    } catch (error) {
-      console.error('Error updating quiz:', error);
-      toast.error('Failed to update quiz');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle quiz details change
-  const handleQuizDetailsChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditedQuizDetails(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
   };
 
   // Cancel editing
@@ -555,9 +657,12 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   name="Title"
                   value={editedQuizDetails.Title}
                   onChange={handleQuizDetailsChange}
-                  className="w-full bg-white text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter quiz title"
+                  className={`w-full bg-white text-black rounded-lg px-4 py-2 border ${errors.Title ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Enter quiz title (must start with 'Quiz')"
                 />
+                {errors.Title && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Title}</p>
+                )}
               </div>
 
               {/* Description */}
@@ -570,25 +675,19 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                   value={editedQuizDetails.Description}
                   onChange={handleQuizDetailsChange}
                   rows={3}
-                  className="w-full bg-white text-black rounded-lg px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter quiz description"
+                  className={`w-full bg-white text-black rounded-lg px-4 py-2 border ${errors.Description ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Enter quiz description (minimum 20 characters)"
                 />
+                {errors.Description && (
+                  <p className="text-red-500 text-sm mt-1">{errors.Description}</p>
+                )}
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-gray-500">Min 20 characters</span>
+                  <span className={`${editedQuizDetails.Description.length < 20 ? 'text-red-500' : 'text-green-500'}`}>
+                    {editedQuizDetails.Description.length}/20
+                  </span>
+                </div>
               </div>
-
-              {/* Active Status */}
-              {/* <div className="flex items-center mb-4">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  name="IsActive"
-                  checked={editedQuizDetails.IsActive}
-                  onChange={handleQuizDetailsChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isActive" className="ml-2 block text-sm text-black">
-                  Active
-                </label>
-              </div> */}
 
               {/* Action Buttons */}
               <div className="flex justify-end space-x-2">
@@ -602,7 +701,8 @@ const ViewQuizModal = ({ quizId, onClose, refetchQuizzes }) => {
                 <button
                   type="button"
                   onClick={handleSaveQuizDetails}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                  disabled={!isFormValid}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Save Changes
                 </button>
