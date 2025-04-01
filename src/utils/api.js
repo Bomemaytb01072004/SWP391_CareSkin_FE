@@ -16,6 +16,9 @@ const apiURLBlogs = `${apiBaseURL}/api/BlogNews`;
 const apiURLQuizzes = `${apiBaseURL}/api/Quiz`;
 const apiURLSkinTypes = `${apiBaseURL}/api/SkinType`;
 
+// Import cache utilities
+import { getCache, setCache } from './cacheUtils';
+
 /* ===============================
         CUSTOMERS API
 ================================== */
@@ -98,21 +101,32 @@ export async function fetchCategories() {
   }
 }
 
-// Fetch categories from active products only
+// Fetch categories from active products
 export async function fetchCategoriesFromActiveProducts() {
+  // Check cache first
+  const cachedCategories = getCache('activeCategories');
+  if (cachedCategories) {
+    return cachedCategories;
+  }
+
   try {
     // First fetch all products
     const response = await fetch(apiURLproducts);
     if (!response.ok) throw new Error('Error fetching products');
-    
+
     const products = await response.json();
-    
+
     // Filter for active products only
-    const activeProducts = products.filter(product => product.IsActive);
-    
+    const activeProducts = products.filter((product) => product.IsActive);
+
     // Extract categories from active products
-    const categoriesFromActive = activeProducts.map(product => product.Category);
-    
+    const categoriesFromActive = activeProducts.map(
+      (product) => product.Category
+    );
+
+    // Cache the categories for 10 minutes
+    setCache('activeCategories', categoriesFromActive, 10);
+
     return categoriesFromActive;
   } catch (error) {
     console.error('Error fetching categories from active products', error);
@@ -122,10 +136,21 @@ export async function fetchCategoriesFromActiveProducts() {
 
 // Fetch only active products (optimized version for ProductsPage)
 export async function fetchActiveProductsWithDetails() {
+  // Check cache first
+  const cachedProducts = getCache('activeProducts');
+  if (cachedProducts) {
+    return cachedProducts;
+  }
+
   try {
     const response = await fetch(`${apiURLproducts}?isActive=true`);
     if (!response.ok) throw new Error('Error fetching active products');
-    return await response.json();
+    const products = await response.json();
+
+    // Cache the products for 5 minutes
+    setCache('activeProducts', products, 5);
+
+    return products;
   } catch (error) {
     console.error('Error fetching active products:', error);
     throw error;
@@ -218,10 +243,21 @@ export async function deleteBrand(id) {
 ================================== */
 
 export async function fetchSkinTypeProduct() {
+  // Check cache first
+  const cachedSkinTypes = getCache('skinTypes');
+  if (cachedSkinTypes) {
+    return cachedSkinTypes;
+  }
+
   try {
     const response = await fetch(apiURLSkinTypeProduct);
     if (!response.ok) throw new Error('Error fetching skin type');
-    return await response.json();
+    const skinTypes = await response.json();
+
+    // Cache the skin types for 30 minutes (changes less frequently)
+    setCache('skinTypes', skinTypes, 30);
+
+    return skinTypes;
   } catch (error) {
     console.error('Error fetching skin type', error);
     throw error;
@@ -914,7 +950,7 @@ export async function updateProductDiscountStatus(statusData) {
         body: JSON.stringify({
           ProductId: statusData.ProductId,
           PromotionId: statusData.PromotionId,
-          IsActive: statusData.IsActive
+          IsActive: statusData.IsActive,
         }),
       }
     );
@@ -985,7 +1021,7 @@ export async function createBlog(blogData) {
       method: 'POST',
       body: formData,
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to create blog');
     }
@@ -1014,7 +1050,7 @@ export async function updateBlog(id, blogData) {
       method: 'PUT',
       body: formData,
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to update blog');
     }
@@ -1031,11 +1067,11 @@ export async function deleteBlog(id) {
     const response = await fetch(`${apiURLBlogs}/${id}`, {
       method: 'DELETE',
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to delete blog');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error deleting blog:', error);
@@ -1105,12 +1141,12 @@ export async function createQuiz(quizData) {
       },
       body: JSON.stringify(quizData),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Error creating quiz');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error creating quiz:', error);
@@ -1128,12 +1164,12 @@ export async function updateQuiz(id, quizData) {
       },
       body: JSON.stringify(quizData),
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Error updating quiz');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error updating quiz:', error);
@@ -1147,12 +1183,12 @@ export async function deleteQuiz(id) {
     const response = await fetch(`${apiURLQuizzes}/${id}`, {
       method: 'DELETE',
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Error deleting quiz');
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error deleting quiz:', error);
@@ -1296,7 +1332,7 @@ export async function createUser(userData) {
     const response = await fetch(apiURLcustomers, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
+      body: JSON.stringify(userData),
     });
     if (!response.ok) throw new Error('Error creating user');
     return await response.json();
@@ -1312,7 +1348,7 @@ export async function updateUser(id, userData) {
     const response = await fetch(`${apiURLcustomers}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
+      body: JSON.stringify(userData),
     });
     if (!response.ok) throw new Error('Error updating user');
     return await response.json();
@@ -1326,7 +1362,7 @@ export async function updateUser(id, userData) {
 export async function deleteUser(id) {
   try {
     const response = await fetch(`${apiURLcustomers}/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     });
     if (!response.ok) throw new Error('Error deleting user');
     return await response.json();
@@ -1342,7 +1378,7 @@ export async function toggleUserStatus(id, isActive) {
     const response = await fetch(`${apiURLcustomers}/toggle-status/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive })
+      body: JSON.stringify({ isActive }),
     });
     if (!response.ok) throw new Error('Error toggling user status');
     return await response.json();

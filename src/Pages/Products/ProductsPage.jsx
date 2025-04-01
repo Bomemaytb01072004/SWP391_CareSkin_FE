@@ -12,6 +12,7 @@ import {
   fetchCategoriesFromActiveProducts,
   fetchSkinTypeProduct
 } from '../../utils/api.js';
+import { clearCache, clearAllCache } from '../../utils/cacheUtils.js';
 import { useState, useEffect, useMemo, createContext } from 'react';
 import LoadingPage from '../../Pages/LoadingPage/LoadingPage';
 import { useLocation } from 'react-router-dom';
@@ -76,82 +77,108 @@ function ProductsPage() {
     setIsLoading(loadingProducts || loadingCategories || loadingSkinTypes);
   }, [loadingProducts, loadingCategories, loadingSkinTypes]);
 
+  // Refresh data by clearing cache and refetching
+  const refreshData = () => {
+    setIsLoading(true);
+    clearCache('activeProducts');
+    clearCache('activeCategories');
+    clearCache('skinTypes');
+    
+    // Reset loading states
+    setLoadingProducts(true);
+    setLoadingCategories(true);
+    setLoadingSkinTypes(true);
+    
+    // Refetch all data
+    fetchProducts();
+    fetchCategories();
+    fetchSkinTypes();
+  };
+  
+  // Function to fetch products (extracted for reuse)
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const data = await fetchActiveProductsWithDetails();
+      // Lọc lại các sản phẩm Active để chắc chắn chỉ tính totalProduct cho những sản phẩm đang Active
+      const activeProducts = data.filter((prod) => prod.IsActive === true);
+
+      setProducts(activeProducts);
+      setFilteredProducts(activeProducts);
+      setTotalProduct(activeProducts.length);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+  
+  // Function to fetch categories (extracted for reuse)
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const categoriesData = await fetchCategoriesFromActiveProducts();
+
+      // Transform raw categories into the format expected by Filters component
+      const splittedCategories = categoriesData.flatMap((item) =>
+        item.split(',').map((str) => str.trim())
+      );
+      const uniqueCategories = Array.from(new Set(splittedCategories));
+
+      const mappedCategories = uniqueCategories.map((cat) => {
+        const capitalizedLabel =
+          cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+        return {
+          label: capitalizedLabel,
+          // Change this to match exactly what HomePage is sending
+          value: capitalizedLabel
+        };
+      });
+
+      setCategories(mappedCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+  
+  // Function to fetch skin types (extracted for reuse)
+  const fetchSkinTypes = async () => {
+    try {
+      setLoadingSkinTypes(true);
+      const skinTypesData = await fetchSkinTypeProduct();
+      const activeSkinTypes = skinTypesData.filter((item) => item.IsActive === true);
+
+      const mappedSkinTypes = activeSkinTypes.map((item) => {
+        const labelWithoutSkin = item.TypeName.replace(' Skin', '');
+        return {
+          label: labelWithoutSkin,
+          value: item.SkinTypeId.toString()
+        };
+      });
+
+      setSkinTypes(mappedSkinTypes);
+    } catch (error) {
+      console.error('Error fetching skin types:', error);
+    } finally {
+      setLoadingSkinTypes(false);
+    }
+  };
+
   // Fetch products
   useEffect(() => {
-    (async () => {
-      try {
-        setLoadingProducts(true);
-        const data = await fetchActiveProductsWithDetails();
-        // Lọc lại các sản phẩm Active để chắc chắn chỉ tính totalProduct cho những sản phẩm đang Active
-        const activeProducts = data.filter((prod) => prod.IsActive === true);
-
-        setProducts(activeProducts);
-        setFilteredProducts(activeProducts);
-        setTotalProduct(activeProducts.length);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoadingProducts(false);
-      }
-    })();
+    fetchProducts();
   }, []);
 
   // Fetch categories
   useEffect(() => {
-    (async () => {
-      try {
-        setLoadingCategories(true);
-        const data = await fetchCategoriesFromActiveProducts();
-
-        // Transform raw categories into the format expected by Filters component
-        const splittedCategories = data.flatMap((item) =>
-          item.split(',').map((str) => str.trim())
-        );
-        const uniqueCategories = Array.from(new Set(splittedCategories));
-
-        const mappedCategories = uniqueCategories.map((cat) => {
-          const capitalizedLabel =
-            cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
-          return {
-            label: capitalizedLabel,
-            // Change this to match exactly what HomePage is sending
-            value: capitalizedLabel
-          };
-        });
-
-
-        setCategories(mappedCategories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    })();
+    fetchCategories();
   }, []);
 
-  // Fetch skin types (chỉ lấy IsActive = true)
+  // Fetch skin types
   useEffect(() => {
-    (async () => {
-      try {
-        setLoadingSkinTypes(true);
-        const data = await fetchSkinTypeProduct();
-        const activeSkinTypes = data.filter((item) => item.IsActive === true);
-
-        const mappedSkinTypes = activeSkinTypes.map((item) => {
-          const labelWithoutSkin = item.TypeName.replace(' Skin', '');
-          return {
-            label: labelWithoutSkin,
-            value: item.SkinTypeId.toString()
-          };
-        });
-
-        setSkinTypes(mappedSkinTypes);
-      } catch (error) {
-        console.error('Error fetching skin types:', error);
-      } finally {
-        setLoadingSkinTypes(false);
-      }
-    })();
+    fetchSkinTypes();
   }, []);
 
   // Nếu đến từ New Arrivals, tự set sort = "Newest"
@@ -467,6 +494,18 @@ function ProductsPage() {
               className={`d-flex flex-column flex-md-row justify-content-between align-items-center ${styles.productPage_breadcrumb}`}
             >
               <Breadcrumb items={breadcrumbItems} />
+              {/* Cache control - only visible to admin users */}
+              {localStorage.getItem('token') && 
+                JSON.parse(atob(localStorage.getItem('token').split('.')[1]))['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] === 'Admin' && (
+                <div className="flex items-center gap-2 ml-auto">
+                  <button 
+                    onClick={refreshData}
+                    className="px-3 py-1 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 transition-colors"
+                  >
+                    Refresh Data
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
