@@ -14,6 +14,7 @@ import {
   faShoppingBag,
   faHeart,
   faSignOutAlt,
+  faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import { generateProductSlug } from '../../utils/urlUtils';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -220,18 +221,37 @@ function Navbar() {
   // Helper function to check if user is admin
   const isAdminUser = () => {
     try {
+      // Check JWT token
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (token) {
+        // Parse the JWT token payload
+        const payload = JSON.parse(atob(token.split('.')[1]));
 
-      // Parse the JWT token payload
-      const payload = JSON.parse(atob(token.split('.')[1]));
+        // Check if the role claim exists and is "Admin"
+        if (
+          payload[
+            'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+          ] === 'Admin'
+        ) {
+          return true;
+        }
+      }
 
-      // Check if the role claim exists and is "Admin"
-      return (
-        payload[
-          'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
-        ] === 'Admin'
-      );
+      // Also check user object in localStorage as a fallback
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (
+          user.role === 'Admin' ||
+          user[
+            'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+          ] === 'Admin'
+        ) {
+          return true;
+        }
+      }
+
+      return false;
     } catch (error) {
       console.error('Error checking admin status:', error);
       return false;
@@ -774,6 +794,20 @@ function Navbar() {
                           />
                           <span>Order History</span>
                         </Link>
+
+                        {isAdminUser() && (
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-3 p-2 hover:bg-emerald-50 rounded-md transition-colors text-gray-700"
+                            onClick={() => setIsProfileDropdownOpen(false)}
+                          >
+                            <FontAwesomeIcon
+                              icon={faLock}
+                              className="text-emerald-600 w-4"
+                            />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        )}
 
                         {/* <Link
                           to="/wishlist"

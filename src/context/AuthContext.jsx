@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useMemo,
+} from 'react';
 
 const AuthContext = createContext(null);
 
@@ -12,7 +18,7 @@ export const AuthProvider = ({ children }) => {
     const checkUserLoggedIn = () => {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
-      
+
       if (token && userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -45,16 +51,32 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
-  const isAdmin = currentUser && 
-    (currentUser.role === 'Admin' || 
-     currentUser['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] === 'Admin');
+  const isAdmin = useMemo(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+
+      // Parse the JWT token payload
+      const payload = JSON.parse(atob(token.split('.')[1]));
+
+      // Check if the role claim exists and is "Admin"
+      return (
+        payload[
+          'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+        ] === 'Admin' || currentUser?.role === 'Admin'
+      );
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
+  }, [currentUser]);
 
   const value = {
     currentUser,
     isAdmin,
     login,
     logout,
-    loading
+    loading,
   };
 
   return (
