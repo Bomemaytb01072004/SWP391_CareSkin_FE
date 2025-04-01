@@ -83,7 +83,7 @@ const PromotionPageAdmin = () => {
                 }`}
               onClick={() => setFilterStatus("all")}
             >
-              All Skin Types
+              All Promotions
             </button>
             <button
               className={`px-4 py-2 rounded-lg transition-colors ${filterStatus === "active"
