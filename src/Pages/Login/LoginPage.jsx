@@ -4,7 +4,7 @@ import image2 from '../../assets/image-login-2.jpg';
 import bgImage from '../../assets/bg-login.png';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { ToastContainer, toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import FacebookLogin from 'react-facebook-login-lite';
@@ -27,8 +27,16 @@ const LoginPage = () => {
   const [confirmPasswordType, setConfirmPasswordType] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Update handleGoogleLoginSuccess function - remove the mergeCartsAfterLogin call
+  const handleSuccessfulLogin = () => {
+    if (location.state?.from) {
+      navigate(`/${location.state.from}`);
+    } else {
+      navigate('/');
+    }
+  };
+
   const handleGoogleLoginSuccess = async (response) => {
     console.log('Google Token:', response.credential);
 
@@ -40,31 +48,25 @@ const LoginPage = () => {
 
       console.log('Backend Response:', res.data);
 
-      // Extract token and user data properly
       const { token, user } = res.data;
 
-      // Check if response has the expected structure
       if (!token || !user || !user.CustomerId) {
         console.error('Invalid response format:', res.data);
         toast.error('Login failed: Invalid server response');
         return;
       }
 
-      // Store token and CustomerId in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('CustomerId', user.CustomerId);
-      localStorage.setItem('user', JSON.stringify(user)); // Store user object
+      localStorage.setItem('user', JSON.stringify(user));
 
-      // Clear any previous cart merge flag to ensure merging happens again
       localStorage.removeItem('cartMerged');
 
-      // Decode JWT token for auth context
       try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const decodedPayload = JSON.parse(window.atob(base64));
 
-        // Update auth context with decoded token data
         login(decodedPayload, token);
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -72,18 +74,16 @@ const LoginPage = () => {
 
       toast.success('Login successful!', { autoClose: 2000 });
 
-      // Navigate based on role
       setTimeout(() => {
         if (user.role === 'Customer' || user.role === 'User') {
-          navigate('/');
+          handleSuccessfulLogin();
         } else {
           navigate('/admin');
         }
       }, 2000);
 
-      // Dispatch event for chat widget and to trigger storage listeners
       window.dispatchEvent(new Event('careSkinUserChanged'));
-      window.dispatchEvent(new Event('storage')); // This will trigger Navbar's storage event listener
+      window.dispatchEvent(new Event('storage'));
     } catch (error) {
       console.error('Error sending token to BE:', error);
       if (error.response && error.response.data) {
@@ -114,31 +114,25 @@ const LoginPage = () => {
 
       console.log('Backend Response:', res.data);
 
-      // Extract token and user data properly
       const { token, user } = res.data;
 
-      // Check if response has the expected structure
       if (!token || !user || !user.CustomerId) {
         console.error('Invalid response format:', res.data);
         toast.error('Login failed: Invalid server response');
         return;
       }
 
-      // Store token and CustomerId in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('CustomerId', user.CustomerId);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Clear any previous cart merge flag to ensure merging happens again
       localStorage.removeItem('cartMerged');
 
-      // Decode JWT token for auth context
       try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const decodedPayload = JSON.parse(window.atob(base64));
 
-        // Update auth context with decoded token data
         login(decodedPayload, token);
       } catch (error) {
         console.error('Error decoding token:', error);
@@ -146,20 +140,18 @@ const LoginPage = () => {
 
       toast.success('Login successful!', { autoClose: 2000 });
 
-      // Navigate based on role
       setTimeout(() => {
         if (user.role === 'Customer' || user.role === 'User') {
-          navigate('/');
+          handleSuccessfulLogin();
         } else {
           navigate('/admin');
         }
       }, 2000);
 
-      // Dispatch events to update other components
       window.dispatchEvent(new Event('careSkinUserChanged'));
       window.dispatchEvent(new Event('storage'));
     } catch (error) {
-      // Error handling remains unchanged
+      console.error('Error:', error);
     }
   };
 
@@ -222,7 +214,7 @@ const LoginPage = () => {
         toast.success('Login successful', { autoClose: 2000 });
         setTimeout(() => {
           if (data.Role === 'User') {
-            navigate('/');
+            handleSuccessfulLogin();
           } else {
             navigate('/admin');
           }
@@ -261,7 +253,6 @@ const LoginPage = () => {
         .required('Please confirm password'),
     }),
     onSubmit: async (values) => {
-      // Code xử lý đăng ký ở đây
       const { userName, email, password, confirmPassword } = values;
 
       try {
@@ -324,10 +315,8 @@ const LoginPage = () => {
     }
   };
 
-  // For mobile view
   const [mobileView, setMobileView] = useState(window.innerWidth <= 768);
 
-  // Update mobileView on window resize
   React.useEffect(() => {
     const handleResize = () => {
       setMobileView(window.innerWidth <= 768);
@@ -378,7 +367,6 @@ const LoginPage = () => {
               </div>
             )}
 
-            {/* Login Form */}
             <form
               onSubmit={formikLogin.handleSubmit}
               className={`${styles.formBase} ${mobileView && rightPanelActive ? styles.inactive : ''}`}
@@ -479,7 +467,6 @@ const LoginPage = () => {
               )}
             </form>
 
-            {/* Register Form */}
             <form
               onSubmit={formikRegister.handleSubmit}
               className={`${styles.formBase} ${mobileView && !rightPanelActive ? styles.inactive : ''}`}

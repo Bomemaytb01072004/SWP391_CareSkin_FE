@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-const GuestUnauthorizedPage = ({ 
-  pageName = "this page", 
-  redirectPath = "/login",
-  returnUrl = "/",
-  message = "Please log in to access this feature"
+const GuestUnauthorizedPage = ({
+  pageName = 'this page',
+  redirectPath = '/login',
+  returnUrl = '/',
+  message = 'Please log in to access this feature',
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [countdown, setCountdown] = useState(10);
+
+  // Store the full path including query parameters
+  const currentPath = location.pathname + location.search;
+
+  // Use the provided returnUrl or fallback to current path if not specified
+  const effectiveReturnUrl = returnUrl === '/' ? currentPath : returnUrl;
 
   // Auto-redirect countdown
   useEffect(() => {
@@ -17,11 +24,15 @@ const GuestUnauthorizedPage = ({
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate(redirectPath, { 
-            state: { 
-              from: returnUrl.substring(1), 
-              message: message
-            } 
+          // Navigate to login with state containing the return URL
+          navigate(redirectPath, {
+            state: {
+              from: effectiveReturnUrl.startsWith('/')
+                ? effectiveReturnUrl.substring(1)
+                : effectiveReturnUrl,
+              message: message,
+              isRedirect: true,
+            },
           });
           return 0;
         }
@@ -30,7 +41,7 @@ const GuestUnauthorizedPage = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate, redirectPath, returnUrl, message]);
+  }, [navigate, redirectPath, effectiveReturnUrl, message]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-emerald-50 to-teal-50 px-4">
@@ -47,16 +58,24 @@ const GuestUnauthorizedPage = ({
             viewBox="0 0 20 20"
             fill="currentColor"
           >
-            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+              clipRule="evenodd"
+            />
           </svg>
         </div>
 
-        <h2 className="text-3xl font-bold text-amber-600 mb-2">Login Required</h2>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Members Only Feature</h3>
+        <h2 className="text-3xl font-bold text-amber-600 mb-2">
+          Login Required
+        </h2>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">
+          Members Only Feature
+        </h3>
 
         <p className="text-gray-600 mb-6">
-          You need to be logged in to access {pageName}. 
-          Create an account or log in to access your personalized skin recommendations.
+          You need to be logged in to access {pageName}. Create an account or
+          log in to access your personalized skin recommendations.
         </p>
 
         <div className="flex flex-col space-y-3 mb-6">
@@ -76,7 +95,13 @@ const GuestUnauthorizedPage = ({
         <div className="flex flex-col space-y-3">
           <Link
             to={redirectPath}
-            state={{ from: returnUrl.substring(1), message: message }}
+            state={{
+              from: effectiveReturnUrl.startsWith('/')
+                ? effectiveReturnUrl.substring(1)
+                : effectiveReturnUrl,
+              message: message,
+              isRedirect: true,
+            }}
             className="px-4 py-3 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-all duration-200 text-center font-medium flex items-center justify-center"
           >
             <svg
@@ -85,7 +110,11 @@ const GuestUnauthorizedPage = ({
               viewBox="0 0 20 20"
               fill="currentColor"
             >
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                clipRule="evenodd"
+              />
             </svg>
             Login / Register
           </Link>

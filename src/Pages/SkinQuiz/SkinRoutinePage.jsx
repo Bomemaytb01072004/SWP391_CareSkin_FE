@@ -1113,7 +1113,7 @@ const SkinRoutinePage = () => {
               <div className="p-8 sm:p-10">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                   <span className="mr-3">💡</span> Tips for{' '}
-                  {skinTypeInfo?.SkinTypeName || 'Your'} Skin
+                  {skinTypeInfo?.SkinTypeName || 'Your Skin'}
                 </h3>
 
                 {/* Ensure SkinTypeName is formatted properly with debugging */}
