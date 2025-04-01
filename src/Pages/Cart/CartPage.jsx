@@ -97,6 +97,13 @@ const CartPage = () => {
     };
   }, [CustomerId, token, cart.length, receivedFromNavbar]);
 
+  // Add this helper function to trigger the cart refresh in Navbar
+  const triggerNavbarCartRefresh = () => {
+    // Dispatch a custom event to notify other components (especially Navbar)
+    window.dispatchEvent(new Event('cartUpdated'));
+    console.log('Cart action completed - triggered Navbar refresh');
+  };
+
   const removeFromCart = async (cartId, productId, productVariationId) => {
     const CustomerId = localStorage.getItem('CustomerId');
     const token = localStorage.getItem('token');
@@ -129,6 +136,9 @@ const CartPage = () => {
           window.dispatchEvent(new Event('storage')); // Sync across components
           return updatedCart;
         });
+
+        // Trigger Navbar refresh
+        triggerNavbarCartRefresh();
       } catch (error) {
         console.error('Error removing item from cart:', error);
       }
@@ -160,6 +170,9 @@ const CartPage = () => {
       window.dispatchEvent(new Event('storage')); // Ensure navbar updates
       return updatedCart;
     });
+
+    // Trigger Navbar refresh
+    triggerNavbarCartRefresh();
   };
 
   useEffect(() => {
@@ -224,6 +237,9 @@ const CartPage = () => {
         );
 
         setCart(updatedCart);
+
+        // Trigger Navbar refresh
+        triggerNavbarCartRefresh();
       } catch (error) {
         console.error('Error updating cart quantity:', error);
       }
@@ -249,6 +265,9 @@ const CartPage = () => {
       });
 
       window.dispatchEvent(new Event('storage'));
+
+      // Trigger Navbar refresh
+      triggerNavbarCartRefresh();
     }
   };
 
@@ -307,6 +326,9 @@ const CartPage = () => {
         );
 
         setCart(updatedCart);
+
+        // Trigger Navbar refresh
+        triggerNavbarCartRefresh();
       } catch (error) {
         console.error('Error updating cart variation:', error);
       }
@@ -330,6 +352,9 @@ const CartPage = () => {
       });
 
       window.dispatchEvent(new Event('storage'));
+
+      // Trigger Navbar refresh
+      triggerNavbarCartRefresh();
     }
   };
 
@@ -400,6 +425,9 @@ const CartPage = () => {
       localStorage.setItem('cart', JSON.stringify(updatedCart));
       window.dispatchEvent(new Event('storage'));
     }
+
+    // Trigger Navbar refresh
+    triggerNavbarCartRefresh();
   };
 
   const proceedToCheckout = async () => {

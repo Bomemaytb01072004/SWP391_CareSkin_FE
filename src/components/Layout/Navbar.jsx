@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   faUser,
-  faEnvelope,
+  faQuestionCircle,
   faShoppingCart,
   faBars,
   faTimes,
@@ -113,8 +113,61 @@ function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
   useEffect(() => {
     const fetchUserData = async () => {
+      // Check if user is admin first
+      if (isAdminUser()) {
+        try {
+          // For admin users, fetch from the admin API
+          const response = await fetch(`${backendUrl}/api/Admin`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (!response.ok) throw new Error(`Error: ${response.status}`);
+
+          const adminData = await response.json();
+
+          // Transform admin data to match expected user structure
+          const formattedAdminData = {
+            UserName: adminData.UserName || 'admin',
+            FullName: adminData.FullName || 'Admin User',
+            Email: adminData.Email || 'admin@careskin.com',
+            PictureUrl: adminData.PictureUrl,
+            Role: 'Admin',
+          };
+
+          setUserName(formattedAdminData.FullName);
+          setUser(formattedAdminData);
+
+          // Cache admin data in localStorage
+          localStorage.setItem('user', JSON.stringify(formattedAdminData));
+          window.dispatchEvent(new Event('careSkinUserChanged'));
+
+          return; // Skip the customer API call
+        } catch (error) {
+          console.error('Error fetching admin data:', error);
+
+          // Try to use cached admin data if available
+          const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+          if (cachedUser && Object.keys(cachedUser).length > 0) {
+            setUser(cachedUser);
+            setUserName(cachedUser.FullName || cachedUser.UserName || 'Admin');
+            return;
+          }
+
+          // Fallback for admin
+          setUserName('Admin User');
+          setUser({
+            UserName: 'admin',
+            FullName: 'Admin User',
+            Role: 'Admin',
+          });
+          return;
+        }
+      }
+
+      // Original code for non-admin users
       if (CustomerId && token) {
         try {
           const response = await fetch(
@@ -163,9 +216,38 @@ function Navbar() {
     );
   };
 
+  // Helper function to check if user is admin
+  const isAdminUser = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+
+      // Parse the JWT token payload
+      const payload = JSON.parse(atob(token.split('.')[1]));
+
+      // Check if the role claim exists and is "Admin"
+      return (
+        payload[
+          'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
+        ] === 'Admin'
+      );
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      return false;
+    }
+  };
+
   // Replace your existing fetchCart function
   const fetchCart = async () => {
     try {
+      // Skip cart fetching for admin users
+      if (isAdminUser()) {
+        console.log('Admin user detected - skipping cart fetch');
+        setCart([]);
+        notifyCartUpdated([]);
+        return [];
+      }
+
       if (CustomerId && token) {
         // For logged in users, fetch from API
         const response = await fetch(
@@ -724,14 +806,14 @@ function Navbar() {
                 </AnimatePresence>
               </div>
 
-              {/* notifications Icon */}
-              <Link to="/notifications" className="relative group">
+              {/* FAQ Icon */}
+              <Link to="/faq" className="relative group">
                 <FontAwesomeIcon
-                  icon={faEnvelope}
-                  className="text-gray-700 hover:text-red-500 text-xl transition-colors hover:scale-110 transition-transform"
+                  icon={faQuestionCircle}
+                  className="text-xl text-gray-700 hover:text-emerald-600 transition-colors"
                 />
                 <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Notifications
+                  FAQ
                 </span>
               </Link>
 
@@ -1046,12 +1128,12 @@ function Navbar() {
                       )}
                     </Link>
                     <Link
-                      to="/notifications"
+                      to="/faq"
                       className="flex items-center gap-2 text-gray-700 hover:text-emerald-600"
                       onClick={() => setIsSidebarOpen(false)}
                     >
-                      <FontAwesomeIcon icon={faEnvelope} />
-                      <span>notifications</span>
+                      <FontAwesomeIcon icon={faQuestionCircle} />
+                      <span>FAQ</span>
                     </Link>
                     <Link
                       to="/profile"
