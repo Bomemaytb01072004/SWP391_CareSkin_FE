@@ -171,7 +171,7 @@ const LoginPage = () => {
       username: Yup.string().required('This field is required'),
       password: Yup.string()
         .required('You must enter a password')
-        .min(3, 'Password must be at least 8 characters'),
+        .min(3, 'Password must be at least 3 characters'),
     }),
     onSubmit: async (values) => {
       const { username, password } = values;
@@ -594,7 +594,7 @@ const LoginPage = () => {
                   </div>
                 )}
 
-              <button type="submit" className={styles.primaryButton}>
+              <button type="submit" className={styles.primaryButton1}>
                 Sign Up
               </button>
 

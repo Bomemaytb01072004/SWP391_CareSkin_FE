@@ -6,7 +6,7 @@ import Header from "../../components/common/Header";
 import StatCard from "../../components/common/StatCard";
 import { ToastContainer } from "react-toastify";
 
-import { ScrollText, FileCheck, Clock, Calendar } from "lucide-react";
+import { ScrollText, FileCheck, Clock, OctagonX } from "lucide-react";
 
 import BlogsTable from "../../components/blogs/BlogsTable";
 import { fetchBlogs } from "../../utils/api";
@@ -40,7 +40,7 @@ const BlogsPage = () => {
 
     // Calculate stats for the cards
     const totalBlogs = blogs.length;
-    const publishedBlogs = blogs.filter((blog) => blog.IsPublished).length;
+    const publishedBlogs = blogs.filter((blog) => blog.IsActive).length;
     const draftBlogs = totalBlogs - publishedBlogs;
 
     // Calculate the number of blogs published in the last 30 days
@@ -79,22 +79,16 @@ const BlogsPage = () => {
                             color="#8B5CF6"
                         />
                         <StatCard
-                            name="Published"
+                            name="Active Blogs"
                             icon={FileCheck}
                             value={publishedBlogs}
                             color="#10B981"
                         />
                         <StatCard
-                            name="Drafts"
-                            icon={Clock}
+                            name="Inactive Blogs"
+                            icon={OctagonX}
                             value={draftBlogs}
                             color="#F59E0B"
-                        />
-                        <StatCard
-                            name="Last 30 Days"
-                            icon={Calendar}
-                            value={recentBlogs}
-                            color="#3B82F6"
                         />
                     </motion.div>
 

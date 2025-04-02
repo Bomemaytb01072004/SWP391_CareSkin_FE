@@ -30,13 +30,7 @@ const UserStatCards = ({ customers }) => {
       color: "bg-red-100 text-red-800",
       iconColor: "text-red-500"
     },
-    {
-      title: "Verified Users",
-      value: verifiedUsers,
-      icon: UserCog,
-      color: "bg-purple-100 text-purple-800",
-      iconColor: "text-purple-500"
-    }
+
   ];
 
   return (
