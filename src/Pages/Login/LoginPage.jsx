@@ -179,7 +179,7 @@ const LoginPage = () => {
       username: Yup.string().required('This field is required'),
       password: Yup.string()
         .required('You must enter a password')
-        .min(3, 'Password must be at least 8 characters'),
+        .min(3, 'Password must be at least 3 characters'),
     }),
     onSubmit: async (values) => {
       const { username, password } = values;
