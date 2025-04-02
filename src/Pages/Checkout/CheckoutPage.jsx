@@ -6,6 +6,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { fetchActivePromotions } from '../../utils/api';
 import { motion } from 'framer-motion'; // Make sure to import motion if not already
+import { ToastContainer, toast } from 'react-toastify';
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const CheckoutPage = () => {
@@ -281,12 +282,36 @@ const CheckoutPage = () => {
 
       if (!response.ok) {
         console.error('Server Response:', responseText);
-        alert(`Failed to place order: ${responseText}`);
+
+        // Extract user-friendly error message
+        let errorMessage = "Failed to place order";
+
+        // Check for specific error patterns
+        if (responseText.includes("One or more products are invalid")) {
+          errorMessage = "One or more products are invalid";
+        }
+
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
         return;
       }
 
       console.log('Order Response:', responseText);
-      alert('Order placed successfully!');
+      toast.success('Order placed successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        icon: "🛍️"
+      });
 
       // Remove purchased items from cart
       const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -670,6 +695,7 @@ const CheckoutPage = () => {
   if (isRedirecting) {
     return (
       <>
+        <ToastContainer />
         <Navbar />
         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-emerald-50 to-teal-50 px-4">
           <motion.div
@@ -722,6 +748,8 @@ const CheckoutPage = () => {
 
   return (
     <>
+      <ToastContainer />
+      y
       <Navbar />
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 py-10">
@@ -893,11 +921,10 @@ const CheckoutPage = () => {
                   <div className="grid grid-cols-1 gap-4">
                     {/* Cash on Delivery */}
                     <label
-                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-200 hover:shadow-md ${
-                        formik.values.paymentMethod === 'cod'
-                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                          : 'border-gray-200'
-                      }`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-200 hover:shadow-md ${formik.values.paymentMethod === 'cod'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                        : 'border-gray-200'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -956,11 +983,10 @@ const CheckoutPage = () => {
 
                     {/* VNPAY */}
                     <label
-                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
-                        formik.values.paymentMethod === 'vnpay'
-                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
-                          : 'border-gray-200 hover:border-emerald-200'
-                      }`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${formik.values.paymentMethod === 'vnpay'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                        : 'border-gray-200 hover:border-emerald-200'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -1011,11 +1037,10 @@ const CheckoutPage = () => {
 
                     {/* MoMo */}
                     <label
-                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
-                        formik.values.paymentMethod === 'momo'
-                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
-                          : 'border-gray-200 hover:border-emerald-200'
-                      }`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${formik.values.paymentMethod === 'momo'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                        : 'border-gray-200 hover:border-emerald-200'
+                        }`}
                     >
                       <input
                         type="radio"
@@ -1066,11 +1091,10 @@ const CheckoutPage = () => {
 
                     {/* ZaloPay */}
                     <label
-                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${
-                        formik.values.paymentMethod === 'zalopay'
-                          ? 'border-emerald-500 bg-emerald-50 shadow-md'
-                          : 'border-gray-200 hover:border-emerald-200'
-                      }`}
+                      className={`border rounded-lg flex items-center cursor-pointer transition-all duration-300 hover:shadow-md transform hover:-translate-y-1 ${formik.values.paymentMethod === 'zalopay'
+                        ? 'border-emerald-500 bg-emerald-50 shadow-md'
+                        : 'border-gray-200 hover:border-emerald-200'
+                        }`}
                     >
                       <input
                         type="radio"
