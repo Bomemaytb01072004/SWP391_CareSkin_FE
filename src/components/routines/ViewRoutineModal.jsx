@@ -579,7 +579,9 @@ const ViewRoutineModal = ({ isOpen, onClose, routineId, refetchRoutines }) => {
                                   required
                                 >
                                   <option value="">Select a product</option>
-                                  {allProducts.map((product) => (
+                                  {allProducts
+                                  .filter((product) => product.IsActive)
+                                  .map((product) => (
                                     <option key={product.ProductId} value={product.ProductId}>
                                       {product.ProductName}
                                     </option>
