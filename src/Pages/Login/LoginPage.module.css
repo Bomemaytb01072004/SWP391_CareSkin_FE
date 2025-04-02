@@ -76,146 +76,18 @@
   font-weight: bold;
 }
 
-/* Social Login Buttons - Modern Design */
 .socialButtonsContainer {
-  margin: 1.5rem 0;
+  margin-bottom: 1.25rem;
   width: 80%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.socialButton {
-  position: relative;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 15px;
-  font-weight: 500;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  color: #333;
-  overflow: hidden;
 }
 
-.socialButton:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: transparent;
-  transition: background-color 0.3s;
-  z-index: 1;
-  border-radius: 8px;
-}
-
-.socialButton:hover:before {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.socialButton:active {
-  transform: translateY(1px);
-}
-
-.socialButtonLogo {
-  position: absolute;
-  left: 16px;
-  height: 24px;
-  width: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-
-.socialButtonText {
-  font-family:
-    'Roboto',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  z-index: 2;
-}
-
-/* Google Button */
-.googleButton {
-  background-color: white;
-  border: 1px solid #dadce0;
-}
-
-.googleButton:active {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-/* Facebook Button */
-.facebookButton {
-  background-color: #1877f2;
-  color: white;
-}
-
-.facebookButton:hover:before {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.facebookButton:active {
-  background-color: #166fe5;
-}
-
-/* Apple Button (if needed) */
-.appleButton {
-  background-color: #000;
-  color: white;
-}
-
-.appleButton:hover:before {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.appleButton:active {
-  background-color: #222;
-}
-
-/* Divider styling */
 .divider {
-  position: relative;
-  width: 80%;
-  margin: 1.5rem 0;
-  text-align: center;
   font-size: 14px;
-  color: #6b7280;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: calc(50% - 30px);
-  height: 1px;
-  background-color: #e5e7eb;
-}
-
-.divider::before {
-  left: 0;
-}
-
-.divider::after {
-  right: 0;
-}
-
-.dividerText {
-  display: inline-block;
-  padding: 0 10px;
-  background-color: white;
-  position: relative;
+  margin-bottom: 1.25rem;
+  color: #666;
 }
 
 .formField {
@@ -344,43 +216,6 @@
 
 :global(.my-facebook-btn i) {
   margin-right: 8px !important;
-}
-
-.socialButtonWrapper {
-  width: 100%;
-  min-height: 48px; /* Match height with Facebook button */
-  display: flex;
-  justify-content: center;
-}
-
-.facebookButtonWrapper {
-  width: 100%;
-}
-
-.facebookButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 12px;
-  background-color: #1877f2;
-  color: white;
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.facebookButton:hover {
-  background-color: #166fe5;
-}
-
-.facebookIcon {
-  height: 20px;
-  margin-right: 10px;
 }
 
 /* Responsive styles */
