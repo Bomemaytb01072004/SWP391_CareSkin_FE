@@ -147,7 +147,7 @@
 
 .primaryButton {
   padding: 12px 40px;
-  margin-top: 20px;
+  margin-top: 31px;
   background-color: #059669;
   color: white;
   border: none;
@@ -158,6 +158,24 @@
 }
 
 .primaryButton:hover {
+  background-color: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.primaryButton1 {
+  padding: 12px 40px;
+  margin-top: 10px;
+  background-color: #059669;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.primaryButton1:hover {
   background-color: #047857;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
